@@ -1,0 +1,20 @@
+{
+  "name": "alpine",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "alpinejs": "^3.15.12",
+    "editate": "0.6.0"
+  },
+  "devDependencies": {
+    "@types/alpinejs": "^3.13.11",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.0"
+  }
+}

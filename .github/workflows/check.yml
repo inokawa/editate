@@ -57,6 +57,8 @@ jobs:
         run: (cd examples/angular && npm ci && npm link editate) && FRAMEWORK_DIR=examples/angular npm run e2e
       - name: Smoke preact
         run: (cd examples/preact && npm ci && npm link editate) && FRAMEWORK_DIR=examples/preact npm run e2e
+      - name: Smoke alpine
+        run: (cd examples/alpine && npm ci && npm link editate) && FRAMEWORK_DIR=examples/alpine npm run e2e
       - name: Smoke vanilla
         run: (cd examples/vanilla && npm ci && npm link editate) && FRAMEWORK_DIR=examples/vanilla npm run e2e
       # - uses: actions/upload-artifact@v3

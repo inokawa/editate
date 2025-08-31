@@ -12,6 +12,7 @@ import {
   readNext as next,
   parentBlock,
   readToken,
+  isHiddenNode,
 } from "./parser.js";
 import type {
   DomPosition,
@@ -234,7 +235,9 @@ const serializePosition = (
         let i = 0;
         let sib: Element = blocks[blocks.length - 1]!;
         while ((sib = sib.previousElementSibling!)) {
-          i++;
+          if (!isHiddenNode(sib)) {
+            i++;
+          }
         }
         return [i];
       });

@@ -213,6 +213,7 @@ export const App = () => {
 - Solid ([Demo](https://inokawa.github.io/editate/solid), [Source](./examples/solid))
 - Angular ([Demo](https://inokawa.github.io/editate/angular), [Source](./examples/angular))
 - Preact ([Demo](https://inokawa.github.io/editate/preact), [Source](./examples/preact))
+- Alpine ([Demo](https://inokawa.github.io/editate/alpine), [Source](./examples/alpine))
 - Vanilla ([Demo](https://inokawa.github.io/editate/vanilla), [Source](./examples/vanilla))
 
 ...and more! Contribution welcome!
