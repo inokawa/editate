@@ -221,10 +221,6 @@ export const createEditor = <
     throw new Error(initialError);
   }
 
-  const history = createHistory<
-    readonly [doc: T, selection: SelectionSnapshot]
-  >([doc, selection]);
-
   const keydownHandlers: KeyboardHandler[] = [
     hotkey(
       "z",
@@ -232,7 +228,8 @@ export const createEditor = <
         if (!readonly) {
           const nextHistory = history.undo();
           if (nextHistory) {
-            [doc, selection] = nextHistory;
+            doc = nextHistory[0];
+            updateSelection(nextHistory[1]);
             onChange(doc);
           }
         }
@@ -245,7 +242,8 @@ export const createEditor = <
         if (!readonly) {
           const nextHistory = history.redo();
           if (nextHistory) {
-            [doc, selection] = nextHistory;
+            doc = nextHistory[0];
+            updateSelection(nextHistory[1]);
             onChange(doc);
           }
         }
@@ -287,7 +285,7 @@ export const createEditor = <
   const commit = () => {
     if (transactions.length) {
       const currentDoc = doc;
-      const currentSelection = selection;
+      const ops: Operation[] = [];
       const length = applyHooks.length;
 
       let tr: Transaction | undefined;
@@ -314,6 +312,7 @@ export const createEditor = <
                 if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                   doc = nextDoc;
                   selection = nextSelection;
+                  ops.push(op);
                 }
               } catch (e) {
                 // rollback
@@ -338,7 +337,7 @@ export const createEditor = <
       }
 
       if (!is(currentDoc, doc)) {
-        history.change([currentDoc, currentSelection], [doc, selection]);
+        history.change(doc, ops);
         onChange(doc);
       }
     }
@@ -725,6 +724,8 @@ export const createEditor = <
       };
     },
   };
+
+  const history = createHistory<T>(doc);
 
   return editor;
 };

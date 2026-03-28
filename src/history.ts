@@ -1,14 +1,21 @@
+import { rebasePosition, type Operation } from "./doc/edit.js";
+import type { SelectionSnapshot } from "./doc/types.js";
+
 const MAX_HISTORY_LENGTH = 500;
 const BATCH_HISTORY_TIME = 500;
+
+const getOperationSelection = (op: Operation): SelectionSnapshot => {
+  return "at" in op ? [op.at, op.at] : [op.start, op.end];
+};
 
 /**
  * @internal
  */
-export const createHistory = <T>(initialValue: T) => {
+export const createHistory = <T>(initialDoc: T) => {
   let index = 0;
   let prevTime = 0;
   const now = Date.now;
-  const histories: T[] = [initialValue];
+  const histories: [T, Operation[]][] = [[initialDoc, []]];
 
   const get = () => histories[index]!;
 
@@ -21,34 +28,45 @@ export const createHistory = <T>(initialValue: T) => {
   };
 
   return {
-    change: (prevHistory: T, history: T) => {
-      histories[index] = prevHistory;
-
+    change: (doc: T, ops: Operation[]) => {
       const time = now();
-      if (index !== 0 && time - prevTime < BATCH_HISTORY_TIME) {
-        index--;
+      if (index === 0 || time - prevTime >= BATCH_HISTORY_TIME) {
+        index++;
+        if (index >= histories.length) {
+          histories.push([doc, []]);
+        } else {
+          histories[index]![1].splice(0);
+        }
       }
       prevTime = time;
-
-      histories[++index] = history;
+      histories[index]![0] = doc;
+      histories[index]![1].push(...ops);
       histories.splice(index + 1);
       if (index > MAX_HISTORY_LENGTH) {
         index--;
         histories.shift();
       }
     },
-    undo: (): T | undefined => {
+    undo: (): [T, SelectionSnapshot] | undefined => {
       if (isUndoable()) {
+        const ops = get()[1];
         index--;
-        return get();
+        const doc = get()[0];
+        return [doc, getOperationSelection(ops[0]!)];
       } else {
         return;
       }
     },
-    redo: (): T | undefined => {
+    redo: (): [T, SelectionSnapshot] | undefined => {
       if (isRedoable()) {
         index++;
-        return get();
+        const [doc, ops] = get();
+        const last = ops[ops.length - 1]!;
+        const sel = getOperationSelection(last);
+        return [
+          doc,
+          [rebasePosition(sel[0], last), rebasePosition(sel[1], last)],
+        ];
       } else {
         return;
       }
