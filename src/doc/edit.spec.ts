@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { applyOperation } from "./edit.js";
+import { applyOperation, isValidSelection } from "./edit.js";
 import { type SelectionSnapshot } from "./types.js";
 import { is } from "../utils.js";
 
@@ -2813,96 +2813,60 @@ describe("update attr", () => {
   });
 });
 
-describe("selection", () => {
-  describe("validation", () => {
-    it("path less than min", () => {
-      const docText = "abcde";
-      const doc: Doc = { children: [[{ id: 1, text: docText }]] };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
-      const res = applyOperation(doc, sel, {
-        type: "select",
-        anchor: [[-1], 0],
-        focus: [[0], 1],
-      });
+describe(isValidSelection.name, () => {
+  it("path less than min", () => {
+    const docText = "abcde";
+    const doc: Doc = { children: [[{ id: 1, text: docText }]] };
+    expect(
+      isValidSelection(doc, [
+        [[-1], 0],
+        [[0], 1],
+      ]),
+    ).toBe(false);
+  });
 
-      expect(is(res[0], doc)).toBe(true);
-      expect(res[1]).toEqual(sel);
-    });
+  it("path more than max", () => {
+    const docText = "abcde";
+    const doc: Doc = { children: [[{ id: 1, text: docText }]] };
+    expect(
+      isValidSelection(doc, [
+        [[0], 0],
+        [[100], 1],
+      ]),
+    ).toBe(false);
+  });
 
-    it("path more than max", () => {
-      const docText = "abcde";
-      const doc: Doc = { children: [[{ id: 1, text: docText }]] };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
-      const res = applyOperation(doc, sel, {
-        type: "select",
-        anchor: [[0], 0],
-        focus: [[100], 1],
-      });
+  it("offset less than min", () => {
+    const docText = "abcde";
+    const doc: Doc = { children: [[{ id: 1, text: docText }]] };
+    expect(
+      isValidSelection(doc, [
+        [[0], -1],
+        [[0], 1],
+      ]),
+    ).toBe(false);
+  });
 
-      expect(is(res[0], doc)).toBe(true);
-      expect(res[1]).toEqual(sel);
-    });
-
-    it("offset less than min", () => {
-      const docText = "abcde";
-      const doc: Doc = { children: [[{ id: 1, text: docText }]] };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
-      const res = applyOperation(doc, sel, {
-        type: "select",
-        anchor: [[0], -1],
-        focus: [[0], 1],
-      });
-
-      expect(is(res[0], doc)).toBe(true);
-      expect(res[1]).toEqual(sel);
-    });
-
-    it("offset more than max", () => {
-      const docText = "abcde";
-      const doc: Doc = { children: [[{ id: 1, text: docText }]] };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
-      const res = applyOperation(doc, sel, {
-        type: "select",
-        anchor: [[0], 0],
-        focus: [[0], 100],
-      });
-
-      expect(is(res[0], doc)).toBe(true);
-      expect(res[1]).toEqual(sel);
-    });
+  it("offset more than max", () => {
+    const docText = "abcde";
+    const doc: Doc = { children: [[{ id: 1, text: docText }]] };
+    expect(
+      isValidSelection(doc, [
+        [[0], 0],
+        [[0], 100],
+      ]),
+    ).toBe(false);
   });
 
   it("should select cursor", () => {
     const docText = "abcde";
     const doc: Doc = { children: [[{ id: 1, text: docText }]] };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
-    const nextSel: SelectionSnapshot = [
-      [[0], 1],
-      [[0], 1],
-    ];
-    const res = applyOperation(doc, sel, {
-      type: "select",
-      anchor: nextSel[0],
-      focus: nextSel[1],
-    });
-
-    expect(is(res[0], doc)).toBe(true);
-    expect(res[1]).toEqual(nextSel);
+    expect(
+      isValidSelection(doc, [
+        [[0], 1],
+        [[0], 1],
+      ]),
+    ).toBe(true);
   });
 
   it("should select text at line", () => {
@@ -2916,22 +2880,12 @@ describe("selection", () => {
         [{ id: 1, text: docText3 }],
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
-    const nextSel: SelectionSnapshot = [
-      [[1], 1],
-      [[2], 1],
-    ];
-    const res = applyOperation(doc, sel, {
-      type: "select",
-      anchor: nextSel[0],
-      focus: nextSel[1],
-    });
-
-    expect(res[0]).toEqual(doc);
-    expect(res[1]).toEqual(nextSel);
+    expect(
+      isValidSelection(doc, [
+        [[1], 1],
+        [[2], 1],
+      ]),
+    ).toBe(true);
   });
 
   it("should select line break", () => {
@@ -2940,22 +2894,12 @@ describe("selection", () => {
     const doc: Doc = {
       children: [[{ id: 1, text: docText }], [{ id: 1, text: docText2 }]],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 1],
-      [[0], 1],
-    ];
-    const nextSel: SelectionSnapshot = [
-      [[0], 2],
-      [[1], 1],
-    ];
-    const res = applyOperation(doc, sel, {
-      type: "select",
-      anchor: nextSel[0],
-      focus: nextSel[1],
-    });
-
-    expect(res[0]).toEqual(doc);
-    expect(res[1]).toEqual(nextSel);
+    expect(
+      isValidSelection(doc, [
+        [[0], 2],
+        [[1], 1],
+      ]),
+    ).toBe(true);
   });
 
   it("should select all", () => {
@@ -2964,24 +2908,14 @@ describe("selection", () => {
     const doc: Doc = {
       children: [[{ id: 1, text: docText }], [{ id: 1, text: docText2 }]],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 1],
-      [[0], 1],
-    ];
-    const nextSel: SelectionSnapshot = [
-      [[0], 0],
-      [
-        [doc.children.length - 1],
-        doc.children[doc.children.length - 1]![0]!.text.length - 1,
-      ],
-    ];
-    const res = applyOperation(doc, sel, {
-      type: "select",
-      anchor: nextSel[0],
-      focus: nextSel[1],
-    });
-
-    expect(res[0]).toEqual(doc);
-    expect(res[1]).toEqual(nextSel);
+    expect(
+      isValidSelection(doc, [
+        [[0], 0],
+        [
+          [doc.children.length - 1],
+          doc.children[doc.children.length - 1]![0]!.text.length - 1,
+        ],
+      ]),
+    ).toBe(true);
   });
 });

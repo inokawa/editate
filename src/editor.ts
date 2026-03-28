@@ -20,6 +20,7 @@ import {
   sliceDoc,
   type Operation,
   isUnsafeOperation,
+  isValidSelection,
 } from "./doc/edit.js";
 import type { ParserConfig } from "./dom/parser.js";
 import { comparePosition, toRange } from "./doc/position.js";
@@ -150,7 +151,7 @@ export interface EditorOptions<
  */
 export interface Editor<T extends DocNode = DocNode> {
   readonly doc: T;
-  readonly selection: SelectionSnapshot;
+  selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor's read-only state.
    * `true` to read-only. `false` to editable.
@@ -331,6 +332,9 @@ export const createEditor = <
 
           dispatch();
         }
+        if (tr.selection) {
+          updateSelection(tr.selection);
+        }
       }
 
       if (!is(currentDoc, doc)) {
@@ -340,12 +344,21 @@ export const createEditor = <
     }
   };
 
+  const updateSelection = (s: SelectionSnapshot) => {
+    if (isValidSelection(doc, s)) {
+      selection = s;
+    }
+  };
+
   const editor: Editor<T> = {
     get doc() {
       return doc;
     },
     get selection() {
       return selection;
+    },
+    set selection(value) {
+      updateSelection(value);
     },
     get readonly() {
       return readonly;
@@ -388,7 +401,7 @@ export const createEditor = <
 
       let disposed = false;
       let selectionReverted = false;
-      let inputTransaction: Transaction | null = null;
+      let inputTransaction: [Transaction, SelectionSnapshot] | null = null;
       let isComposing = false;
       let hasFocus = false;
       let isDragging = false;
@@ -430,7 +443,7 @@ export const createEditor = <
       });
 
       const syncSelection = () => {
-        selection = takeSelectionSnapshot(element, parserConfig);
+        updateSelection(takeSelectionSnapshot(element, parserConfig));
       };
 
       const flushInput = () => {
@@ -469,7 +482,8 @@ export const createEditor = <
         }
 
         if (inputTransaction) {
-          apply(inputTransaction);
+          updateSelection(inputTransaction[1]);
+          apply(inputTransaction[0]);
           inputTransaction = null;
         }
         isComposing = false;
@@ -534,16 +548,18 @@ export const createEditor = <
             }
           }
 
+          let tr: Transaction;
           if (!inputTransaction) {
-            inputTransaction = new Transaction().select(...selection);
+            inputTransaction = [new Transaction(), selection];
           }
+          tr = inputTransaction[0];
           if (comparePosition(...range) !== 0) {
             // replace or delete
-            inputTransaction.delete(...range);
+            tr.delete(...range);
           }
           if (data) {
             // replace or insert
-            inputTransaction.insertText(range[0], data);
+            tr.insertText(range[0], data);
           }
         }
 
@@ -631,13 +647,12 @@ export const createEditor = <
           const pasted = paste(dataTransfer);
           if (pasted) {
             const pos = tr.transform(droppedPosition);
-            tr.select(pos, pos);
             if (isString(pasted)) {
               tr.insertText(pos, pasted);
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.select(pos);
+            tr.selection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
           element.focus({ preventScroll: true });

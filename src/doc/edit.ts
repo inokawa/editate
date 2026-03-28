@@ -41,18 +41,11 @@ type SetAttrOperation = Readonly<{
   value: unknown;
 }>;
 
-const TYPE_SELECT = "select";
-type SelectOperataion = Readonly<{
-  type: typeof TYPE_SELECT;
-  anchor: Position | undefined;
-  focus: Position | undefined;
-}>;
-type EditOperation =
+export type Operation =
   | DeleteOperation
   | InsertOperation
   | InsertNodeOperation
   | SetAttrOperation;
-export type Operation = EditOperation | SelectOperataion;
 
 /**
  * @internal
@@ -62,6 +55,7 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =>
 
 export class Transaction {
   private readonly _ops: Operation[];
+  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -105,15 +99,6 @@ export class Transaction {
       end: end,
       key: key,
       value: value,
-    });
-    return this;
-  }
-
-  select(anchor?: Position, focus?: Position): this {
-    this._ops.push({
-      type: TYPE_SELECT,
-      anchor: anchor,
-      focus: focus,
     });
     return this;
   }
@@ -376,8 +361,7 @@ const rebasePosition = (position: Position, op: Operation): Position => {
       }
       break;
     }
-    case TYPE_SET_ATTR:
-    case TYPE_SELECT: {
+    case TYPE_SET_ATTR: {
       break;
     }
     default: {
@@ -392,6 +376,16 @@ const rebaseSelection = (
   op: Operation,
 ): SelectionSnapshot => {
   return [rebasePosition(selection[0], op), rebasePosition(selection[1], op)];
+};
+
+/**
+ * @internal
+ */
+export const isValidSelection = (
+  doc: DocNode,
+  [anchor, focus]: SelectionSnapshot,
+): boolean => {
+  return isValidPosition(doc, anchor) && isValidPosition(doc, focus);
 };
 
 /**
@@ -448,18 +442,6 @@ export const applyOperation = <T extends DocNode>(
             ),
           ),
         );
-      }
-      break;
-    }
-    case TYPE_SELECT: {
-      const { anchor: anchor, focus: focus } = op;
-      if (
-        (!anchor || isValidPosition(doc, anchor)) &&
-        (!focus || isValidPosition(doc, focus))
-      ) {
-        if (anchor || focus) {
-          selection = [anchor || selection[0], focus || selection[1]];
-        }
       }
       break;
     }
