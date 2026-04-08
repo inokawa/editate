@@ -221,42 +221,9 @@ export const createEditor = <
     throw new Error(initialError);
   }
 
-  const keydownHandlers: KeyboardHandler[] = [
-    hotkey(
-      "z",
-      () => {
-        if (!readonly) {
-          const nextHistory = history.undo();
-          if (nextHistory) {
-            doc = nextHistory[0];
-            updateSelection(nextHistory[1]);
-            onChange(doc);
-          }
-        }
-      },
-      { mod: true },
-    ),
-    hotkey(
-      "z",
-      () => {
-        if (!readonly) {
-          const nextHistory = history.redo();
-          if (nextHistory) {
-            doc = nextHistory[0];
-            updateSelection(nextHistory[1]);
-            onChange(doc);
-          }
-        }
-      },
-      { mod: true, shift: true },
-    ),
-  ];
-  if (keyboard) {
-    keydownHandlers.push(...keyboard);
-  }
-
   const applyHooks: Exclude<EditorPlugin["apply"], undefined>[] = [];
   const mountHooks: Exclude<EditorPlugin["mount"], undefined>[] = [];
+
   if (plugins) {
     plugins.forEach(({ apply, mount }) => {
       if (apply) {
@@ -285,7 +252,6 @@ export const createEditor = <
   const commit = () => {
     if (transactions.length) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const length = applyHooks.length;
 
       let tr: Transaction | undefined;
@@ -312,7 +278,6 @@ export const createEditor = <
                 if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                   doc = nextDoc;
                   selection = nextSelection;
-                  ops.push(op);
                 }
               } catch (e) {
                 // rollback
@@ -337,7 +302,6 @@ export const createEditor = <
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         onChange(doc);
       }
     }
@@ -725,7 +689,15 @@ export const createEditor = <
     },
   };
 
-  const history = createHistory<T>(doc);
+  const history = createHistory(editor);
+  applyHooks.unshift(history.apply);
+  const keydownHandlers: KeyboardHandler[] = [
+    hotkey("z", history.undo, { mod: true }),
+    hotkey("z", history.redo, { mod: true, shift: true }),
+  ];
+  if (keyboard) {
+    keydownHandlers.push(...keyboard);
+  }
 
   return editor;
 };

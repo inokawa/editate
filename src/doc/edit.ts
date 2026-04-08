@@ -19,7 +19,7 @@ type DeleteOperation = Readonly<{
 }>;
 
 const TYPE_INSERT_TEXT = "insert_text";
-type InsertOperation = Readonly<{
+type InsertTextOperation = Readonly<{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -43,7 +43,7 @@ type SetAttrOperation = Readonly<{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -135,6 +135,23 @@ const getNodeSize = (node: InlineNode): number =>
  */
 export const getLineSize = (line: readonly InlineNode[]): number =>
   line.reduce((acc: number, n) => acc + getNodeSize(n), 0);
+
+const movePositionWithFragment = (
+  position: Position,
+  fragment: Fragment,
+  insertedAt: Position = position,
+): Position => {
+  const lineLength = fragment.length;
+  const lineDiff = lineLength - 1;
+  return [
+    movePath(position[0], lineDiff),
+    position[1] +
+      (comparePath(position[0], insertedAt[0]) === 0
+        ? getLineSize(fragment[lineLength - 1]!) -
+          (lineDiff === 0 ? 0 : insertedAt[1])
+        : 0),
+  ];
+};
 
 const normalize = <T extends InlineNode>(
   array: T[],
@@ -315,7 +332,61 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean => {
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position => {
+/**
+ * @internal
+ */
+export function* invertOperation<T extends DocNode>(
+  op: Operation,
+  beforeDoc: T,
+): Generator<Operation> {
+  switch (op.type) {
+    case TYPE_DELETE: {
+      yield {
+        type: TYPE_INSERT_NODE,
+        at: op.start,
+        fragment: sliceDoc(beforeDoc, op.start, op.end),
+      };
+      break;
+    }
+    case TYPE_INSERT_TEXT: {
+      yield {
+        type: TYPE_DELETE,
+        start: op.at,
+        end: movePositionWithFragment(op.at, stringToFragment(op.text)),
+      };
+      break;
+    }
+    case TYPE_INSERT_NODE: {
+      yield {
+        type: TYPE_DELETE,
+        start: op.at,
+        end: movePositionWithFragment(op.at, op.fragment),
+      };
+      break;
+    }
+    case TYPE_SET_ATTR: {
+      const { start, end, key } = op;
+      for (const b of sliceDoc(beforeDoc, start, end)) {
+        for (const n of b) {
+          // TODO range is wrong
+          yield {
+            type: TYPE_SET_ATTR,
+            start,
+            end,
+            key,
+            value: n[key as keyof typeof n],
+          };
+        }
+      }
+      break;
+    }
+    default: {
+      return op satisfies never;
+    }
+  }
+}
+
+const rebasePosition = (position: Position, op: Operation): Position => {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -342,22 +413,16 @@ export const rebasePosition = (position: Position, op: Operation): Position => {
     case TYPE_INSERT_TEXT:
     case TYPE_INSERT_NODE: {
       const at = op.at;
-      const lines =
-        op.type === TYPE_INSERT_TEXT ? stringToFragment(op.text) : op.fragment;
-
-      const lineLength = lines.length;
-      const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
         // pos <= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        return movePositionWithFragment(
+          position,
+          op.type === TYPE_INSERT_TEXT
+            ? stringToFragment(op.text)
+            : op.fragment,
+          at,
+        );
       }
       break;
     }
