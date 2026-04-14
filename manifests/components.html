@@ -582,7 +582,7 @@
 <main>
   <div class="wrap">
     <div class="note info" style="margin-bottom: 16px;">
-            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.6s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
+            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.5s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
             <pre><code>typescript: {
   reactDocgen: 'react-docgen-typescript',
 }</code></pre>
@@ -888,9 +888,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -981,20 +991,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -1008,15 +1015,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -4026,9 +4031,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -4119,20 +4134,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -4146,15 +4158,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -7117,9 +7127,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -7210,20 +7230,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -7237,15 +7254,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -9839,9 +9854,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -9932,20 +9957,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -9959,15 +9981,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -12495,9 +12515,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -12588,20 +12618,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -12615,15 +12642,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -15184,9 +15209,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -15277,20 +15312,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -15304,15 +15336,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -17906,9 +17936,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -17999,20 +18039,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -18026,15 +18063,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -20568,9 +20603,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -20661,20 +20706,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -20688,15 +20730,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -23239,9 +23279,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -23332,20 +23382,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -23359,15 +23406,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -25923,9 +25968,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -26016,20 +26071,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -26043,15 +26095,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -28577,9 +28627,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -28670,20 +28730,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -28697,15 +28754,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -31283,9 +31338,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -31376,20 +31441,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -31403,15 +31465,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -34421,9 +34481,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -34514,20 +34584,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -34541,15 +34608,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -37512,9 +37577,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -37605,20 +37680,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -37632,15 +37704,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -40234,9 +40304,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -40327,20 +40407,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -40354,15 +40431,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -42890,9 +42965,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -42983,20 +43068,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -43010,15 +43092,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -45579,9 +45659,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -45672,20 +45762,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -45699,15 +45786,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -48301,9 +48386,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -48394,20 +48489,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -48421,15 +48513,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -50963,9 +51053,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -51056,20 +51156,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -51083,15 +51180,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -53634,9 +53729,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -53727,20 +53832,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -53754,15 +53856,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -56318,9 +56418,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -56411,20 +56521,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -56438,15 +56545,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -58972,9 +59077,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path =&gt; {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position =&gt; {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = &lt;T extends DocNode&gt;(
@@ -59065,20 +59180,17 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
 
       if (comparePosition(position, start) !== -1) {
         // start &lt;= position
-        return comparePosition(end, position) === -1
-          ? // start &lt;= end &lt; position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start &lt;= position &lt;= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start &lt;= position &lt;= end
+          return start;
+        }
+        // start &lt;= end &lt; position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -59092,15 +59204,13 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos &lt;= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at &lt;= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
