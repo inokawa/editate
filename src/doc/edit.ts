@@ -229,9 +229,19 @@ const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] => {
   return doc.children[normalizePath(path)]!;
 };
 
-const movePath = (path: Path, int: number): Path => {
-  // TODO support nested node
-  return [normalizePath(path) + int];
+const move = (
+  position: Position,
+  pathDiff: number,
+  offsetDiff: number,
+  isSamePath: boolean,
+): Position => {
+  return [
+    [
+      // TODO support nested node
+      normalizePath(position[0]) + pathDiff,
+    ],
+    position[1] + (isSamePath ? offsetDiff : 0),
+  ];
 };
 
 const replaceRange = <T extends DocNode>(
@@ -322,20 +332,17 @@ export const rebasePosition = (position: Position, op: Operation): Position => {
 
       if (comparePosition(position, start) !== -1) {
         // start <= position
-        return comparePosition(end, position) === -1
-          ? // start <= end < position
-            [
-              movePath(
-                position[0],
-                normalizePath(start[0]) - normalizePath(end[0]),
-              ),
-              position[1] +
-                (comparePath(end[0], position[0]) === 0
-                  ? start[1] - end[1]
-                  : 0),
-            ]
-          : // start <= position <= end
-            start;
+        if (comparePosition(end, position) !== -1) {
+          // start <= position <= end
+          return start;
+        }
+        // start <= end < position
+        return move(
+          position,
+          normalizePath(start[0]) - normalizePath(end[0]),
+          start[1] - end[1],
+          comparePath(end[0], position[0]) === 0,
+        );
       }
       break;
     }
@@ -349,15 +356,13 @@ export const rebasePosition = (position: Position, op: Operation): Position => {
       const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
-        // pos <= position
-        return [
-          movePath(position[0], lineDiff),
-          position[1] +
-            (comparePath(position[0], at[0]) === 0
-              ? getLineSize(lines[lineLength - 1]!) -
-                (lineDiff === 0 ? 0 : at[1])
-              : 0),
-        ];
+        // at <= position
+        return move(
+          position,
+          lineDiff,
+          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          comparePath(at[0], position[0]) === 0,
+        );
       }
       break;
     }
