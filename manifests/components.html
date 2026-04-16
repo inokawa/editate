@@ -1418,9 +1418,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -1558,19 +1557,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -1589,59 +1575,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -1683,7 +1666,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -2244,9 +2227,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -2384,19 +2366,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -2415,59 +2384,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -2509,7 +2475,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -4729,9 +4695,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -4869,19 +4834,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -4900,59 +4852,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -4994,7 +4943,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -5555,9 +5504,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -5695,19 +5643,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -5726,59 +5661,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -5820,7 +5752,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -7999,9 +7931,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -8139,19 +8070,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -8170,59 +8088,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -8264,7 +8179,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -8825,9 +8740,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -8965,19 +8879,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -8996,59 +8897,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -9090,7 +8988,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -10895,9 +10793,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -11035,19 +10932,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -11066,59 +10950,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -11160,7 +11041,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -11721,9 +11602,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -11861,19 +11741,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -11892,59 +11759,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -11986,7 +11850,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -13725,9 +13589,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -13865,19 +13728,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -13896,59 +13746,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -13990,7 +13837,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -14551,9 +14398,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -14691,19 +14537,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -14722,59 +14555,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -14816,7 +14646,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -16588,9 +16418,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -16728,19 +16557,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -16759,59 +16575,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -16853,7 +16666,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -17414,9 +17227,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -17554,19 +17366,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -17585,59 +17384,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -17679,7 +17475,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -19484,9 +19280,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -19624,19 +19419,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -19655,59 +19437,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -19749,7 +19528,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -20310,9 +20089,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -20450,19 +20228,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -20481,59 +20246,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -20575,7 +20337,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -22320,9 +22082,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -22460,19 +22221,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -22491,59 +22239,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -22585,7 +22330,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -23146,9 +22891,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -23286,19 +23030,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -23317,59 +23048,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -23411,7 +23139,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -25165,9 +24893,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -25305,19 +25032,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -25336,59 +25050,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -25430,7 +25141,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -25991,9 +25702,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -26131,19 +25841,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -26162,59 +25859,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -26256,7 +25950,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -28023,9 +27717,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -28163,19 +27856,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -28194,59 +27874,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -28288,7 +27965,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -28849,9 +28526,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -28989,19 +28665,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -29020,59 +28683,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -29114,7 +28774,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -30851,9 +30511,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -30991,19 +30650,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -31022,59 +30668,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -31116,7 +30759,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -31677,9 +31320,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -31817,19 +31459,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -31848,59 +31477,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -31942,7 +31568,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -33731,9 +33357,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -33871,19 +33496,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -33902,59 +33514,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -33996,7 +33605,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -34557,9 +34166,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -34697,19 +34305,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -34728,59 +34323,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -34822,7 +34414,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -37042,9 +36634,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -37182,19 +36773,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -37213,59 +36791,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -37307,7 +36882,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -37868,9 +37443,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -38008,19 +37582,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -38039,59 +37600,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -38133,7 +37691,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -40312,9 +39870,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -40452,19 +40009,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -40483,59 +40027,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -40577,7 +40118,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -41138,9 +40679,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -41278,19 +40818,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -41309,59 +40836,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -41403,7 +40927,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -43208,9 +42732,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -43348,19 +42871,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -43379,59 +42889,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -43473,7 +42980,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -44034,9 +43541,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -44174,19 +43680,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -44205,59 +43698,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -44299,7 +43789,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -46038,9 +45528,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -46178,19 +45667,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -46209,59 +45685,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -46303,7 +45776,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -46864,9 +46337,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -47004,19 +46476,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -47035,59 +46494,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -47129,7 +46585,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -48901,9 +48357,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -49041,19 +48496,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -49072,59 +48514,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -49166,7 +48605,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -49727,9 +49166,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -49867,19 +49305,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -49898,59 +49323,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -49992,7 +49414,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -51797,9 +51219,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -51937,19 +51358,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -51968,59 +51376,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -52062,7 +51467,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -52623,9 +52028,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -52763,19 +52167,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -52794,59 +52185,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -52888,7 +52276,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -54633,9 +54021,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -54773,19 +54160,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -54804,59 +54178,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -54898,7 +54269,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -55459,9 +54830,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -55599,19 +54969,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -55630,59 +54987,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -55724,7 +55078,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -57478,9 +56832,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -57618,19 +56971,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -57649,59 +56989,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -57743,7 +57080,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -58304,9 +57641,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -58444,19 +57780,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -58475,59 +57798,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -58569,7 +57889,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -60336,9 +59656,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -60476,19 +59795,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -60507,59 +59813,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -60601,7 +59904,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -61162,9 +60465,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -61302,19 +60604,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -61333,59 +60622,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -61427,7 +60713,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -63164,9 +62450,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -63304,19 +62589,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -63335,59 +62607,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -63429,7 +62698,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
@@ -63990,9 +63259,8 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * Dispatches editing operations.
    * @param tr {@link Transaction} or {@link EditorCommand}
    * @param args arguments of {@link EditorCommand}
-   * @param immediate If true, flushes queued operations immediately.
    */
-  apply(tr: Transaction, immediate?: boolean): this;
+  apply(tr: Transaction): this;
   apply&lt;A extends unknown[]&gt;(fn: EditorCommand&lt;A, T&gt;, ...args: A): this;
   /**
    * A function to subscribe editor events.
@@ -64130,19 +63398,6 @@ export const createEditor = &lt;
     };
   };
 
-  const transactions: Transaction[] = [];
-  const apply = (tr: Transaction, immediate?: boolean) =&gt; {
-    if (!readonly) {
-      const shouldFlush = !transactions.length;
-      transactions.unshift(tr);
-      if (immediate) {
-        commit();
-      } else if (shouldFlush) {
-        microtask(commit);
-      }
-    }
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -64161,59 +63416,56 @@ export const createEditor = &lt;
     }
   };
 
-  const commit = () =&gt; {
-    if (transactions.length) {
+  const apply = (tr: Transaction) =&gt; {
+    if (!readonly) {
       const currentDoc = doc;
       const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
-      let tr: Transaction | undefined;
-      while ((tr = transactions.pop())) {
-        for (let op of tr.ops) {
-          let index = 0;
+      for (let op of tr.ops) {
+        let index = 0;
 
-          const dispatch = () =&gt; {
-            if (index &lt; length) {
-              const i = index;
-              applyHooks[index]!(op, next);
-              if (i === index) {
-                next();
-              }
-            } else if (index === length) {
-              index++;
-
-              try {
-                const [nextDoc, nextSelection] = applyOperation(
-                  doc,
-                  selection,
-                  op,
-                );
-                if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                  doc = nextDoc;
-                  selection = nextSelection;
-                  ops.push(op);
-                }
-              } catch (e) {
-                // rollback
-                onError(&quot;rollback operation: &quot; + e);
-              }
+        const dispatch = () =&gt; {
+          if (index &lt; length) {
+            const i = index;
+            applyHooks[index]!(op, next);
+            if (i === index) {
+              next();
             }
-          };
-
-          const next = (o?: Operation): void =&gt; {
-            if (o) {
-              op = o;
-            }
+          } else if (index === length) {
             index++;
-            dispatch();
-          };
 
+            try {
+              const [nextDoc, nextSelection] = applyOperation(
+                doc,
+                selection,
+                op,
+              );
+              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+                doc = nextDoc;
+                selection = nextSelection;
+                ops.push(op);
+              }
+            } catch (e) {
+              // rollback
+              onError(&quot;rollback operation: &quot; + e);
+            }
+          }
+        };
+
+        const next = (o?: Operation): void =&gt; {
+          if (o) {
+            op = o;
+          }
+          index++;
           dispatch();
-        }
-        if (tr.selection) {
-          updateSelection(tr.selection);
-        }
+        };
+
+        dispatch();
+      }
+      if (tr.selection) {
+        updateSelection(tr.selection);
       }
 
       if (!is(currentDoc, doc)) {
@@ -64255,7 +63507,7 @@ export const createEditor = &lt;
       if (isFunction(tr)) {
         tr.call(editor, ...args);
       } else {
-        apply(tr, args[0] as boolean | undefined);
+        apply(tr);
       }
       return editor;
     },
