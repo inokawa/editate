@@ -1436,7 +1436,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -2263,7 +2263,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -4749,7 +4749,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -5576,7 +5576,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -8021,7 +8021,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -8848,7 +8848,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -10919,7 +10919,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -11746,7 +11746,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -13751,7 +13751,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -14578,7 +14578,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -16616,7 +16616,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -17443,7 +17443,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -19514,7 +19514,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -20341,7 +20341,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -22352,7 +22352,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -23179,7 +23179,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -25199,7 +25199,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -26026,7 +26026,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -28059,7 +28059,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -28886,7 +28886,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -30889,7 +30889,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -31716,7 +31716,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -33771,7 +33771,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -34598,7 +34598,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -37084,7 +37084,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -37911,7 +37911,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -40356,7 +40356,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -41183,7 +41183,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -43254,7 +43254,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -44081,7 +44081,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -46086,7 +46086,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -46913,7 +46913,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -48951,7 +48951,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -49778,7 +49778,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -51849,7 +51849,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -52676,7 +52676,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -54687,7 +54687,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -55514,7 +55514,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -57534,7 +57534,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -58361,7 +58361,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -60394,7 +60394,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -61221,7 +61221,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -63224,7 +63224,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
@@ -64051,7 +64051,7 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    */
   on&lt;K extends keyof EditorEventMap&gt;(...args: EditorEvent&lt;K&gt;): () =&gt; void;
   /**
-   * A function to set editor hooks.
+   * A function to register editor hooks.
    * @returns cleanup function
    */
   hook&lt;K extends keyof EditorHookMap&gt;(...args: EditorHook&lt;K&gt;): () =&gt; void;
