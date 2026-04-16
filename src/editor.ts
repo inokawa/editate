@@ -154,6 +154,7 @@ type EditorEventMap = {
 type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) => void) => void;
   mount: (element: HTMLElement) => void | (() => void);
+  keyboard: KeyboardHook;
 };
 
 /**
@@ -246,40 +247,6 @@ export const createEditor = <
     initialError
   ) {
     throw new Error(initialError);
-  }
-
-  const keydownHooks: KeyboardHook[] = [
-    hotkey(
-      "z",
-      () => {
-        if (!readonly) {
-          const nextHistory = history.undo();
-          if (nextHistory) {
-            doc = nextHistory[0];
-            updateSelection(nextHistory[1]);
-            publish("change");
-          }
-        }
-      },
-      { mod: true },
-    ),
-    hotkey(
-      "z",
-      () => {
-        if (!readonly) {
-          const nextHistory = history.redo();
-          if (nextHistory) {
-            doc = nextHistory[0];
-            updateSelection(nextHistory[1]);
-            publish("change");
-          }
-        }
-      },
-      { mod: true, shift: true },
-    ),
-  ];
-  if (keyboard) {
-    keydownHooks.push(...keyboard);
   }
 
   const hooks = new Map<
@@ -537,7 +504,7 @@ export const createEditor = <
       const onKeyDown = (e: KeyboardEvent) => {
         if (isComposing) return;
 
-        for (const handler of keydownHooks) {
+        for (const handler of getHook("keyboard")) {
           if (handler(e)) {
             e.preventDefault();
             observer._record(false);
@@ -775,6 +742,47 @@ export const createEditor = <
   editor.on("change", () => {
     onChange(doc);
   });
+
+  editor.hook(
+    "keyboard",
+    hotkey(
+      "z",
+      () => {
+        if (!readonly) {
+          const nextHistory = history.undo();
+          if (nextHistory) {
+            doc = nextHistory[0];
+            updateSelection(nextHistory[1]);
+            publish("change");
+          }
+        }
+      },
+      { mod: true },
+    ),
+  );
+  editor.hook(
+    "keyboard",
+    hotkey(
+      "z",
+      () => {
+        if (!readonly) {
+          const nextHistory = history.redo();
+          if (nextHistory) {
+            doc = nextHistory[0];
+            updateSelection(nextHistory[1]);
+            publish("change");
+          }
+        }
+      },
+      { mod: true, shift: true },
+    ),
+  );
+
+  if (keyboard) {
+    keyboard.forEach((h) => {
+      editor.hook("keyboard", h);
+    });
+  }
 
   return editor;
 };
