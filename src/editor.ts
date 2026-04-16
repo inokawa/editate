@@ -146,6 +146,15 @@ export interface EditorOptions<
   onError?: (message: string) => void;
 }
 
+type EditorEventMap = {
+  change: () => void;
+  selectionchange: () => void;
+};
+type EditorEvent<K extends keyof EditorEventMap> = [
+  type: K,
+  callback: EditorEventMap[K],
+];
+
 /**
  * The editor instance.
  */
@@ -165,6 +174,11 @@ export interface Editor<T extends DocNode = DocNode> {
    */
   apply(tr: Transaction, immediate?: boolean): this;
   apply<A extends unknown[]>(fn: EditorCommand<A, T>, ...args: A): this;
+  /**
+   * A function to subscribe editor events.
+   * @returns cleanup function
+   */
+  on<K extends keyof EditorEventMap>(...args: EditorEvent<K>): () => void;
   /**
    * A function to make DOM editable.
    * @returns A function to stop subscribing DOM changes and restores previous DOM state.
@@ -230,7 +244,7 @@ export const createEditor = <
           if (nextHistory) {
             doc = nextHistory[0];
             updateSelection(nextHistory[1]);
-            onChange(doc);
+            publish("change");
           }
         }
       },
@@ -244,7 +258,7 @@ export const createEditor = <
           if (nextHistory) {
             doc = nextHistory[0];
             updateSelection(nextHistory[1]);
-            onChange(doc);
+            publish("change");
           }
         }
       },
@@ -279,6 +293,24 @@ export const createEditor = <
       } else if (shouldFlush) {
         microtask(commit);
       }
+    }
+  };
+
+  const subs = new Map<
+    keyof EditorEventMap,
+    [cbs: Set<EditorEventMap[keyof EditorEventMap]>, queued: boolean]
+  >();
+
+  const publish = <K extends keyof EditorEventMap>(key: K) => {
+    const sub = subs.get(key);
+    if (sub && !sub[1]) {
+      sub[1] = true;
+      microtask(() => {
+        sub[1] = false;
+        sub[0].forEach((cb) => {
+          cb();
+        });
+      });
     }
   };
 
@@ -338,14 +370,19 @@ export const createEditor = <
 
       if (!is(currentDoc, doc)) {
         history.change(doc, ops);
-        onChange(doc);
+        publish("change");
       }
     }
   };
 
   const updateSelection = (s: SelectionSnapshot) => {
-    if (isValidSelection(doc, s)) {
+    if (
+      isValidSelection(doc, s) &&
+      (comparePosition(selection[0], s[0]) ||
+        comparePosition(selection[1], s[1]))
+    ) {
       selection = s;
+      publish("selectionchange");
     }
   };
 
@@ -373,6 +410,17 @@ export const createEditor = <
         apply(tr, args[0] as boolean | undefined);
       }
       return editor;
+    },
+    on: (type, callback) => {
+      let sub = subs.get(type);
+      if (!sub) {
+        subs.set(type, (sub = [new Set(), false]));
+      }
+      const cbs = sub[0];
+      cbs.add(callback);
+      return () => {
+        cbs.delete(callback);
+      };
     },
     input: (element) => {
       if (
@@ -726,6 +774,10 @@ export const createEditor = <
   };
 
   const history = createHistory<T>(doc);
+
+  editor.on("change", () => {
+    onChange(doc);
+  });
 
   return editor;
 };
