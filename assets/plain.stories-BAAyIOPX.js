@@ -1,8 +1,8 @@
-import{n as e,o as t}from"./chunk-zsgVPwQN.js";import{t as n}from"./react-ca9hEu7I.js";import{t as r}from"./jsx-runtime-Ba5PjWsp.js";import{h as i,n as a,p as o,t as s}from"./src-BTeWTo7c.js";var c,l,u,d,f,p,m,h,g,_,v,y,b,x;e((()=>{c=t(n()),s(),l=r(),u={component:a},d={render:()=>{let e=(0,c.useRef)(null),[t,n]=(0,c.useState)(``);return(0,c.useEffect)(()=>{if(e.current)return a({text:t,onChange:n}).input(e.current)},[]),(0,l.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t.split(`
+import{n as e,o as t}from"./chunk-zsgVPwQN.js";import{t as n}from"./react-ca9hEu7I.js";import{t as r}from"./jsx-runtime-Ba5PjWsp.js";import{h as i,n as a,p as o,t as s}from"./src-BTYGoKFs.js";var c,l,u,d,f,p,m,h,g,_,v,y,b,x;e((()=>{c=t(n()),s(),l=r(),u={component:a},d={render:()=>{let e=(0,c.useRef)(null),[t,n]=(0,c.useState)(``);return(0,c.useEffect)(()=>{if(e.current)return a({text:t,onChange:n}).input(e.current)},[]),(0,l.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t.split(`
 `).map((e,t)=>(0,l.jsx)(`div`,{children:e||(0,l.jsx)(`br`,{})},t))})}},f={render:()=>{let e=(0,c.useRef)(null),[t,n]=(0,c.useState)(`Hello world.
 こんにちは。
 👍❤️🧑‍🧑‍🧒`);return(0,c.useEffect)(()=>{if(e.current)return a({text:t,onChange:n}).input(e.current)},[]),(0,l.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t.split(`
-`).map((e,t)=>(0,l.jsx)(`div`,{children:e||(0,l.jsx)(`br`,{})},t))})}},p={render:()=>{let e=(0,c.useRef)(null),[t,n]=(0,c.useState)(`Hello world.`);return(0,c.useEffect)(()=>{if(e.current)return a({text:t,singleline:!0,onChange:n}).input(e.current)},[]),(0,l.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t||(0,l.jsx)(`br`,{})})}},m={render:()=>{let e=(0,c.useRef)(null),[t,n]=(0,c.useState)(`Hello world.`),r=(0,c.useMemo)(()=>a({text:t,singleline:!0,onChange:n}),[]),[i,o]=(0,c.useState)(!1);return(0,c.useEffect)(()=>{if(e.current)return r.input(e.current)},[]),(0,l.jsxs)(`div`,{children:[(0,l.jsx)(`div`,{children:(0,l.jsx)(`button`,{onClick:()=>{let e=!i;r.readonly=e,o(e)},children:i?`editable`:`readonly`})}),(0,l.jsx)(`div`,{ref:e,style:{background:`white`,color:i?`gray`:void 0},children:t||(0,l.jsx)(`br`,{})})]})}},h={render:()=>{let e=(0,c.useRef)(null),[t,n]=(0,c.useState)(``);return(0,c.useEffect)(()=>{if(e.current)return a({text:t,singleline:!0,onChange:n}).input(e.current)},[]),(0,l.jsxs)(l.Fragment,{children:[(0,l.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},"aria-placeholder":`Enter some text...`,children:t}),(0,l.jsx)(`style`,{children:`
+`).map((e,t)=>(0,l.jsx)(`div`,{children:e||(0,l.jsx)(`br`,{})},t))})}},p={render:()=>{let e=(0,c.useRef)(null),[t,n]=(0,c.useState)(`Hello world.`);return(0,c.useEffect)(()=>{if(e.current)return a({text:t,singleline:!0,onChange:n}).input(e.current)},[]),(0,l.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t||(0,l.jsx)(`br`,{})})}},m={render:()=>{let e=(0,c.useRef)(null),[t,n]=(0,c.useState)(`Hello world.`),r=(0,c.useMemo)(()=>a({text:t,singleline:!0,onChange:n}),[]),[i,o]=(0,c.useState)(r.readonly);return(0,c.useEffect)(()=>{if(!e.current)return;let t=r.input(e.current),n=r.on(`readonly`,()=>{o(r.readonly)});return()=>{t(),n()}},[]),(0,l.jsxs)(`div`,{children:[(0,l.jsx)(`div`,{children:(0,l.jsx)(`button`,{onClick:()=>{r.readonly=!i},children:i?`editable`:`readonly`})}),(0,l.jsx)(`div`,{ref:e,style:{background:`white`,color:i?`gray`:void 0},children:t||(0,l.jsx)(`br`,{})})]})}},h={render:()=>{let e=(0,c.useRef)(null),[t,n]=(0,c.useState)(``);return(0,c.useEffect)(()=>{if(e.current)return a({text:t,singleline:!0,onChange:n}).input(e.current)},[]),(0,l.jsxs)(l.Fragment,{children:[(0,l.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},"aria-placeholder":`Enter some text...`,children:t}),(0,l.jsx)(`style`,{children:`
 [contenteditable]:empty:before {
   content: attr(aria-placeholder) / "";
   pointer-events: none;
@@ -89,17 +89,22 @@ two !
       singleline: true,
       onChange: setText
     }), []);
-    const [readonly, setReadonly] = useState(false);
+    const [readonly, setReadonly] = useState(editor.readonly);
     useEffect(() => {
       if (!ref.current) return;
-      return editor.input(ref.current);
+      const cleanupInput = editor.input(ref.current);
+      const cleanupOnReadonly = editor.on("readonly", () => {
+        setReadonly(editor.readonly);
+      });
+      return () => {
+        cleanupInput();
+        cleanupOnReadonly();
+      };
     }, []);
     return <div>
         <div>
           <button onClick={() => {
-          const text = !readonly;
-          editor.readonly = text;
-          setReadonly(text);
+          editor.readonly = !readonly;
         }}>
             {readonly ? "editable" : "readonly"}
           </button>
