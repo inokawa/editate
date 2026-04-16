@@ -1,6 +1,7 @@
-import { type Operation } from "../doc/edit.js";
+import type { DocNode } from "../doc/types.js";
+import type { Editor } from "../editor.js";
 
-export interface EditorPlugin {
-  apply?: (op: Operation, next: (op?: Operation) => void) => void;
-  mount?: (element: HTMLElement) => void | (() => void);
-}
+export type EditorPlugin<A extends unknown[], T extends DocNode> = (
+  this: Editor<T>,
+  ...args: A
+) => void;

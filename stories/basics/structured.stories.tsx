@@ -236,14 +236,13 @@ export const Tag: StoryObj = {
         createEditor({
           doc: doc,
           schema: tagSchema,
-          plugins: [singlelinePlugin()],
           copy: [
             internalCopy(),
             plainCopy<Doc>((node) => ("text" in node ? node.text : node.label)),
           ],
           paste: [internalPaste(), plainPaste()],
           onChange: setDoc,
-        }),
+        }).use(singlelinePlugin),
       [],
     );
 

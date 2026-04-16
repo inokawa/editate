@@ -33,6 +33,8 @@ import {
 } from "./extensions/index.js";
 import { hotkey, type KeyboardHandler } from "./hotkey.js";
 
+const empty: unknown[] = [];
+
 const noop = () => {};
 
 /**
@@ -111,10 +113,6 @@ export interface EditorOptions<
    */
   readonly?: boolean;
   /**
-   * TODO
-   */
-  plugins?: EditorPlugin[];
-  /**
    * Functions to handle keyboard events.
    *
    * Return `true` if you want to stop propagation.
@@ -156,6 +154,15 @@ type EditorEvent<K extends keyof EditorEventMap> = [
   callback: EditorEventMap[K],
 ];
 
+type EditorHookMap = {
+  apply: (op: Operation, next: (op?: Operation) => void) => void;
+  mount: (element: HTMLElement) => void | (() => void);
+};
+type EditorHook<K extends keyof EditorHookMap> = [
+  type: K,
+  callback: EditorHookMap[K],
+];
+
 /**
  * The editor instance.
  */
@@ -181,10 +188,19 @@ export interface Editor<T extends DocNode = DocNode> {
    */
   on<K extends keyof EditorEventMap>(...args: EditorEvent<K>): () => void;
   /**
+   * A function to set editor hooks.
+   * @returns cleanup function
+   */
+  hook<K extends keyof EditorHookMap>(...args: EditorHook<K>): () => void;
+  /**
    * A function to make DOM editable.
    * @returns A function to stop subscribing DOM changes and restores previous DOM state.
    */
   input: (element: HTMLElement) => () => void;
+  /**
+   * A function to use editor plugins.
+   */
+  use<A extends unknown[]>(fn: EditorPlugin<A, T>, ...args: A): this;
 }
 
 /**
@@ -197,7 +213,6 @@ export const createEditor = <
   doc,
   readonly = false,
   schema,
-  plugins,
   keyboard,
   copy: copyExtensions = [plainCopy()],
   paste: pasteExtensions = [plainPaste()],
@@ -269,19 +284,33 @@ export const createEditor = <
     keydownHandlers.push(...keyboard);
   }
 
-  const applyHooks: Exclude<EditorPlugin["apply"], undefined>[] = [];
-  const mountHooks: Exclude<EditorPlugin["mount"], undefined>[] = [];
-  if (plugins) {
-    plugins.forEach(({ apply, mount }) => {
-      if (apply) {
-        applyHooks.push(apply);
+  const hooks = new Map<
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  >();
+
+  const getHook = <T extends keyof EditorHookMap>(
+    key: T,
+  ): readonly EditorHookMap[T][] => {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
+  };
+
+  const setHook = <T extends keyof EditorHookMap>(
+    type: T,
+    callback: EditorHookMap[T],
+  ): (() => void) => {
+    let sub = hooks.get(type);
+    if (!sub) {
+      hooks.set(type, (sub = []));
+    }
+    sub.push(callback);
+    return () => {
+      const i = sub.indexOf(callback);
+      if (i !== -1) {
+        sub.splice(i, 1);
       }
-      if (mount) {
-        mountHooks.push(mount);
-      }
-    });
-    plugins = undefined;
-  }
+    };
+  };
 
   const transactions: Transaction[] = [];
   const apply = (tr: Transaction, immediate?: boolean) => {
@@ -318,6 +347,7 @@ export const createEditor = <
     if (transactions.length) {
       const currentDoc = doc;
       const ops: Operation[] = [];
+      const applyHooks = getHook("apply");
       const length = applyHooks.length;
 
       let tr: Transaction | undefined;
@@ -421,6 +451,11 @@ export const createEditor = <
       return () => {
         cbs.delete(callback);
       };
+    },
+    hook: setHook,
+    use: (plugin, ...args) => {
+      plugin.call(editor, ...args);
+      return editor;
     },
     input: (element) => {
       if (
@@ -730,6 +765,7 @@ export const createEditor = <
       element.addEventListener("dragstart", onDragStart);
       element.addEventListener("dragend", onDragEnd);
 
+      const mountHooks = getHook("mount");
       const unmountHooks: (() => void)[] = [];
       mountHooks.forEach((mount) => {
         const cb = mount(element);
