@@ -26,12 +26,13 @@ import type { ParserConfig } from "./dom/parser.js";
 import { comparePosition, toRange } from "./doc/position.js";
 import type { EditorPlugin } from "./plugins/types.js";
 import {
-  type CopyExtension,
-  type PasteExtension,
+  type CopyHook,
+  type PasteHook,
   plainCopy,
   plainPaste,
-} from "./extensions/index.js";
-import { hotkey, type KeyboardHandler } from "./hotkey.js";
+  hotkey,
+  type KeyboardHook,
+} from "./hooks/index.js";
 
 const empty: unknown[] = [];
 
@@ -117,17 +118,17 @@ export interface EditorOptions<
    *
    * Return `true` if you want to stop propagation.
    */
-  keyboard?: KeyboardHandler[];
+  keyboard?: KeyboardHook[];
   /**
    * Functions to handle copy events
    * @default [plainCopy()]
    */
-  copy?: [CopyExtension, ...rest: CopyExtension[]];
+  copy?: [CopyHook, ...rest: CopyHook[]];
   /**
    * Functions to handle paste / drop events
    * @default [plainPaste()]
    */
-  paste?: [PasteExtension, ...rest: PasteExtension[]];
+  paste?: [PasteHook, ...rest: PasteHook[]];
   /**
    * TODO
    */
@@ -214,8 +215,8 @@ export const createEditor = <
   readonly = false,
   schema,
   keyboard,
-  copy: copyExtensions = [plainCopy()],
-  paste: pasteExtensions = [plainPaste()],
+  copy: copyHooks = [plainCopy()],
+  paste: pasteHooks = [plainPaste()],
   isBlock = defaultIsBlockNode,
   onChange,
   onError = console.error,
@@ -250,7 +251,7 @@ export const createEditor = <
     throw new Error(initialError);
   }
 
-  const keydownHandlers: KeyboardHandler[] = [
+  const keydownHooks: KeyboardHook[] = [
     hotkey(
       "z",
       () => {
@@ -281,7 +282,7 @@ export const createEditor = <
     ),
   ];
   if (keyboard) {
-    keydownHandlers.push(...keyboard);
+    keydownHooks.push(...keyboard);
   }
 
   const hooks = new Map<
@@ -506,12 +507,12 @@ export const createEditor = <
       const cleanupOnReadonly = editor.on("readonly", setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) => {
-        for (const ex of copyExtensions) {
+        for (const ex of copyHooks) {
           ex(dataTransfer, fragment, element);
         }
       };
       const paste = (dataTransfer: DataTransfer): string | Fragment | void => {
-        for (const ex of pasteExtensions) {
+        for (const ex of pasteHooks) {
           const pasted = ex(dataTransfer, parserConfig);
           if (pasted) {
             return pasted;
@@ -580,7 +581,7 @@ export const createEditor = <
       const onKeyDown = (e: KeyboardEvent) => {
         if (isComposing) return;
 
-        for (const handler of keydownHandlers) {
+        for (const handler of keydownHooks) {
           if (handler(e)) {
             e.preventDefault();
             observer._record(false);

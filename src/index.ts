@@ -10,7 +10,6 @@ export {
 } from "./commands.js";
 export { createEditor } from "./editor.js";
 export type { EditorOptions, Editor } from "./editor.js";
-export * from "./extensions/index.js";
-export * from "./hotkey.js";
+export * from "./hooks/index.js";
 export * from "./presets/index.js";
 export * from "./plugins/index.js";

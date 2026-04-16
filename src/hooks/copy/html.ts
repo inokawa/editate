@@ -1,10 +1,10 @@
 import { getDOMSelection, getSelectionRangeInEditor } from "../../dom/index.js";
-import type { CopyExtension } from "./types.js";
+import type { CopyHook } from "./types.js";
 
 /**
  * An extension to handle copying to HTML.
  */
-export const htmlCopy = (): CopyExtension => {
+export const htmlCopy = (): CopyHook => {
   return (dataTransfer, _, element) => {
     const wrapper = document.createElement("div");
     wrapper.appendChild(

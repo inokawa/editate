@@ -1,4 +1,4 @@
-export type KeyboardHandler = (keyboard: KeyboardEvent) => boolean | void;
+export type KeyboardHook = (keyboard: KeyboardEvent) => boolean | void;
 
 /**
  * TODO
@@ -18,7 +18,7 @@ export const hotkey = (
     alt?: boolean;
     // phase?: 'down' | 'up';
   } = {},
-): KeyboardHandler => {
+): KeyboardHook => {
   key = key.toLowerCase();
 
   return (e): boolean | void => {
