@@ -582,7 +582,7 @@
 <main>
   <div class="wrap">
     <div class="note info" style="margin-bottom: 16px;">
-            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.6s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
+            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.5s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
             <pre><code>typescript: {
   reactDocgen: 'react-docgen-typescript',
 }</code></pre>
@@ -1392,13 +1392,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -1426,17 +1426,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -1530,17 +1530,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -1569,11 +1572,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -2215,13 +2218,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -2249,17 +2252,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -2353,17 +2356,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -2392,11 +2398,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -4697,13 +4703,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -4731,17 +4737,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -4835,17 +4841,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -4874,11 +4883,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -5520,13 +5529,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -5554,17 +5563,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -5658,17 +5667,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -5697,11 +5709,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -7961,13 +7973,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -7995,17 +8007,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -8099,17 +8111,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -8138,11 +8153,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -8784,13 +8799,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -8818,17 +8833,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -8922,17 +8937,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -8961,11 +8979,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -10851,13 +10869,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -10885,17 +10903,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -10989,17 +11007,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -11028,11 +11049,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -11674,13 +11695,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -11708,17 +11729,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -11812,17 +11833,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -11851,11 +11875,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -13675,13 +13699,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -13709,17 +13733,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -13813,17 +13837,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -13852,11 +13879,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -14498,13 +14525,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -14532,17 +14559,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -14636,17 +14663,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -14675,11 +14705,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -16532,13 +16562,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -16566,17 +16596,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -16670,17 +16700,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -16709,11 +16742,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -17355,13 +17388,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -17389,17 +17422,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -17493,17 +17526,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -17532,11 +17568,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -19422,13 +19458,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -19456,17 +19492,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -19560,17 +19596,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -19599,11 +19638,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -20245,13 +20284,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -20279,17 +20318,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -20383,17 +20422,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -20422,11 +20464,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -22252,13 +22294,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -22286,17 +22328,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -22390,17 +22432,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -22429,11 +22474,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -23075,13 +23120,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -23109,17 +23154,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -23213,17 +23258,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -23252,11 +23300,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -25091,13 +25139,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -25125,17 +25173,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -25229,17 +25277,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -25268,11 +25319,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -25914,13 +25965,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -25948,17 +25999,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -26052,17 +26103,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -26091,11 +26145,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -27943,13 +27997,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -27977,17 +28031,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -28081,17 +28135,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -28120,11 +28177,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -28766,13 +28823,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -28800,17 +28857,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -28904,17 +28961,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -28943,11 +29003,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -30765,13 +30825,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -30799,17 +30859,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -30903,17 +30963,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -30942,11 +31005,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -31588,13 +31651,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -31622,17 +31685,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -31726,17 +31789,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -31765,11 +31831,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -33639,13 +33705,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -33673,17 +33739,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -33777,17 +33843,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -33816,11 +33885,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -34462,13 +34531,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -34496,17 +34565,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -34600,17 +34669,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -34639,11 +34711,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -36944,13 +37016,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -36978,17 +37050,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -37082,17 +37154,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -37121,11 +37196,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -37767,13 +37842,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -37801,17 +37876,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -37905,17 +37980,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -37944,11 +38022,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -40208,13 +40286,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -40242,17 +40320,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -40346,17 +40424,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -40385,11 +40466,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -41031,13 +41112,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -41065,17 +41146,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -41169,17 +41250,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -41208,11 +41292,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -43098,13 +43182,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -43132,17 +43216,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -43236,17 +43320,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -43275,11 +43362,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -43921,13 +44008,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -43955,17 +44042,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -44059,17 +44146,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -44098,11 +44188,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -45922,13 +46012,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -45956,17 +46046,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -46060,17 +46150,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -46099,11 +46192,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -46745,13 +46838,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -46779,17 +46872,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -46883,17 +46976,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -46922,11 +47018,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -48779,13 +48875,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -48813,17 +48909,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -48917,17 +49013,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -48956,11 +49055,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -49602,13 +49701,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -49636,17 +49735,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -49740,17 +49839,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -49779,11 +49881,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -51669,13 +51771,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -51703,17 +51805,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -51807,17 +51909,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -51846,11 +51951,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -52492,13 +52597,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -52526,17 +52631,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -52630,17 +52735,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -52669,11 +52777,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -54499,13 +54607,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -54533,17 +54641,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -54637,17 +54745,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -54676,11 +54787,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -55322,13 +55433,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -55356,17 +55467,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -55460,17 +55571,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -55499,11 +55613,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -57338,13 +57452,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -57372,17 +57486,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -57476,17 +57590,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -57515,11 +57632,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -58161,13 +58278,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -58195,17 +58312,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -58299,17 +58416,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -58338,11 +58458,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -60190,13 +60310,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -60224,17 +60344,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -60328,17 +60448,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -60367,11 +60490,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -61013,13 +61136,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -61047,17 +61170,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -61151,17 +61274,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -61190,11 +61316,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -63012,13 +63138,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -63046,17 +63172,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -63150,17 +63276,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -63189,11 +63318,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
@@ -63835,13 +63964,13 @@ export interface EditorOptions&lt;
   onError?: (message: string) =&gt; void;
 }
 
-type EditorEvents = {
+type EditorEventMap = {
   change: () =&gt; void;
   selectionchange: () =&gt; void;
   readonly: () =&gt; void;
 };
 
-type EditorHooks = {
+type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) =&gt; void) =&gt; void;
   mount: (element: HTMLElement) =&gt; void | (() =&gt; void);
 };
@@ -63869,17 +63998,17 @@ export interface Editor&lt;T extends DocNode = DocNode&gt; {
    * A function to subscribe editor events.
    * @returns cleanup function
    */
-  on&lt;K extends keyof EditorEvents&gt;(
+  on&lt;K extends keyof EditorEventMap&gt;(
     key: K,
-    callback: EditorEvents[K],
+    callback: EditorEventMap[K],
   ): () =&gt; void;
   /**
    * A function to register editor hooks.
    * @returns cleanup function
    */
-  hook&lt;K extends keyof EditorHooks&gt;(
+  hook&lt;K extends keyof EditorHookMap&gt;(
     key: K,
-    callback: EditorHooks[K],
+    callback: EditorHookMap[K],
   ): () =&gt; void;
   /**
    * A function to make DOM editable.
@@ -63973,17 +64102,20 @@ export const createEditor = &lt;
     keydownHooks.push(...keyboard);
   }
 
-  const hooks = new Map&lt;keyof EditorHooks, EditorHooks[keyof EditorHooks][]&gt;();
+  const hooks = new Map&lt;
+    keyof EditorHookMap,
+    EditorHookMap[keyof EditorHookMap][]
+  &gt;();
 
-  const getHook = &lt;T extends keyof EditorHooks&gt;(
+  const getHook = &lt;T extends keyof EditorHookMap&gt;(
     key: T,
-  ): readonly EditorHooks[T][] =&gt; {
-    return (hooks.get(key) || empty) as unknown as EditorHooks[T][];
+  ): readonly EditorHookMap[T][] =&gt; {
+    return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHooks&gt;(
+  const setHook = &lt;T extends keyof EditorHookMap&gt;(
     type: T,
-    callback: EditorHooks[T],
+    callback: EditorHookMap[T],
   ): (() =&gt; void) =&gt; {
     let sub = hooks.get(type);
     if (!sub) {
@@ -64012,11 +64144,11 @@ export const createEditor = &lt;
   };
 
   const subs = new Map&lt;
-    keyof EditorEvents,
-    [cbs: Set&lt;EditorEvents[keyof EditorEvents]&gt;, queued: boolean]
+    keyof EditorEventMap,
+    [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
   &gt;();
 
-  const publish = &lt;K extends keyof EditorEvents&gt;(key: K) =&gt; {
+  const publish = &lt;K extends keyof EditorEventMap&gt;(key: K) =&gt; {
     const sub = subs.get(key);
     if (sub &amp;&amp; !sub[1]) {
       sub[1] = true;
