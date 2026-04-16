@@ -1540,23 +1540,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -1681,7 +1664,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -2349,23 +2344,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -2490,7 +2468,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -4817,23 +4807,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -4958,7 +4931,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -5626,23 +5611,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -5767,7 +5735,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -8053,23 +8033,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -8194,7 +8157,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -8862,23 +8837,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -9003,7 +8961,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -10915,23 +10885,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -11056,7 +11009,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -11724,23 +11689,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -11865,7 +11813,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -13711,23 +13671,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -13852,7 +13795,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -14520,23 +14475,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -14661,7 +14599,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -16540,23 +16490,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -16681,7 +16614,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -17349,23 +17294,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -17490,7 +17418,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -19402,23 +19342,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -19543,7 +19466,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -20211,23 +20146,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -20352,7 +20270,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -22204,23 +22134,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -22345,7 +22258,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -23013,23 +22938,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -23154,7 +23062,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -25015,23 +24935,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -25156,7 +25059,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -25824,23 +25739,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -25965,7 +25863,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -27839,23 +27749,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -27980,7 +27873,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -28648,23 +28553,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -28789,7 +28677,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -30633,23 +30533,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -30774,7 +30657,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -31442,23 +31337,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -31583,7 +31461,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -33479,23 +33369,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -33620,7 +33493,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -34288,23 +34173,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -34429,7 +34297,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -36756,23 +36636,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -36897,7 +36760,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -37565,23 +37440,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -37706,7 +37564,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -39992,23 +39862,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -40133,7 +39986,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -40801,23 +40666,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -40942,7 +40790,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -42854,23 +42714,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -42995,7 +42838,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -43663,23 +43518,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -43804,7 +43642,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -45650,23 +45500,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -45791,7 +45624,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -46459,23 +46304,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -46600,7 +46428,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -48479,23 +48319,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -48620,7 +48443,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -49288,23 +49123,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -49429,7 +49247,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -51341,23 +51171,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -51482,7 +51295,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -52150,23 +51975,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -52291,7 +52099,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -54143,23 +53963,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -54284,7 +54087,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -54952,23 +54767,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -55093,7 +54891,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -56954,23 +56764,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -57095,7 +56888,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -57763,23 +57568,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -57904,7 +57692,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -59778,23 +59578,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -59919,7 +59702,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -60587,23 +60382,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -60728,7 +60506,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -62572,23 +62362,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -62713,7 +62486,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
@@ -63381,23 +63166,6 @@ export const createEditor = &lt;
     return (hooks.get(key) || empty) as unknown as EditorHookMap[T][];
   };
 
-  const setHook = &lt;T extends keyof EditorHookMap&gt;(
-    type: T,
-    callback: EditorHookMap[T],
-  ): (() =&gt; void) =&gt; {
-    let sub = hooks.get(type);
-    if (!sub) {
-      hooks.set(type, (sub = []));
-    }
-    sub.push(callback);
-    return () =&gt; {
-      const i = sub.indexOf(callback);
-      if (i !== -1) {
-        sub.splice(i, 1);
-      }
-    };
-  };
-
   const subs = new Map&lt;
     keyof EditorEventMap,
     [cbs: Set&lt;EditorEventMap[keyof EditorEventMap]&gt;, queued: boolean]
@@ -63522,7 +63290,19 @@ export const createEditor = &lt;
         cbs.delete(callback);
       };
     },
-    hook: setHook,
+    hook: (type, callback) =&gt; {
+      let sub = hooks.get(type);
+      if (!sub) {
+        hooks.set(type, (sub = []));
+      }
+      sub.push(callback);
+      return () =&gt; {
+        const i = sub.indexOf(callback);
+        if (i !== -1) {
+          sub.splice(i, 1);
+        }
+      };
+    },
     use: (plugin, ...args) =&gt; {
       plugin.call(editor, ...args);
       return editor;
