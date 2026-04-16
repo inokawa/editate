@@ -149,6 +149,7 @@ export interface EditorOptions<
 type EditorEventMap = {
   change: () => void;
   selectionchange: () => void;
+  readonly: () => void;
 };
 type EditorEvent<K extends keyof EditorEventMap> = [
   type: K,
@@ -205,7 +206,6 @@ export const createEditor = <
   onError = console.error,
 }: EditorOptions<T, S>): Editor<T> => {
   let selection: SelectionSnapshot = getEmptySelectionSnapshot();
-  let setContentEditable: () => void = noop;
 
   const validate = (value: T, onError: (m: string) => void): boolean => {
     if (!schema) {
@@ -401,7 +401,7 @@ export const createEditor = <
     },
     set readonly(value) {
       readonly = value;
-      setContentEditable();
+      publish("readonly");
     },
     apply: (tr: Transaction | EditorCommand<any, T>, ...args: unknown[]) => {
       if (isFunction(tr)) {
@@ -461,12 +461,14 @@ export const createEditor = <
         _isVoid: defaultIsVoidNode,
       };
 
-      setContentEditable = () => {
+      const setEditableState = () => {
         element.contentEditable = readonly ? "false" : "true";
         element.ariaReadOnly = readonly ? "true" : null;
       };
 
-      setContentEditable();
+      setEditableState();
+
+      const cleanupOnReadonly = editor.on("readonly", setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) => {
         for (const ex of copyExtensions) {
@@ -740,8 +742,7 @@ export const createEditor = <
         if (disposed) return;
         disposed = true;
 
-        // TODO improve
-        setContentEditable = noop;
+        cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
         element.role = prevRole;

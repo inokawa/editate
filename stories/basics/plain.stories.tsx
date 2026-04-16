@@ -106,19 +106,24 @@ export const Readonly: StoryObj = {
         }),
       [],
     );
-    const [readonly, setReadonly] = useState(false);
+    const [readonly, setReadonly] = useState(editor.readonly);
     useEffect(() => {
       if (!ref.current) return;
-      return editor.input(ref.current);
+      const cleanupInput = editor.input(ref.current);
+      const cleanupOnReadonly = editor.on("readonly", () => {
+        setReadonly(editor.readonly);
+      });
+      return () => {
+        cleanupInput();
+        cleanupOnReadonly();
+      };
     }, []);
     return (
       <div>
         <div>
           <button
             onClick={() => {
-              const text = !readonly;
-              editor.readonly = text;
-              setReadonly(text);
+              editor.readonly = !readonly;
             }}
           >
             {readonly ? "editable" : "readonly"}

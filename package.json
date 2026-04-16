@@ -1,7 +1,7 @@
 {
   "name": "edix",
   "version": "0.3.1",
-  "description": "An experimental, framework agnostic, small (4kB+) contenteditable state manager.",
+  "description": "An experimental, framework agnostic, small (5kB+) contenteditable state manager.",
   "main": "lib/index.cjs",
   "module": "lib/index.js",
   "types": "lib/index.d.ts",

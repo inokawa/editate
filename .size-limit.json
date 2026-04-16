@@ -3,7 +3,7 @@
     "name": "Editor",
     "path": "lib/index.js",
     "import": "{ createEditor }",
-    "limit": "5.0 kB"
+    "limit": "5.5 kB"
   },
   {
     "name": "Total",
