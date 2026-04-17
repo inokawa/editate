@@ -582,7 +582,7 @@
 <main>
   <div class="wrap">
     <div class="note info" style="margin-bottom: 16px;">
-            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.5s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
+            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.6s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
             <pre><code>typescript: {
   reactDocgen: 'react-docgen-typescript',
 }</code></pre>
@@ -677,7 +677,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -701,7 +701,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -3944,7 +3944,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -3968,7 +3968,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -7170,7 +7170,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -7194,7 +7194,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -10022,7 +10022,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -10046,7 +10046,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -12808,7 +12808,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -12832,7 +12832,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -15627,7 +15627,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -15651,7 +15651,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -18479,7 +18479,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -18503,7 +18503,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -21271,7 +21271,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -21295,7 +21295,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -24072,7 +24072,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -24096,7 +24096,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -26886,7 +26886,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -26910,7 +26910,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -29670,7 +29670,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -29694,7 +29694,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -32506,7 +32506,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -32530,7 +32530,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -35773,7 +35773,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -35797,7 +35797,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -38999,7 +38999,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -39023,7 +39023,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -41851,7 +41851,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -41875,7 +41875,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -44637,7 +44637,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -44661,7 +44661,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -47456,7 +47456,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -47480,7 +47480,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -50308,7 +50308,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -50332,7 +50332,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -53100,7 +53100,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -53124,7 +53124,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -55901,7 +55901,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -55925,7 +55925,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -58715,7 +58715,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -58739,7 +58739,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
@@ -61499,7 +61499,7 @@ type DeleteOperation = Readonly&lt;{
 }&gt;;
 
 const TYPE_INSERT_TEXT = &quot;insert_text&quot;;
-type InsertOperation = Readonly&lt;{
+type InsertTextOperation = Readonly&lt;{
   type: typeof TYPE_INSERT_TEXT;
   at: Position;
   text: string;
@@ -61523,7 +61523,7 @@ type SetAttrOperation = Readonly&lt;{
 
 export type Operation =
   | DeleteOperation
-  | InsertOperation
+  | InsertTextOperation
   | InsertNodeOperation
   | SetAttrOperation;
 
