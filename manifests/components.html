@@ -1408,7 +1408,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -1635,9 +1635,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -2212,7 +2212,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -2439,9 +2439,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -4675,7 +4675,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -4902,9 +4902,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -5479,7 +5479,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -5706,9 +5706,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -7901,7 +7901,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -8128,9 +8128,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -8705,7 +8705,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -8932,9 +8932,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -10753,7 +10753,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -10980,9 +10980,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -11557,7 +11557,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -11784,9 +11784,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -13539,7 +13539,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -13766,9 +13766,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -14343,7 +14343,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -14570,9 +14570,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -16358,7 +16358,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -16585,9 +16585,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -17162,7 +17162,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -17389,9 +17389,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -19210,7 +19210,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -19437,9 +19437,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -20014,7 +20014,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -20241,9 +20241,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -22002,7 +22002,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -22229,9 +22229,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -22806,7 +22806,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -23033,9 +23033,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -24803,7 +24803,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -25030,9 +25030,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -25607,7 +25607,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -25834,9 +25834,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -27617,7 +27617,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -27844,9 +27844,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -28421,7 +28421,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -28648,9 +28648,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -30401,7 +30401,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -30628,9 +30628,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -31205,7 +31205,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -31432,9 +31432,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -33237,7 +33237,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -33464,9 +33464,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -34041,7 +34041,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -34268,9 +34268,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -36504,7 +36504,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -36731,9 +36731,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -37308,7 +37308,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -37535,9 +37535,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -39730,7 +39730,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -39957,9 +39957,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -40534,7 +40534,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -40761,9 +40761,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -42582,7 +42582,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -42809,9 +42809,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -43386,7 +43386,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -43613,9 +43613,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -45368,7 +45368,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -45595,9 +45595,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -46172,7 +46172,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -46399,9 +46399,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -48187,7 +48187,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -48414,9 +48414,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -48991,7 +48991,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -49218,9 +49218,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -51039,7 +51039,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -51266,9 +51266,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -51843,7 +51843,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -52070,9 +52070,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -53831,7 +53831,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -54058,9 +54058,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -54635,7 +54635,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -54862,9 +54862,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -56632,7 +56632,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -56859,9 +56859,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -57436,7 +57436,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -57663,9 +57663,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -59446,7 +59446,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -59673,9 +59673,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -60250,7 +60250,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -60477,9 +60477,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -62230,7 +62230,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -62457,9 +62457,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
@@ -63034,7 +63034,7 @@ type EditorHookMap = {
  */
 export interface Editor&lt;T extends DocNode = DocNode&gt; {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  readonly selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor&#39;s read-only state.
    * `true` to read-only. `false` to editable.
@@ -63261,9 +63261,9 @@ export const createEditor = &lt;
     get selection() {
       return selection;
     },
-    set selection(value) {
-      updateSelection(value);
-    },
+    // set selection(value) {
+    //   updateSelection(value);
+    // },
     get readonly() {
       return readonly;
     },
