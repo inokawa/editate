@@ -307,16 +307,6 @@ import{n as e,o as t}from"./chunk-zsgVPwQN.js";import{t as n}from"./react-ca9hEu
       }).input(ref.current);
     }, []);
     return <div>
-        {/* <div>
-          <button
-            onClick={() => {
-              // TODO
-              editorRef.current?.insert(" [IqKz0SfHaqI]");
-            }}
-          >
-            insert
-          </button>
-         </div> */}
         <div ref={ref} style={{
         backgroundColor: "white",
         padding: 8
