@@ -582,7 +582,7 @@
 <main>
   <div class="wrap">
     <div class="note info" style="margin-bottom: 16px;">
-            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.6s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
+            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.5s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
             <pre><code>typescript: {
   reactDocgen: 'react-docgen-typescript',
 }</code></pre>
@@ -3499,9 +3499,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   const [doc, setDoc] = useState&lt;Doc&gt;({
     children: [
       [
-        { type: &quot;text&quot;, text: &quot;Hello &quot; },
+        { text: &quot;Hello &quot; },
         { type: &quot;tag&quot;, label: &quot;Apple&quot;, value: &quot;1&quot; },
-        { type: &quot;text&quot;, text: &quot; world &quot; },
+        { text: &quot; world &quot; },
         { type: &quot;tag&quot;, label: &quot;Orange&quot;, value: &quot;2&quot; },
       ],
     ],
@@ -3560,7 +3560,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
         }}
       &gt;
         {doc.children[0].map((t, j) =&gt;
-          t.type === &quot;tag&quot; ? (
+          &quot;text&quot; in t ? (
+            &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
+          ) : (
             &lt;span
               key={j}
               contentEditable={false}
@@ -3575,8 +3577,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
             &gt;
               {t.label}
             &lt;/span&gt;
-          ) : (
-            &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
           ),
         )}
       &lt;/div&gt;
@@ -3599,7 +3599,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
     children: [
       [
         {
-          type: &quot;text&quot;,
           text: &quot;Hello &quot;,
         },
         {
@@ -3607,7 +3606,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
           src: &quot;https://loremflickr.com/320/240/cats?lock=1&quot;,
         },
         {
-          type: &quot;text&quot;,
           text: &quot; world &quot;,
         },
         {
@@ -3633,7 +3631,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
           }),
         }),
         htmlPaste&lt;Doc&gt;(
-          (text) =&gt; ({ type: &quot;text&quot;, text }),
+          (text) =&gt; ({ text }),
           [
             (e) =&gt; {
               if (e.tagName === &quot;IMG&quot;) {
@@ -3662,10 +3660,10 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
       {doc.children.map((r, i) =&gt; (
         &lt;div key={i}&gt;
           {r.map((t, j) =&gt;
-            t.type === &quot;image&quot; ? (
-              &lt;img key={j} src={t.src} style={{ maxWidth: 200 }} /&gt;
-            ) : (
+            &quot;text&quot; in t ? (
               &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
+            ) : (
+              &lt;img key={j} src={t.src} style={{ maxWidth: 200 }} /&gt;
             ),
           )}
         &lt;/div&gt;
@@ -3689,7 +3687,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
     children: [
       [
         {
-          type: &quot;text&quot;,
           text: &quot;Hello &quot;,
         },
         {
@@ -3697,7 +3694,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
           src: &quot;https://download.samplelib.com/mp4/sample-5s.mp4&quot;,
         },
         {
-          type: &quot;text&quot;,
           text: &quot; world &quot;,
         },
       ],
@@ -3713,7 +3709,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
       paste: [
         internalPaste(),
         htmlPaste&lt;Doc&gt;(
-          (text) =&gt; ({ type: &quot;text&quot;, text }),
+          (text) =&gt; ({ text }),
           [
             (e) =&gt; {
               if (e.tagName === &quot;VIDEO&quot;) {
@@ -3742,7 +3738,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
       {doc.children.map((r, i) =&gt; (
         &lt;div key={i}&gt;
           {r.map((t, j) =&gt;
-            t.type === &quot;video&quot; ? (
+            &quot;text&quot; in t ? (
+              &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
+            ) : (
               // safari needs contentEditable=&quot;false&quot;
               (&lt;video
                 key={j}
@@ -3753,8 +3751,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
               &gt;
                 &lt;source src={t.src} /&gt;
               &lt;/video&gt;)
-            ) : (
-              &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
             ),
           )}
         &lt;/div&gt;
@@ -3778,7 +3774,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
     children: [
       [
         {
-          type: &quot;text&quot;,
           text: &quot;Hello &quot;,
         },
         {
@@ -3786,7 +3781,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
           id: &quot;IqKz0SfHaqI&quot;,
         },
         {
-          type: &quot;text&quot;,
           text: &quot; Youtube&quot;,
         },
       ],
@@ -3802,7 +3796,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
       paste: [
         internalPaste(),
         htmlPaste&lt;Doc&gt;(
-          (text) =&gt; ({ type: &quot;text&quot;, text }),
+          (text) =&gt; ({ text }),
           [
             (e) =&gt; {
               if (!!e.dataset.youtubeNode) {
@@ -3842,10 +3836,10 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
         {doc.children.map((r, i) =&gt; (
           &lt;div key={i}&gt;
             {r.map((t, j) =&gt;
-              t.type === &quot;youtube&quot; ? (
-                &lt;Youtube key={j} id={t.id} /&gt;
-              ) : (
+              &quot;text&quot; in t ? (
                 &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
+              ) : (
+                &lt;Youtube key={j} id={t.id} /&gt;
               ),
             )}
           &lt;/div&gt;
@@ -35328,9 +35322,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   const [doc, setDoc] = useState&lt;Doc&gt;({
     children: [
       [
-        { type: &quot;text&quot;, text: &quot;Hello &quot; },
+        { text: &quot;Hello &quot; },
         { type: &quot;tag&quot;, label: &quot;Apple&quot;, value: &quot;1&quot; },
-        { type: &quot;text&quot;, text: &quot; world &quot; },
+        { text: &quot; world &quot; },
         { type: &quot;tag&quot;, label: &quot;Orange&quot;, value: &quot;2&quot; },
       ],
     ],
@@ -35389,7 +35383,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
         }}
       &gt;
         {doc.children[0].map((t, j) =&gt;
-          t.type === &quot;tag&quot; ? (
+          &quot;text&quot; in t ? (
+            &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
+          ) : (
             &lt;span
               key={j}
               contentEditable={false}
@@ -35404,8 +35400,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
             &gt;
               {t.label}
             &lt;/span&gt;
-          ) : (
-            &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
           ),
         )}
       &lt;/div&gt;
@@ -35428,7 +35422,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
     children: [
       [
         {
-          type: &quot;text&quot;,
           text: &quot;Hello &quot;,
         },
         {
@@ -35436,7 +35429,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
           src: &quot;https://loremflickr.com/320/240/cats?lock=1&quot;,
         },
         {
-          type: &quot;text&quot;,
           text: &quot; world &quot;,
         },
         {
@@ -35462,7 +35454,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
           }),
         }),
         htmlPaste&lt;Doc&gt;(
-          (text) =&gt; ({ type: &quot;text&quot;, text }),
+          (text) =&gt; ({ text }),
           [
             (e) =&gt; {
               if (e.tagName === &quot;IMG&quot;) {
@@ -35491,10 +35483,10 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
       {doc.children.map((r, i) =&gt; (
         &lt;div key={i}&gt;
           {r.map((t, j) =&gt;
-            t.type === &quot;image&quot; ? (
-              &lt;img key={j} src={t.src} style={{ maxWidth: 200 }} /&gt;
-            ) : (
+            &quot;text&quot; in t ? (
               &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
+            ) : (
+              &lt;img key={j} src={t.src} style={{ maxWidth: 200 }} /&gt;
             ),
           )}
         &lt;/div&gt;
@@ -35518,7 +35510,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
     children: [
       [
         {
-          type: &quot;text&quot;,
           text: &quot;Hello &quot;,
         },
         {
@@ -35526,7 +35517,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
           src: &quot;https://download.samplelib.com/mp4/sample-5s.mp4&quot;,
         },
         {
-          type: &quot;text&quot;,
           text: &quot; world &quot;,
         },
       ],
@@ -35542,7 +35532,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
       paste: [
         internalPaste(),
         htmlPaste&lt;Doc&gt;(
-          (text) =&gt; ({ type: &quot;text&quot;, text }),
+          (text) =&gt; ({ text }),
           [
             (e) =&gt; {
               if (e.tagName === &quot;VIDEO&quot;) {
@@ -35571,7 +35561,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
       {doc.children.map((r, i) =&gt; (
         &lt;div key={i}&gt;
           {r.map((t, j) =&gt;
-            t.type === &quot;video&quot; ? (
+            &quot;text&quot; in t ? (
+              &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
+            ) : (
               // safari needs contentEditable=&quot;false&quot;
               (&lt;video
                 key={j}
@@ -35582,8 +35574,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
               &gt;
                 &lt;source src={t.src} /&gt;
               &lt;/video&gt;)
-            ) : (
-              &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
             ),
           )}
         &lt;/div&gt;
@@ -35607,7 +35597,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
     children: [
       [
         {
-          type: &quot;text&quot;,
           text: &quot;Hello &quot;,
         },
         {
@@ -35615,7 +35604,6 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
           id: &quot;IqKz0SfHaqI&quot;,
         },
         {
-          type: &quot;text&quot;,
           text: &quot; Youtube&quot;,
         },
       ],
@@ -35631,7 +35619,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
       paste: [
         internalPaste(),
         htmlPaste&lt;Doc&gt;(
-          (text) =&gt; ({ type: &quot;text&quot;, text }),
+          (text) =&gt; ({ text }),
           [
             (e) =&gt; {
               if (!!e.dataset.youtubeNode) {
@@ -35671,10 +35659,10 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
         {doc.children.map((r, i) =&gt; (
           &lt;div key={i}&gt;
             {r.map((t, j) =&gt;
-              t.type === &quot;youtube&quot; ? (
-                &lt;Youtube key={j} id={t.id} /&gt;
-              ) : (
+              &quot;text&quot; in t ? (
                 &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
+              ) : (
+                &lt;Youtube key={j} id={t.id} /&gt;
               ),
             )}
           &lt;/div&gt;
