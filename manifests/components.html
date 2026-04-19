@@ -954,7 +954,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -1099,7 +1099,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -1123,7 +1123,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -1225,7 +1230,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -1264,7 +1269,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -1907,7 +1912,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -2068,7 +2073,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -2711,7 +2716,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -4205,7 +4210,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -4350,7 +4355,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -4374,7 +4379,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -4476,7 +4486,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -4515,7 +4525,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -5158,7 +5168,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -5319,7 +5329,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -5962,7 +5972,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -7431,7 +7441,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -7576,7 +7586,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -7600,7 +7610,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -7702,7 +7717,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -7741,7 +7756,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -8384,7 +8399,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -8545,7 +8560,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -9188,7 +9203,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -10283,7 +10298,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -10428,7 +10443,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -10452,7 +10467,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -10554,7 +10574,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -10593,7 +10613,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -11236,7 +11256,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -11397,7 +11417,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -12040,7 +12060,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -13069,7 +13089,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -13214,7 +13234,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -13238,7 +13258,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -13340,7 +13365,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -13379,7 +13404,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -14022,7 +14047,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -14183,7 +14208,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -14826,7 +14851,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -15888,7 +15913,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -16033,7 +16058,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -16057,7 +16082,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -16159,7 +16189,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -16198,7 +16228,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -16841,7 +16871,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -17002,7 +17032,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -17645,7 +17675,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -18740,7 +18770,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -18885,7 +18915,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -18909,7 +18939,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -19011,7 +19046,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -19050,7 +19085,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -19693,7 +19728,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -19854,7 +19889,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -20497,7 +20532,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -21532,7 +21567,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -21677,7 +21712,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -21701,7 +21736,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -21803,7 +21843,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -21842,7 +21882,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -22485,7 +22525,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -22646,7 +22686,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -23289,7 +23329,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -24333,7 +24373,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -24478,7 +24518,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -24502,7 +24542,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -24604,7 +24649,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -24643,7 +24688,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -25286,7 +25331,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -25447,7 +25492,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -26090,7 +26135,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -27147,7 +27192,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -27292,7 +27337,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -27316,7 +27361,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -27418,7 +27468,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -27457,7 +27507,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -28100,7 +28150,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -28261,7 +28311,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -28904,7 +28954,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -29931,7 +29981,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -30076,7 +30126,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -30100,7 +30150,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -30202,7 +30257,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -30241,7 +30296,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -30884,7 +30939,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -31045,7 +31100,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -31688,7 +31743,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -32767,7 +32822,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -32912,7 +32967,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -32936,7 +32991,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -33038,7 +33098,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -33077,7 +33137,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -33720,7 +33780,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -33881,7 +33941,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -34524,7 +34584,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -36018,7 +36078,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -36163,7 +36223,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -36187,7 +36247,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -36289,7 +36354,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -36328,7 +36393,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -36971,7 +37036,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -37132,7 +37197,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -37775,7 +37840,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -39244,7 +39309,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -39389,7 +39454,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -39413,7 +39478,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -39515,7 +39585,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -39554,7 +39624,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -40197,7 +40267,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -40358,7 +40428,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -41001,7 +41071,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -42096,7 +42166,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -42241,7 +42311,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -42265,7 +42335,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -42367,7 +42442,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -42406,7 +42481,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -43049,7 +43124,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -43210,7 +43285,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -43853,7 +43928,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -44882,7 +44957,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -45027,7 +45102,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -45051,7 +45126,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -45153,7 +45233,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -45192,7 +45272,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -45835,7 +45915,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -45996,7 +46076,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -46639,7 +46719,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -47701,7 +47781,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -47846,7 +47926,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -47870,7 +47950,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -47972,7 +48057,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -48011,7 +48096,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -48654,7 +48739,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -48815,7 +48900,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -49458,7 +49543,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -50553,7 +50638,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -50698,7 +50783,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -50722,7 +50807,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -50824,7 +50914,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -50863,7 +50953,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -51506,7 +51596,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -51667,7 +51757,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -52310,7 +52400,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -53345,7 +53435,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -53490,7 +53580,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -53514,7 +53604,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -53616,7 +53711,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -53655,7 +53750,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -54298,7 +54393,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -54459,7 +54554,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -55102,7 +55197,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -56146,7 +56241,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -56291,7 +56386,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -56315,7 +56410,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -56417,7 +56517,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -56456,7 +56556,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -57099,7 +57199,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -57260,7 +57360,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -57903,7 +58003,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -58960,7 +59060,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -59105,7 +59205,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -59129,7 +59229,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -59231,7 +59336,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -59270,7 +59375,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -59913,7 +60018,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -60074,7 +60179,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -60717,7 +60822,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -61744,7 +61849,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
 /**
  * @internal
  */
-export const sliceDoc = (
+export const sliceFragment = (
   doc: DocNode,
   start: Position,
   end: Position,
@@ -61889,7 +61994,7 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceDoc(doc, start, end).map((line) =&gt;
+          sliceFragment(doc, start, end).map((line) =&gt;
             line.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
@@ -61913,7 +62018,12 @@ No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
-import { getLineSize, isTextNode, sliceDoc, Transaction } from &quot;./doc/edit.js&quot;;
+import {
+  getLineSize,
+  isTextNode,
+  sliceFragment,
+  Transaction,
+} from &quot;./doc/edit.js&quot;;
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
@@ -62015,7 +62125,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
-  const texts = sliceDoc(this.doc, ...range).flatMap((n) =&gt;
+  const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
     n.filter(isTextNode),
   );
   if (texts.length) {
@@ -62054,7 +62164,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -62697,7 +62807,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
@@ -62858,7 +62968,7 @@ import type { EditorCommand } from &quot;./commands.js&quot;;
 import {
   applyOperation,
   Transaction,
-  sliceDoc,
+  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -63501,7 +63611,7 @@ export const createEditor = &lt;
       const copySelected = (dataTransfer: DataTransfer) =&gt; {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceDoc(doc, ...toRange(selection)));
+          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
         }
       };
 
