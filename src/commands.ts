@@ -1,6 +1,6 @@
 import { toRange } from "./doc/position.js";
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -48,7 +48,9 @@ export function InsertNode<T extends DocNode>(
   node: Exclude<InferNode<T>, TextNode>,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -71,7 +73,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -107,7 +109,7 @@ export function ToggleFormat<T extends DocNode>(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =>
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(

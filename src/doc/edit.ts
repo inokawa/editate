@@ -8,6 +8,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from "./types.js";
 import { stringToFragment } from "./utils.js";
 
@@ -114,6 +115,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =>
   "text" in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =>
+  "children" in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean => {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -133,8 +140,8 @@ const getNodeSize = (node: InlineNode): number =>
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =>
-  line.reduce((acc: number, n) => acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =>
+  block.children.reduce((acc: number, n) => acc + getNodeSize(n), 0);
 
 const normalize = <T extends InlineNode>(
   array: T[],
@@ -181,19 +188,18 @@ const concat = <T extends InlineNode>(a: T[], b: readonly T[]): void => {
 /**
  * @internal
  */
-export const joinBlocks = <T extends InlineNode>(
-  ...blocks: (readonly T[])[]
-): readonly T[] => {
-  return blocks.reduce<T[]>((acc, b) => {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = <T extends BlockNode>(...blocks: T[]): T => {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) => {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = <T extends InlineNode>(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] => {
+const splitBlock = <T extends BlockNode>(block: T, offset: number): [T, T] => {
+  const nodes = block.children;
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -213,11 +219,14 @@ const splitBlock = <T extends InlineNode>(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number => {
@@ -225,7 +234,7 @@ const normalizePath = (path: Path): number => {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] => {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode => {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -263,11 +272,12 @@ const replaceRange = <T extends DocNode>(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -275,7 +285,7 @@ const replaceRange = <T extends DocNode>(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -318,7 +328,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean => {
   // TODO improve
   if (!path.length || (path[0]! >= 0 && path[0]! < doc.children.length)) {
-    if (offset >= 0 && offset <= getLineSize(blockAtPath(doc, path))) {
+    if (offset >= 0 && offset <= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -360,7 +370,7 @@ export const rebasePosition = (position: Position, op: Operation): Position => {
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -441,11 +451,12 @@ export const applyOperation = <T extends DocNode>(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =>
-            line.map((node) =>
+          sliceFragment(doc, start, end).map((block) => ({
+            ...block,
+            children: block.children.map((node) =>
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;

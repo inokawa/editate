@@ -1,19 +1,25 @@
-import { isTextNode } from "./edit.js";
+import { isBlockNode, isTextNode } from "./edit.js";
 import { type DocNode, type InlineNode, type TextNode } from "./types.js";
 
 /**
  * @internal
  */
-export const docToString = (
-  doc: DocNode,
+export const docToString = <T extends DocNode>(
+  doc: T,
   serializer: (node: InlineNode) => string = (n) =>
     isTextNode(n) ? n.text : "",
 ): string => {
-  return doc.children.reduce((acc, r, i) => {
-    if (i !== 0) {
+  return doc.children.reduce((acc: string, r, i) => {
+    const isBlock = isBlockNode(r);
+    if (i !== 0 && isBlock) {
       acc += "\n";
     }
-    return acc + r.reduce((acc, n) => acc + serializer(n), "");
+    return (
+      acc +
+      (isBlock
+        ? r.children.reduce((acc: string, n) => acc + serializer(n), "")
+        : "")
+    );
   }, "");
 };
 
@@ -23,6 +29,8 @@ export const docToString = (
 export const stringToFragment = <T extends TextNode>(
   text: string,
   node?: T,
-): T[][] => {
-  return text.split("\n").map((l) => [{ ...node, text: l } as T]);
+) => {
+  return text
+    .split("\n")
+    .map((l) => ({ children: [{ ...node, text: l } as T] }));
 };

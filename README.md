@@ -101,13 +101,15 @@ import * as v from "valibot";
 
 const schema = v.strictObject({
   children: v.array(
-    v.array(
-      v.strictObject({
-        text: v.string(),
-        bold: v.optional(v.boolean()),
-        italic: v.optional(v.boolean()),
-      }),
-    ),
+    v.strictObject({
+      children: v.array(
+        v.strictObject({
+          text: v.string(),
+          bold: v.optional(v.boolean()),
+          italic: v.optional(v.boolean()),
+        }),
+      ),
+    }),
   ),
 });
 
@@ -117,12 +119,14 @@ export const App = () => {
   type Doc = v.InferOutput<typeof schema>;
   const [doc, setDoc] = useState<Doc>({
     children: [
-      [
-        { text: "Hello", bold: true },
-        { text: " " },
-        { text: "World", italic: true },
-        { text: "." },
-      ],
+      {
+        children: [
+          { text: "Hello", bold: true },
+          { text: " " },
+          { text: "World", italic: true },
+          { text: "." },
+        ],
+      },
     ],
   });
 

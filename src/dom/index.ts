@@ -23,6 +23,7 @@ import type {
   Fragment,
   TextNode,
   Path,
+  BlockNode,
 } from "../doc/types.js";
 import { min } from "../utils.js";
 
@@ -338,7 +339,7 @@ export const domToFragment = (
       let text = "";
       let hasContent = false;
 
-      const rows: InlineNode[][] = [];
+      const rows: BlockNode[] = [];
 
       const completeText = () => {
         if (text) {
@@ -355,7 +356,7 @@ export const domToFragment = (
           row = [];
         }
         if (row) {
-          rows.push(row);
+          rows.push({ children: row });
         }
         row = null;
         hasContent = false;
@@ -383,7 +384,7 @@ export const domToFragment = (
       completeRow();
 
       if (!rows.length) {
-        rows.push([]);
+        rows.push({ children: [] });
       }
 
       return rows;

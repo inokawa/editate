@@ -4,19 +4,22 @@ import { type Fragment } from "./types.js";
 
 describe(stringToFragment.name, () => {
   const tests: [string, Fragment][] = [
-    ["Hello world", [[{ text: "Hello world" }]]],
-    ["Hello\n world", [[{ text: "Hello" }], [{ text: " world" }]]],
-    ["", [[{ text: "" }]]],
-    ["\n", [[{ text: "" }], [{ text: "" }]]],
+    ["Hello world", [{ children: [{ text: "Hello world" }] }]],
+    [
+      "Hello\n world",
+      [{ children: [{ text: "Hello" }] }, { children: [{ text: " world" }] }],
+    ],
+    ["", [{ children: [{ text: "" }] }]],
+    ["\n", [{ children: [{ text: "" }] }, { children: [{ text: "" }] }]],
     [
       "\nHello\n\n\n world\n",
       [
-        [{ text: "" }],
-        [{ text: "Hello" }],
-        [{ text: "" }],
-        [{ text: "" }],
-        [{ text: " world" }],
-        [{ text: "" }],
+        { children: [{ text: "" }] },
+        { children: [{ text: "Hello" }] },
+        { children: [{ text: "" }] },
+        { children: [{ text: "" }] },
+        { children: [{ text: " world" }] },
+        { children: [{ text: "" }] },
       ],
     ],
   ];

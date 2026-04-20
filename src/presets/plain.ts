@@ -2,7 +2,7 @@ import { docToString, stringToFragment } from "../doc/utils.js";
 import { createEditor, type Editor, type EditorOptions } from "../editor.js";
 import { singlelinePlugin } from "../plugins/index.js";
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit<
   EditorOptions<PlainDoc>,

@@ -6,12 +6,19 @@ export interface VoidNode {}
 
 export type InlineNode = TextNode | VoidNode;
 
+export interface BlockNode {
+  readonly children: readonly InlineNode[];
+}
+
 export interface DocNode {
-  readonly children: readonly (readonly InlineNode[])[];
+  readonly children: readonly BlockNode[];
 }
 export type Fragment = DocNode["children"];
 
-export type InferNode<T extends DocNode> = T["children"][number][number];
+type InferChild<T> = T extends { children: readonly (infer N)[] }
+  ? InferChild<N>
+  : T;
+export type InferNode<T extends DocNode> = InferChild<T>;
 
 export type Path = readonly [number?];
 export type Position = readonly [path: Path, offset: number];

@@ -14,7 +14,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
