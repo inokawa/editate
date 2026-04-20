@@ -666,6 +666,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -772,6 +773,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -791,8 +798,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -839,19 +846,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -871,11 +877,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -883,7 +892,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -921,11 +930,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -933,7 +943,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -976,7 +986,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -1018,7 +1028,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -1099,11 +1109,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -1124,7 +1135,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -1172,7 +1183,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -1195,7 +1208,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -1231,7 +1244,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -2996,7 +3009,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -3178,7 +3191,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -3230,7 +3243,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -3361,9 +3374,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   type Doc = v.InferOutput&lt;typeof basicSchema&gt;;
   const [doc, setDoc] = useState&lt;Doc&gt;({
     children: [
-      [{ text: &quot;Hello world.&quot; }],
-      [{ text: &quot;こんにちは。&quot; }],
-      [{ text: &quot;👍❤️🧑‍🧑‍🧒&quot; }],
+      { children: [{ text: &quot;Hello world.&quot; }] },
+      { children: [{ text: &quot;こんにちは。&quot; }] },
+      { children: [{ text: &quot;👍❤️🧑‍🧑‍🧒&quot; }] },
     ],
   });
 
@@ -3393,7 +3406,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
     &gt;
       {doc.children.map((r, i) =&gt; (
         &lt;div key={i}&gt;
-          {r.map((n, j) =&gt; (
+          {r.children.map((n, j) =&gt; (
             &lt;span key={j}&gt;{n.text || &lt;br /&gt;}&lt;/span&gt;
           ))}
         &lt;/div&gt;
@@ -3415,14 +3428,16 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   type Doc = v.InferOutput&lt;typeof richSchema&gt;;
   const [doc, setDoc] = useState&lt;Doc&gt;({
     children: [
-      [
-        { text: &quot;Hello&quot;, bold: true },
-        { text: &quot; &quot; },
-        { text: &quot;World&quot;, italic: true },
-        { text: &quot;.&quot; },
-      ],
-      [{ text: &quot;こんにちは。&quot; }],
-      [{ text: &quot;👍❤️🧑‍🧑‍🧒&quot; }],
+      {
+        children: [
+          { text: &quot;Hello&quot;, bold: true },
+          { text: &quot; &quot; },
+          { text: &quot;World&quot;, italic: true },
+          { text: &quot;.&quot; },
+        ],
+      },
+      { children: [{ text: &quot;こんにちは。&quot; }] },
+      { children: [{ text: &quot;👍❤️🧑‍🧑‍🧒&quot; }] },
     ],
   });
 
@@ -3480,7 +3495,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
       &gt;
         {doc.children.map((r, i) =&gt; (
           &lt;div key={i}&gt;
-            {r.map((n, j) =&gt; (
+            {r.children.map((n, j) =&gt; (
               &lt;Text key={j} node={n} /&gt;
             ))}
           &lt;/div&gt;
@@ -3503,12 +3518,14 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   type Doc = v.InferOutput&lt;typeof tagSchema&gt;;
   const [doc, setDoc] = useState&lt;Doc&gt;({
     children: [
-      [
-        { text: &quot;Hello &quot; },
-        { type: &quot;tag&quot;, label: &quot;Apple&quot;, value: &quot;1&quot; },
-        { text: &quot; world &quot; },
-        { type: &quot;tag&quot;, label: &quot;Orange&quot;, value: &quot;2&quot; },
-      ],
+      {
+        children: [
+          { text: &quot;Hello &quot; },
+          { type: &quot;tag&quot;, label: &quot;Apple&quot;, value: &quot;1&quot; },
+          { text: &quot; world &quot; },
+          { type: &quot;tag&quot;, label: &quot;Orange&quot;, value: &quot;2&quot; },
+        ],
+      },
     ],
   });
 
@@ -3564,7 +3581,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
           padding: 8,
         }}
       &gt;
-        {doc.children[0].map((t, j) =&gt;
+        {doc.children[0].children.map((t, j) =&gt;
           &quot;text&quot; in t ? (
             &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
           ) : (
@@ -3602,22 +3619,24 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   type Doc = v.InferOutput&lt;typeof imageSchema&gt;;
   const [doc, setDoc] = useState&lt;Doc&gt;({
     children: [
-      [
-        {
-          text: &quot;Hello &quot;,
-        },
-        {
-          type: &quot;image&quot;,
-          src: &quot;https://loremflickr.com/320/240/cats?lock=1&quot;,
-        },
-        {
-          text: &quot; world &quot;,
-        },
-        {
-          type: &quot;image&quot;,
-          src: &quot;https://loremflickr.com/320/240/cats?lock=2&quot;,
-        },
-      ],
+      {
+        children: [
+          {
+            text: &quot;Hello &quot;,
+          },
+          {
+            type: &quot;image&quot;,
+            src: &quot;https://loremflickr.com/320/240/cats?lock=1&quot;,
+          },
+          {
+            text: &quot; world &quot;,
+          },
+          {
+            type: &quot;image&quot;,
+            src: &quot;https://loremflickr.com/320/240/cats?lock=2&quot;,
+          },
+        ],
+      },
     ],
   });
 
@@ -3664,7 +3683,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
     &gt;
       {doc.children.map((r, i) =&gt; (
         &lt;div key={i}&gt;
-          {r.map((t, j) =&gt;
+          {r.children.map((t, j) =&gt;
             &quot;text&quot; in t ? (
               &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
             ) : (
@@ -3690,18 +3709,20 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   type Doc = v.InferOutput&lt;typeof videoSchema&gt;;
   const [doc, setDoc] = useState&lt;Doc&gt;({
     children: [
-      [
-        {
-          text: &quot;Hello &quot;,
-        },
-        {
-          type: &quot;video&quot;,
-          src: &quot;https://download.samplelib.com/mp4/sample-5s.mp4&quot;,
-        },
-        {
-          text: &quot; world &quot;,
-        },
-      ],
+      {
+        children: [
+          {
+            text: &quot;Hello &quot;,
+          },
+          {
+            type: &quot;video&quot;,
+            src: &quot;https://download.samplelib.com/mp4/sample-5s.mp4&quot;,
+          },
+          {
+            text: &quot; world &quot;,
+          },
+        ],
+      },
     ],
   });
 
@@ -3742,7 +3763,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
     &gt;
       {doc.children.map((r, i) =&gt; (
         &lt;div key={i}&gt;
-          {r.map((t, j) =&gt;
+          {r.children.map((t, j) =&gt;
             &quot;text&quot; in t ? (
               &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
             ) : (
@@ -3777,18 +3798,20 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   type Doc = v.InferOutput&lt;typeof youtubeSchema&gt;;
   const [doc, setDoc] = useState&lt;Doc&gt;({
     children: [
-      [
-        {
-          text: &quot;Hello &quot;,
-        },
-        {
-          type: &quot;youtube&quot;,
-          id: &quot;IqKz0SfHaqI&quot;,
-        },
-        {
-          text: &quot; Youtube&quot;,
-        },
-      ],
+      {
+        children: [
+          {
+            text: &quot;Hello &quot;,
+          },
+          {
+            type: &quot;youtube&quot;,
+            id: &quot;IqKz0SfHaqI&quot;,
+          },
+          {
+            text: &quot; Youtube&quot;,
+          },
+        ],
+      },
     ],
   });
 
@@ -3830,7 +3853,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
       &gt;
         {doc.children.map((r, i) =&gt; (
           &lt;div key={i}&gt;
-            {r.map((t, j) =&gt;
+            {r.children.map((t, j) =&gt;
               &quot;text&quot; in t ? (
                 &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
               ) : (
@@ -3922,6 +3945,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -4028,6 +4052,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -4047,8 +4077,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -4095,19 +4125,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -4127,11 +4156,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -4139,7 +4171,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -4177,11 +4209,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -4189,7 +4222,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -4232,7 +4265,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -4274,7 +4307,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -4355,11 +4388,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -4380,7 +4414,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -4428,7 +4462,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -4451,7 +4487,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -4487,7 +4523,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -6252,7 +6288,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -6434,7 +6470,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -6486,7 +6522,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -7153,6 +7189,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -7259,6 +7296,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -7278,8 +7321,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -7326,19 +7369,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -7358,11 +7400,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -7370,7 +7415,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -7408,11 +7453,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -7420,7 +7466,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -7463,7 +7509,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -7505,7 +7551,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -7586,11 +7632,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -7611,7 +7658,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -7659,7 +7706,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -7682,7 +7731,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -7718,7 +7767,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -9483,7 +9532,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -9665,7 +9714,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -9717,7 +9766,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -10010,6 +10059,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -10116,6 +10166,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -10135,8 +10191,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -10183,19 +10239,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -10215,11 +10270,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -10227,7 +10285,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -10265,11 +10323,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -10277,7 +10336,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -10320,7 +10379,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -10362,7 +10421,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -10443,11 +10502,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -10468,7 +10528,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -10516,7 +10576,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -10539,7 +10601,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -10575,7 +10637,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -12340,7 +12402,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -12522,7 +12584,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -12574,7 +12636,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -12801,6 +12863,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -12907,6 +12970,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -12926,8 +12995,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -12974,19 +13043,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -13006,11 +13074,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -13018,7 +13089,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -13056,11 +13127,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -13068,7 +13140,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -13111,7 +13183,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -13153,7 +13225,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -13234,11 +13306,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -13259,7 +13332,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -13307,7 +13380,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -13330,7 +13405,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -13366,7 +13441,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -15131,7 +15206,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -15313,7 +15388,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -15365,7 +15440,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -15625,6 +15700,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -15731,6 +15807,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -15750,8 +15832,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -15798,19 +15880,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -15830,11 +15911,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -15842,7 +15926,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -15880,11 +15964,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -15892,7 +15977,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -15935,7 +16020,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -15977,7 +16062,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -16058,11 +16143,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -16083,7 +16169,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -16131,7 +16217,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -16154,7 +16242,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -16190,7 +16278,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -17955,7 +18043,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -18137,7 +18225,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -18189,7 +18277,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -18482,6 +18570,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -18588,6 +18677,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -18607,8 +18702,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -18655,19 +18750,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -18687,11 +18781,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -18699,7 +18796,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -18737,11 +18834,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -18749,7 +18847,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -18792,7 +18890,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -18834,7 +18932,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -18915,11 +19013,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -18940,7 +19039,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -18988,7 +19087,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -19011,7 +19112,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -19047,7 +19148,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -20812,7 +20913,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -20994,7 +21095,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -21046,7 +21147,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -21279,6 +21380,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -21385,6 +21487,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -21404,8 +21512,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -21452,19 +21560,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -21484,11 +21591,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -21496,7 +21606,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -21534,11 +21644,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -21546,7 +21657,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -21589,7 +21700,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -21631,7 +21742,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -21712,11 +21823,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -21737,7 +21849,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -21785,7 +21897,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -21808,7 +21922,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -21844,7 +21958,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -23609,7 +23723,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -23791,7 +23905,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -23843,7 +23957,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -24085,6 +24199,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -24191,6 +24306,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -24210,8 +24331,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -24258,19 +24379,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -24290,11 +24410,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -24302,7 +24425,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -24340,11 +24463,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -24352,7 +24476,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -24395,7 +24519,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -24437,7 +24561,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -24518,11 +24642,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -24543,7 +24668,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -24591,7 +24716,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -24614,7 +24741,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -24650,7 +24777,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -26415,7 +26542,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -26597,7 +26724,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -26649,7 +26776,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -26904,6 +27031,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -27010,6 +27138,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -27029,8 +27163,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -27077,19 +27211,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -27109,11 +27242,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -27121,7 +27257,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -27159,11 +27295,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -27171,7 +27308,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -27214,7 +27351,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -27256,7 +27393,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -27337,11 +27474,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -27362,7 +27500,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -27410,7 +27548,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -27433,7 +27573,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -27469,7 +27609,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -29234,7 +29374,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -29416,7 +29556,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -29468,7 +29608,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -29693,6 +29833,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -29799,6 +29940,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -29818,8 +29965,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -29866,19 +30013,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -29898,11 +30044,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -29910,7 +30059,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -29948,11 +30097,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -29960,7 +30110,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -30003,7 +30153,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -30045,7 +30195,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -30126,11 +30276,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -30151,7 +30302,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -30199,7 +30350,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -30222,7 +30375,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -30258,7 +30411,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -32023,7 +32176,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -32205,7 +32358,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -32257,7 +32410,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -32534,6 +32687,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -32640,6 +32794,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -32659,8 +32819,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -32707,19 +32867,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -32739,11 +32898,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -32751,7 +32913,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -32789,11 +32951,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -32801,7 +32964,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -32844,7 +33007,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -32886,7 +33049,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -32967,11 +33130,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -32992,7 +33156,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -33040,7 +33204,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -33063,7 +33229,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -33099,7 +33265,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -34864,7 +35030,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -35046,7 +35212,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -35098,7 +35264,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -35229,9 +35395,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   type Doc = v.InferOutput&lt;typeof basicSchema&gt;;
   const [doc, setDoc] = useState&lt;Doc&gt;({
     children: [
-      [{ text: &quot;Hello world.&quot; }],
-      [{ text: &quot;こんにちは。&quot; }],
-      [{ text: &quot;👍❤️🧑‍🧑‍🧒&quot; }],
+      { children: [{ text: &quot;Hello world.&quot; }] },
+      { children: [{ text: &quot;こんにちは。&quot; }] },
+      { children: [{ text: &quot;👍❤️🧑‍🧑‍🧒&quot; }] },
     ],
   });
 
@@ -35261,7 +35427,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
     &gt;
       {doc.children.map((r, i) =&gt; (
         &lt;div key={i}&gt;
-          {r.map((n, j) =&gt; (
+          {r.children.map((n, j) =&gt; (
             &lt;span key={j}&gt;{n.text || &lt;br /&gt;}&lt;/span&gt;
           ))}
         &lt;/div&gt;
@@ -35283,14 +35449,16 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   type Doc = v.InferOutput&lt;typeof richSchema&gt;;
   const [doc, setDoc] = useState&lt;Doc&gt;({
     children: [
-      [
-        { text: &quot;Hello&quot;, bold: true },
-        { text: &quot; &quot; },
-        { text: &quot;World&quot;, italic: true },
-        { text: &quot;.&quot; },
-      ],
-      [{ text: &quot;こんにちは。&quot; }],
-      [{ text: &quot;👍❤️🧑‍🧑‍🧒&quot; }],
+      {
+        children: [
+          { text: &quot;Hello&quot;, bold: true },
+          { text: &quot; &quot; },
+          { text: &quot;World&quot;, italic: true },
+          { text: &quot;.&quot; },
+        ],
+      },
+      { children: [{ text: &quot;こんにちは。&quot; }] },
+      { children: [{ text: &quot;👍❤️🧑‍🧑‍🧒&quot; }] },
     ],
   });
 
@@ -35348,7 +35516,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
       &gt;
         {doc.children.map((r, i) =&gt; (
           &lt;div key={i}&gt;
-            {r.map((n, j) =&gt; (
+            {r.children.map((n, j) =&gt; (
               &lt;Text key={j} node={n} /&gt;
             ))}
           &lt;/div&gt;
@@ -35371,12 +35539,14 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   type Doc = v.InferOutput&lt;typeof tagSchema&gt;;
   const [doc, setDoc] = useState&lt;Doc&gt;({
     children: [
-      [
-        { text: &quot;Hello &quot; },
-        { type: &quot;tag&quot;, label: &quot;Apple&quot;, value: &quot;1&quot; },
-        { text: &quot; world &quot; },
-        { type: &quot;tag&quot;, label: &quot;Orange&quot;, value: &quot;2&quot; },
-      ],
+      {
+        children: [
+          { text: &quot;Hello &quot; },
+          { type: &quot;tag&quot;, label: &quot;Apple&quot;, value: &quot;1&quot; },
+          { text: &quot; world &quot; },
+          { type: &quot;tag&quot;, label: &quot;Orange&quot;, value: &quot;2&quot; },
+        ],
+      },
     ],
   });
 
@@ -35432,7 +35602,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
           padding: 8,
         }}
       &gt;
-        {doc.children[0].map((t, j) =&gt;
+        {doc.children[0].children.map((t, j) =&gt;
           &quot;text&quot; in t ? (
             &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
           ) : (
@@ -35470,22 +35640,24 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   type Doc = v.InferOutput&lt;typeof imageSchema&gt;;
   const [doc, setDoc] = useState&lt;Doc&gt;({
     children: [
-      [
-        {
-          text: &quot;Hello &quot;,
-        },
-        {
-          type: &quot;image&quot;,
-          src: &quot;https://loremflickr.com/320/240/cats?lock=1&quot;,
-        },
-        {
-          text: &quot; world &quot;,
-        },
-        {
-          type: &quot;image&quot;,
-          src: &quot;https://loremflickr.com/320/240/cats?lock=2&quot;,
-        },
-      ],
+      {
+        children: [
+          {
+            text: &quot;Hello &quot;,
+          },
+          {
+            type: &quot;image&quot;,
+            src: &quot;https://loremflickr.com/320/240/cats?lock=1&quot;,
+          },
+          {
+            text: &quot; world &quot;,
+          },
+          {
+            type: &quot;image&quot;,
+            src: &quot;https://loremflickr.com/320/240/cats?lock=2&quot;,
+          },
+        ],
+      },
     ],
   });
 
@@ -35532,7 +35704,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
     &gt;
       {doc.children.map((r, i) =&gt; (
         &lt;div key={i}&gt;
-          {r.map((t, j) =&gt;
+          {r.children.map((t, j) =&gt;
             &quot;text&quot; in t ? (
               &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
             ) : (
@@ -35558,18 +35730,20 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   type Doc = v.InferOutput&lt;typeof videoSchema&gt;;
   const [doc, setDoc] = useState&lt;Doc&gt;({
     children: [
-      [
-        {
-          text: &quot;Hello &quot;,
-        },
-        {
-          type: &quot;video&quot;,
-          src: &quot;https://download.samplelib.com/mp4/sample-5s.mp4&quot;,
-        },
-        {
-          text: &quot; world &quot;,
-        },
-      ],
+      {
+        children: [
+          {
+            text: &quot;Hello &quot;,
+          },
+          {
+            type: &quot;video&quot;,
+            src: &quot;https://download.samplelib.com/mp4/sample-5s.mp4&quot;,
+          },
+          {
+            text: &quot; world &quot;,
+          },
+        ],
+      },
     ],
   });
 
@@ -35610,7 +35784,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
     &gt;
       {doc.children.map((r, i) =&gt; (
         &lt;div key={i}&gt;
-          {r.map((t, j) =&gt;
+          {r.children.map((t, j) =&gt;
             &quot;text&quot; in t ? (
               &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
             ) : (
@@ -35645,18 +35819,20 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   type Doc = v.InferOutput&lt;typeof youtubeSchema&gt;;
   const [doc, setDoc] = useState&lt;Doc&gt;({
     children: [
-      [
-        {
-          text: &quot;Hello &quot;,
-        },
-        {
-          type: &quot;youtube&quot;,
-          id: &quot;IqKz0SfHaqI&quot;,
-        },
-        {
-          text: &quot; Youtube&quot;,
-        },
-      ],
+      {
+        children: [
+          {
+            text: &quot;Hello &quot;,
+          },
+          {
+            type: &quot;youtube&quot;,
+            id: &quot;IqKz0SfHaqI&quot;,
+          },
+          {
+            text: &quot; Youtube&quot;,
+          },
+        ],
+      },
     ],
   });
 
@@ -35698,7 +35874,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
       &gt;
         {doc.children.map((r, i) =&gt; (
           &lt;div key={i}&gt;
-            {r.map((t, j) =&gt;
+            {r.children.map((t, j) =&gt;
               &quot;text&quot; in t ? (
                 &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
               ) : (
@@ -35790,6 +35966,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -35896,6 +36073,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -35915,8 +36098,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -35963,19 +36146,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -35995,11 +36177,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -36007,7 +36192,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -36045,11 +36230,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -36057,7 +36243,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -36100,7 +36286,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -36142,7 +36328,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -36223,11 +36409,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -36248,7 +36435,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -36296,7 +36483,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -36319,7 +36508,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -36355,7 +36544,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -38120,7 +38309,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -38302,7 +38491,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -38354,7 +38543,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -39021,6 +39210,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -39127,6 +39317,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -39146,8 +39342,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -39194,19 +39390,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -39226,11 +39421,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -39238,7 +39436,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -39276,11 +39474,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -39288,7 +39487,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -39331,7 +39530,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -39373,7 +39572,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -39454,11 +39653,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -39479,7 +39679,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -39527,7 +39727,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -39550,7 +39752,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -39586,7 +39788,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -41351,7 +41553,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -41533,7 +41735,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -41585,7 +41787,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -41878,6 +42080,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -41984,6 +42187,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -42003,8 +42212,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -42051,19 +42260,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -42083,11 +42291,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -42095,7 +42306,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -42133,11 +42344,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -42145,7 +42357,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -42188,7 +42400,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -42230,7 +42442,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -42311,11 +42523,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -42336,7 +42549,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -42384,7 +42597,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -42407,7 +42622,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -42443,7 +42658,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -44208,7 +44423,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -44390,7 +44605,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -44442,7 +44657,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -44669,6 +44884,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -44775,6 +44991,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -44794,8 +45016,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -44842,19 +45064,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -44874,11 +45095,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -44886,7 +45110,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -44924,11 +45148,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -44936,7 +45161,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -44979,7 +45204,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -45021,7 +45246,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -45102,11 +45327,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -45127,7 +45353,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -45175,7 +45401,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -45198,7 +45426,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -45234,7 +45462,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -46999,7 +47227,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -47181,7 +47409,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -47233,7 +47461,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -47493,6 +47721,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -47599,6 +47828,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -47618,8 +47853,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -47666,19 +47901,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -47698,11 +47932,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -47710,7 +47947,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -47748,11 +47985,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -47760,7 +47998,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -47803,7 +48041,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -47845,7 +48083,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -47926,11 +48164,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -47951,7 +48190,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -47999,7 +48238,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -48022,7 +48263,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -48058,7 +48299,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -49823,7 +50064,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -50005,7 +50246,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -50057,7 +50298,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -50350,6 +50591,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -50456,6 +50698,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -50475,8 +50723,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -50523,19 +50771,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -50555,11 +50802,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -50567,7 +50817,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -50605,11 +50855,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -50617,7 +50868,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -50660,7 +50911,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -50702,7 +50953,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -50783,11 +51034,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -50808,7 +51060,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -50856,7 +51108,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -50879,7 +51133,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -50915,7 +51169,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -52680,7 +52934,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -52862,7 +53116,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -52914,7 +53168,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -53147,6 +53401,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -53253,6 +53508,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -53272,8 +53533,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -53320,19 +53581,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -53352,11 +53612,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -53364,7 +53627,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -53402,11 +53665,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -53414,7 +53678,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -53457,7 +53721,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -53499,7 +53763,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -53580,11 +53844,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -53605,7 +53870,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -53653,7 +53918,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -53676,7 +53943,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -53712,7 +53979,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -55477,7 +55744,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -55659,7 +55926,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -55711,7 +55978,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -55953,6 +56220,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -56059,6 +56327,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -56078,8 +56352,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -56126,19 +56400,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -56158,11 +56431,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -56170,7 +56446,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -56208,11 +56484,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -56220,7 +56497,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -56263,7 +56540,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -56305,7 +56582,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -56386,11 +56663,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -56411,7 +56689,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -56459,7 +56737,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -56482,7 +56762,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -56518,7 +56798,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -58283,7 +58563,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -58465,7 +58745,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -58517,7 +58797,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -58772,6 +59052,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -58878,6 +59159,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -58897,8 +59184,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -58945,19 +59232,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -58977,11 +59263,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -58989,7 +59278,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -59027,11 +59316,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -59039,7 +59329,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -59082,7 +59372,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -59124,7 +59414,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -59205,11 +59495,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -59230,7 +59521,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -59278,7 +59569,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -59301,7 +59594,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -59337,7 +59630,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -61102,7 +61395,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -61284,7 +61577,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -61336,7 +61629,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -61561,6 +61854,7 @@ import type {
   SelectionSnapshot,
   TextNode,
   Path,
+  BlockNode,
 } from &quot;./types.js&quot;;
 import { stringToFragment } from &quot;./utils.js&quot;;
 
@@ -61667,6 +61961,12 @@ export class Transaction {
 export const isTextNode = (node: InlineNode): node is TextNode =&gt;
   &quot;text&quot; in node;
 
+/**
+ * @internal
+ */
+export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =&gt;
+  &quot;children&quot; in node;
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean =&gt; {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -61686,8 +61986,8 @@ const getNodeSize = (node: InlineNode): number =&gt;
 /**
  * @internal
  */
-export const getLineSize = (line: readonly InlineNode[]): number =&gt;
-  line.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
+export const getBlockSize = (block: BlockNode): number =&gt;
+  block.children.reduce((acc: number, n) =&gt; acc + getNodeSize(n), 0);
 
 const normalize = &lt;T extends InlineNode&gt;(
   array: T[],
@@ -61734,19 +62034,18 @@ const concat = &lt;T extends InlineNode&gt;(a: T[], b: readonly T[]): void =&gt;
 /**
  * @internal
  */
-export const joinBlocks = &lt;T extends InlineNode&gt;(
-  ...blocks: (readonly T[])[]
-): readonly T[] =&gt; {
-  return blocks.reduce&lt;T[]&gt;((acc, b) =&gt; {
-    concat(acc, b);
-    return acc;
-  }, []);
+export const joinBlocks = &lt;T extends BlockNode&gt;(...blocks: T[]): T =&gt; {
+  return {
+    ...blocks[0]!,
+    children: blocks.reduce((acc, b) =&gt; {
+      concat(acc, b.children);
+      return acc;
+    }, []),
+  };
 };
 
-const splitBlock = &lt;T extends InlineNode&gt;(
-  nodes: readonly T[],
-  offset: number,
-): [readonly T[], readonly T[]] =&gt; {
+const splitBlock = &lt;T extends BlockNode&gt;(block: T, offset: number): [T, T] =&gt; {
+  const nodes = block.children;
   for (let i = 0; i &lt; nodes.length; i++) {
     const node = nodes[i]!;
     const size = getNodeSize(node);
@@ -61766,11 +62065,14 @@ const splitBlock = &lt;T extends InlineNode&gt;(
         // node size must be 1
         after.unshift(node);
       }
-      return [before, after];
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
     }
     offset -= size;
   }
-  return [nodes, []];
+  return [block, { ...block, children: [] }];
 };
 
 const normalizePath = (path: Path): number =&gt; {
@@ -61778,7 +62080,7 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): readonly InlineNode[] =&gt; {
+const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -61816,11 +62118,12 @@ const replaceRange = &lt;T extends DocNode&gt;(
       : maybeAfter;
 
   if (isString(inserted)) {
+    const beforeNodes = before.children;
     // inherit style from previous text node
-    const beforeLength = before.length;
+    const beforeLength = beforeNodes.length;
     let anchorNode: TextNode | undefined;
     if (beforeLength) {
-      const maybeAnchor = before[beforeLength - 1]!;
+      const maybeAnchor = beforeNodes[beforeLength - 1]!;
       if (isTextNode(maybeAnchor)) {
         anchorNode = maybeAnchor;
       }
@@ -61828,7 +62131,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
     inserted = stringToFragment(inserted, anchorNode);
   }
 
-  let lines: (readonly InlineNode[])[];
+  let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
@@ -61871,7 +62174,7 @@ export const sliceFragment = (
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
   if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
-    if (offset &gt;= 0 &amp;&amp; offset &lt;= getLineSize(blockAtPath(doc, path))) {
+    if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
   }
@@ -61913,7 +62216,7 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
         return move(
           position,
           lineDiff,
-          getLineSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
+          getBlockSize(lines[lineLength - 1]!) - (lineDiff === 0 ? 0 : at[1]),
           comparePath(at[0], position[0]) === 0,
         );
       }
@@ -61994,11 +62297,12 @@ export const applyOperation = &lt;T extends DocNode&gt;(
           doc,
           start,
           end,
-          sliceFragment(doc, start, end).map((line) =&gt;
-            line.map((node) =&gt;
+          sliceFragment(doc, start, end).map((block) =&gt; ({
+            ...block,
+            children: block.children.map((node) =&gt;
               isTextNode(node) ? { ...node, [key]: value } : node,
             ),
-          ),
+          })),
         );
       }
       break;
@@ -62019,7 +62323,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
-  getLineSize,
+  getBlockSize,
   isTextNode,
   sliceFragment,
   Transaction,
@@ -62067,7 +62371,9 @@ export function InsertNode&lt;T extends DocNode&gt;(
   node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
-  this.apply(new Transaction().insertFragment(position, [[node]]));
+  this.apply(
+    new Transaction().insertFragment(position, [{ children: [node] }]),
+  );
 }
 
 /**
@@ -62090,7 +62396,7 @@ export function ReplaceAll(this: Editor, text: string) {
         [[], 0],
         [
           [doc.children.length - 1],
-          getLineSize(doc.children[doc.children.length - 1]!),
+          getBlockSize(doc.children[doc.children.length - 1]!),
         ],
       )
       .insertText([[], 0], text),
@@ -62126,7 +62432,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
-    n.filter(isTextNode),
+    n.children.filter(isTextNode),
   );
   if (texts.length) {
     this.apply(
@@ -63891,7 +64197,7 @@ export const filePaste = (
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [[mapper(file)]];
+            return [{ children: [mapper(file)] }];
           }
         }
       }
@@ -64073,7 +64379,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
@@ -64125,7 +64431,7 @@ import { docToString, stringToFragment } from &quot;../doc/utils.js&quot;;
 import { createEditor, type Editor, type EditorOptions } from &quot;../editor.js&quot;;
 import { singlelinePlugin } from &quot;../plugins/index.js&quot;;
 
-type PlainDoc = { children: { text: string }[][] };
+type PlainDoc = { children: { children: { text: string }[] }[] };
 
 export interface PlainEditorOptions extends Omit&lt;
   EditorOptions&lt;PlainDoc&gt;,
