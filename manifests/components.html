@@ -714,7 +714,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -1625,9 +1624,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -1966,6 +1962,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -1978,9 +1975,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -2426,9 +2426,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -2767,6 +2764,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -2779,9 +2777,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -3991,7 +3992,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -4902,9 +4902,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -5243,6 +5240,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -5255,9 +5253,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -5703,9 +5704,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -6044,6 +6042,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -6056,9 +6055,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -7233,7 +7235,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -8144,9 +8145,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -8485,6 +8483,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -8497,9 +8496,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -8945,9 +8947,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -9286,6 +9285,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -9298,9 +9298,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -10101,7 +10104,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -11012,9 +11014,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -11353,6 +11352,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -11365,9 +11365,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -11813,9 +11816,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -12154,6 +12154,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -12166,9 +12167,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -12903,7 +12907,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -13814,9 +13817,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -14155,6 +14155,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -14167,9 +14168,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -14615,9 +14619,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -14956,6 +14957,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -14968,9 +14970,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -15738,7 +15743,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -16649,9 +16653,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -16990,6 +16991,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -17002,9 +17004,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -17450,9 +17455,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -17791,6 +17793,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -17803,9 +17806,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -18606,7 +18612,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -19517,9 +19522,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -19858,6 +19860,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -19870,9 +19873,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -20318,9 +20324,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -20659,6 +20662,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -20671,9 +20675,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -21414,7 +21421,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -22325,9 +22331,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -22666,6 +22669,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -22678,9 +22682,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -23126,9 +23133,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -23467,6 +23471,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -23479,9 +23484,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -24231,7 +24239,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -25142,9 +25149,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -25483,6 +25487,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -25495,9 +25500,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -25943,9 +25951,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -26284,6 +26289,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -26296,9 +26302,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -27061,7 +27070,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -27972,9 +27980,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -28313,6 +28318,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -28325,9 +28331,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -28773,9 +28782,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -29114,6 +29120,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -29126,9 +29133,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -29861,7 +29871,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -30772,9 +30781,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -31113,6 +31119,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -31125,9 +31132,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -31573,9 +31583,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -31914,6 +31921,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -31926,9 +31934,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -32713,7 +32724,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -33624,9 +33634,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -33965,6 +33972,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -33977,9 +33985,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -34425,9 +34436,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -34766,6 +34774,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -34778,9 +34787,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -35990,7 +36002,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -36901,9 +36912,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -37242,6 +37250,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -37254,9 +37263,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -37702,9 +37714,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -38043,6 +38052,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -38055,9 +38065,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -39232,7 +39245,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -40143,9 +40155,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -40484,6 +40493,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -40496,9 +40506,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -40944,9 +40957,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -41285,6 +41295,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -41297,9 +41308,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -42100,7 +42114,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -43011,9 +43024,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -43352,6 +43362,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -43364,9 +43375,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -43812,9 +43826,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -44153,6 +44164,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -44165,9 +44177,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -44902,7 +44917,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -45813,9 +45827,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -46154,6 +46165,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -46166,9 +46178,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -46614,9 +46629,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -46955,6 +46967,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -46967,9 +46980,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -47737,7 +47753,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -48648,9 +48663,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -48989,6 +49001,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -49001,9 +49014,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -49449,9 +49465,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -49790,6 +49803,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -49802,9 +49816,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -50605,7 +50622,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -51516,9 +51532,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -51857,6 +51870,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -51869,9 +51883,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -52317,9 +52334,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -52658,6 +52672,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -52670,9 +52685,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -53413,7 +53431,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -54324,9 +54341,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -54665,6 +54679,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -54677,9 +54692,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -55125,9 +55143,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -55466,6 +55481,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -55478,9 +55494,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -56230,7 +56249,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -57141,9 +57159,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -57482,6 +57497,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -57494,9 +57510,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -57942,9 +57961,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -58283,6 +58299,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -58295,9 +58312,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -59060,7 +59080,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -59971,9 +59990,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -60312,6 +60328,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -60324,9 +60341,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -60772,9 +60792,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -61113,6 +61130,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -61125,9 +61143,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -61860,7 +61881,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
@@ -62771,9 +62791,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -63112,6 +63129,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -63124,9 +63142,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
@@ -63572,9 +63593,6 @@ export const createEditor = &lt;
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish(&quot;change&quot;);
@@ -63913,6 +63931,7 @@ export const createEditor = &lt;
           parserConfig,
         );
         if (dataTransfer &amp;&amp; droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -63925,9 +63944,12 @@ export const createEditor = &lt;
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };
