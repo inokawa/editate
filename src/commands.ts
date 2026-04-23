@@ -8,7 +8,9 @@ import {
 import type { Editor } from "./editor.js";
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -45,7 +47,7 @@ export function InsertText(
  */
 export function InsertNode<T extends DocNode>(
   this: Editor<T>,
-  node: Exclude<InferNode<T>, TextNode>,
+  node: Exclude<InferInlineNode<T>, TextNode>,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -89,7 +91,7 @@ type ToggleableKey<T> = {
  */
 export function Format<
   T extends DocNode,
-  N extends Omit<InferNode<T>, "text">,
+  N extends Omit<InferInlineNode<T>, "text">,
   K extends Extract<keyof N, string>,
 >(
   this: Editor<T>,
@@ -97,7 +99,7 @@ export function Format<
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -105,7 +107,7 @@ export function Format<
  */
 export function ToggleFormat<T extends DocNode>(
   this: Editor<T>,
-  key: Extract<ToggleableKey<Omit<InferNode<T>, "text">>, string>,
+  key: Extract<ToggleableKey<Omit<InferInlineNode<T>, "text">>, string>,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =>
@@ -113,11 +115,22 @@ export function ToggleFormat<T extends DocNode>(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) => !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr<
+  T extends DocNode,
+  N extends Omit<InferBlockNode<T>, "text">,
+  K extends Extract<keyof N, string>,
+>(this: Editor<T>, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }

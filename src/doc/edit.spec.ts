@@ -2667,7 +2667,7 @@ describe("delete", () => {
   });
 });
 
-describe("update attr", () => {
+describe("format", () => {
   describe("validation", () => {
     it("path less than min", () => {
       const docText = "abcde";
@@ -3090,6 +3090,107 @@ describe("update attr", () => {
             { id: 1, text: docText3.slice(1) },
           ],
         },
+      ],
+    });
+    expect(res[1]).toEqual(sel);
+  });
+});
+
+describe("set block attr", () => {
+  describe("validation", () => {
+    it("path less than min", () => {
+      const docText = "abcde";
+      const doc: Doc = { children: [{ children: [{ id: 1, text: docText }] }] };
+      const sel: SelectionSnapshot = [
+        [[0], 2],
+        [[0], 2],
+      ];
+      const res = applyOperation(doc, sel, {
+        type: "set_node_attr",
+        path: [-1],
+        key: "foo",
+        value: "bar",
+      });
+
+      expect(is(res[0], doc)).toBe(true);
+      expect(res[1]).toEqual(sel);
+    });
+
+    it("path more than max", () => {
+      const docText = "abcde";
+      const doc: Doc = { children: [{ children: [{ id: 1, text: docText }] }] };
+      const sel: SelectionSnapshot = [
+        [[0], 2],
+        [[0], 2],
+      ];
+      const res = applyOperation(doc, sel, {
+        type: "set_node_attr",
+        path: [100],
+        key: "foo",
+        value: "bar",
+      });
+
+      expect(is(res[0], doc)).toBe(true);
+      expect(res[1]).toEqual(sel);
+    });
+  });
+
+  it("update node at start", () => {
+    const docText = "abcde";
+    const docText2 = "fghij";
+    const doc: Doc = {
+      children: [
+        { children: [{ id: 1, text: docText }] },
+        { children: [{ id: 1, text: docText2 }] },
+      ],
+    };
+    const sel: SelectionSnapshot = [
+      [[1], 2],
+      [[1], 2],
+    ];
+    const res = applyOperation(doc, sel, {
+      type: "set_node_attr",
+      path: [0],
+      key: "foo",
+      value: "bar",
+    });
+
+    expect(res[0]).toEqual({
+      children: [
+        {
+          foo: "bar",
+          children: [{ id: 1, text: docText }],
+        },
+        { children: [{ id: 1, text: docText2 }] },
+      ],
+    });
+    expect(res[1]).toEqual(sel);
+  });
+
+  it("update node at end", () => {
+    const docText = "abcde";
+    const docText2 = "fghij";
+    const doc: Doc = {
+      children: [
+        { children: [{ id: 1, text: docText }] },
+        { children: [{ id: 1, text: docText2 }] },
+      ],
+    };
+    const sel: SelectionSnapshot = [
+      [[1], 2],
+      [[1], 2],
+    ];
+    const res = applyOperation(doc, sel, {
+      type: "set_node_attr",
+      path: [1],
+      key: "foo",
+      value: "bar",
+    });
+
+    expect(res[0]).toEqual({
+      children: [
+        { children: [{ id: 1, text: docText }] },
+        { foo: "bar", children: [{ id: 1, text: docText2 }] },
       ],
     });
     expect(res[1]).toEqual(sel);

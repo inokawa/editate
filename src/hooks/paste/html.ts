@@ -1,4 +1,4 @@
-import type { DocNode, InferNode, TextNode } from "../../doc/types.js";
+import type { DocNode, InferInlineNode, TextNode } from "../../doc/types.js";
 import { domToFragment } from "../../dom/index.js";
 import { isCommentNode } from "../../dom/parser.js";
 import type { PasteHook } from "./types.js";
@@ -7,10 +7,10 @@ import type { PasteHook } from "./types.js";
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = <T extends DocNode>(
-  serializeText: (t: string) => Extract<InferNode<T>, TextNode>,
+  serializeText: (t: string) => Extract<InferInlineNode<T>, TextNode>,
   serializers: ((
     node: HTMLElement,
-  ) => Exclude<InferNode<T>, TextNode> | void)[] = [],
+  ) => Exclude<InferInlineNode<T>, TextNode> | void)[] = [],
 ): PasteHook => {
   return (dataTransfer, config) => {
     const html = dataTransfer.getData("text/html");

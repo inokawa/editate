@@ -42,11 +42,20 @@ type SetAttrOperation = Readonly<{
   value: unknown;
 }>;
 
+const TYPE_SET_NODE_ATTR = "set_node_attr";
+type SetNodeAttrOperation = Readonly<{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}>;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -92,11 +101,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -252,6 +271,17 @@ const move = (
   ];
 };
 
+const replace = <T extends DocNode>(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T => {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = <T extends DocNode>(
   doc: T,
   start: Position,
@@ -293,13 +323,7 @@ const replaceRange = <T extends DocNode>(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -324,9 +348,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean => {
+  return !path.length || (path[0]! >= 0 && path[0]! < doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean => {
   // TODO improve
-  if (!path.length || (path[0]! >= 0 && path[0]! < doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset >= 0 && offset <= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -375,7 +403,8 @@ const rebasePosition = (position: Position, op: Operation): Position => {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -460,6 +489,14 @@ export const applyOperation = <T extends DocNode>(
             ),
           })),
         );
+      }
+      break;
+    }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
       }
       break;
     }
