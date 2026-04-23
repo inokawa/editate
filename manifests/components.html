@@ -582,7 +582,7 @@
 <main>
   <div class="wrap">
     <div class="note info" style="margin-bottom: 16px;">
-            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.5s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
+            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.6s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
             <pre><code>typescript: {
   reactDocgen: 'react-docgen-typescript',
 }</code></pre>
@@ -993,7 +993,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -1044,7 +1044,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -1579,7 +1582,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -1605,7 +1607,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -1629,7 +1630,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -2052,7 +2052,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -2383,7 +2383,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -2409,7 +2408,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -2433,7 +2431,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -2856,7 +2853,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -4272,7 +4269,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -4323,7 +4320,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -4858,7 +4858,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -4884,7 +4883,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -4908,7 +4906,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -5331,7 +5328,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -5662,7 +5659,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -5688,7 +5684,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -5712,7 +5707,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -6135,7 +6129,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -7516,7 +7510,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -7567,7 +7561,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -8102,7 +8099,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -8128,7 +8124,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -8152,7 +8147,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -8575,7 +8569,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -8906,7 +8900,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -8932,7 +8925,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -8956,7 +8948,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -9379,7 +9370,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -10386,7 +10377,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -10437,7 +10428,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -10972,7 +10966,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -10998,7 +10991,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -11022,7 +11014,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -11445,7 +11436,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -11776,7 +11767,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -11802,7 +11792,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -11826,7 +11815,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -12249,7 +12237,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -13190,7 +13178,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -13241,7 +13229,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -13776,7 +13767,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -13802,7 +13792,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -13826,7 +13815,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -14249,7 +14237,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -14580,7 +14568,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -14606,7 +14593,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -14630,7 +14616,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -15053,7 +15038,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -16027,7 +16012,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -16078,7 +16063,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -16613,7 +16601,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -16639,7 +16626,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -16663,7 +16649,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -17086,7 +17071,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -17417,7 +17402,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -17443,7 +17427,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -17467,7 +17450,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -17890,7 +17872,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -18897,7 +18879,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -18948,7 +18930,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -19483,7 +19468,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -19509,7 +19493,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -19533,7 +19516,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -19956,7 +19938,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -20287,7 +20269,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -20313,7 +20294,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -20337,7 +20317,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -20760,7 +20739,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -21707,7 +21686,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -21758,7 +21737,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -22293,7 +22275,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -22319,7 +22300,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -22343,7 +22323,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -22766,7 +22745,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -23097,7 +23076,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -23123,7 +23101,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -23147,7 +23124,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -23570,7 +23546,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -24526,7 +24502,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -24577,7 +24553,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -25112,7 +25091,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -25138,7 +25116,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -25162,7 +25139,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -25585,7 +25561,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -25916,7 +25892,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -25942,7 +25917,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -25966,7 +25940,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -26389,7 +26362,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -27358,7 +27331,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -27409,7 +27382,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -27944,7 +27920,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -27970,7 +27945,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -27994,7 +27968,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -28417,7 +28390,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -28748,7 +28721,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -28774,7 +28746,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -28798,7 +28769,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -29221,7 +29191,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -30160,7 +30130,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -30211,7 +30181,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -30746,7 +30719,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -30772,7 +30744,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -30796,7 +30767,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -31219,7 +31189,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -31550,7 +31520,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -31576,7 +31545,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -31600,7 +31568,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -32023,7 +31990,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -33014,7 +32981,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -33065,7 +33032,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -33600,7 +33570,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -33626,7 +33595,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -33650,7 +33618,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -34073,7 +34040,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -34404,7 +34371,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -34430,7 +34396,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -34454,7 +34419,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -34877,7 +34841,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -36293,7 +36257,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -36344,7 +36308,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -36879,7 +36846,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -36905,7 +36871,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -36929,7 +36894,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -37352,7 +37316,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -37683,7 +37647,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -37709,7 +37672,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -37733,7 +37695,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -38156,7 +38117,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -39537,7 +39498,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -39588,7 +39549,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -40123,7 +40087,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -40149,7 +40112,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -40173,7 +40135,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -40596,7 +40557,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -40927,7 +40888,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -40953,7 +40913,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -40977,7 +40936,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -41400,7 +41358,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -42407,7 +42365,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -42458,7 +42416,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -42993,7 +42954,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -43019,7 +42979,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -43043,7 +43002,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -43466,7 +43424,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -43797,7 +43755,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -43823,7 +43780,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -43847,7 +43803,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -44270,7 +44225,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -45211,7 +45166,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -45262,7 +45217,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -45797,7 +45755,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -45823,7 +45780,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -45847,7 +45803,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -46270,7 +46225,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -46601,7 +46556,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -46627,7 +46581,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -46651,7 +46604,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -47074,7 +47026,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -48048,7 +48000,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -48099,7 +48051,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -48634,7 +48589,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -48660,7 +48614,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -48684,7 +48637,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -49107,7 +49059,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -49438,7 +49390,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -49464,7 +49415,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -49488,7 +49438,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -49911,7 +49860,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -50918,7 +50867,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -50969,7 +50918,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -51504,7 +51456,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -51530,7 +51481,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -51554,7 +51504,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -51977,7 +51926,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -52308,7 +52257,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -52334,7 +52282,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -52358,7 +52305,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -52781,7 +52727,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -53728,7 +53674,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -53779,7 +53725,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -54314,7 +54263,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -54340,7 +54288,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -54364,7 +54311,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -54787,7 +54733,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -55118,7 +55064,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -55144,7 +55089,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -55168,7 +55112,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -55591,7 +55534,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -56547,7 +56490,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -56598,7 +56541,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -57133,7 +57079,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -57159,7 +57104,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -57183,7 +57127,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -57606,7 +57549,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -57937,7 +57880,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -57963,7 +57905,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -57987,7 +57928,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -58410,7 +58350,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -59379,7 +59319,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -59430,7 +59370,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -59965,7 +59908,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -59991,7 +59933,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -60015,7 +59956,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -60438,7 +60378,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -60769,7 +60709,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -60795,7 +60734,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -60819,7 +60757,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -61242,7 +61179,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -62181,7 +62118,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; 
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position =&gt; {
+const rebasePosition = (position: Position, op: Operation): Position =&gt; {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -62232,7 +62169,10 @@ export const rebasePosition = (position: Position, op: Operation): Position =&gt
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot =&gt; {
@@ -62767,7 +62707,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -62793,7 +62732,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -62817,7 +62755,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -63240,7 +63177,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
@@ -63571,7 +63508,6 @@ export const createEditor = &lt;
   const apply = (tr: Transaction) =&gt; {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook(&quot;apply&quot;);
       const length = applyHooks.length;
 
@@ -63597,7 +63533,6 @@ export const createEditor = &lt;
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -63621,7 +63556,6 @@ export const createEditor = &lt;
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish(&quot;change&quot;);
       }
     }
@@ -64044,7 +63978,7 @@ export const createEditor = &lt;
     },
   };
 
-  const history = createHistory&lt;T&gt;(doc);
+  const history = createHistory(editor);
 
   editor.on(&quot;change&quot;, () =&gt; {
     onChange(doc);
