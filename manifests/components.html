@@ -3301,10 +3301,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -6577,10 +6578,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -9818,10 +9820,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -12685,10 +12688,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -15486,10 +15490,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -18320,10 +18325,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -21187,10 +21193,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -23994,10 +24001,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -26810,10 +26818,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -29639,10 +29648,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -32438,10 +32448,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -35289,10 +35300,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -38565,10 +38577,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -41806,10 +41819,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -44673,10 +44687,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -47474,10 +47489,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -50308,10 +50324,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -53175,10 +53192,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -55982,10 +56000,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -58798,10 +58817,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -61627,10 +61647,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
@@ -64426,10 +64447,11 @@ import { joinBlocks } from &quot;../doc/edit.js&quot;;
 import type { Editor } from &quot;../editor.js&quot;;
 
 export function singlelinePlugin(this: Editor) {
-  this.hook(&quot;mount&quot;, (element) =&gt; {
+  const editor = this;
+  editor.hook(&quot;mount&quot;, (element) =&gt; {
     element.ariaMultiLine = null;
   });
-  this.hook(&quot;apply&quot;, (op, next) =&gt; {
+  editor.hook(&quot;apply&quot;, (op, next) =&gt; {
     if (op.type === &quot;insert_text&quot;) {
       op = {
         ...op,
