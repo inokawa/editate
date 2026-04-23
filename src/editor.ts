@@ -357,9 +357,6 @@ export const createEditor = <
 
         dispatch();
       }
-      if (tr.selection) {
-        updateSelection(tr.selection);
-      }
 
       if (!is(currentDoc, doc)) {
         publish("change");
@@ -698,6 +695,7 @@ export const createEditor = <
           parserConfig,
         );
         if (dataTransfer && droppedPosition) {
+          let afterSelection: SelectionSnapshot | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
@@ -710,9 +708,12 @@ export const createEditor = <
             } else {
               tr.insertFragment(pos, pasted);
             }
-            tr.selection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(droppedPosition)];
           }
           apply(tr);
+          if (afterSelection) {
+            updateSelection(afterSelection);
+          }
           element.focus({ preventScroll: true });
         }
       };

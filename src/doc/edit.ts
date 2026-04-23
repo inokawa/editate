@@ -56,7 +56,6 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =>
 
 export class Transaction {
   private readonly _ops: Operation[];
-  selection?: SelectionSnapshot;
 
   constructor(ops?: readonly Operation[]) {
     this._ops = ops ? ops.slice() : [];
