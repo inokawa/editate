@@ -335,7 +335,7 @@ const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean => {
   return false;
 };
 
-export const rebasePosition = (position: Position, op: Operation): Position => {
+const rebasePosition = (position: Position, op: Operation): Position => {
   switch (op.type) {
     case TYPE_DELETE: {
       const { start, end } = op;
@@ -386,7 +386,10 @@ export const rebasePosition = (position: Position, op: Operation): Position => {
   return position;
 };
 
-const rebaseSelection = (
+/**
+ * @internal
+ */
+export const rebaseSelection = (
   selection: SelectionSnapshot,
   op: Operation,
 ): SelectionSnapshot => {

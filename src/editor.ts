@@ -314,7 +314,6 @@ export const createEditor = <
   const apply = (tr: Transaction) => {
     if (!readonly) {
       const currentDoc = doc;
-      const ops: Operation[] = [];
       const applyHooks = getHook("apply");
       const length = applyHooks.length;
 
@@ -340,7 +339,6 @@ export const createEditor = <
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
                 selection = nextSelection;
-                ops.push(op);
               }
             } catch (e) {
               // rollback
@@ -364,7 +362,6 @@ export const createEditor = <
       }
 
       if (!is(currentDoc, doc)) {
-        history.change(doc, ops);
         publish("change");
       }
     }
@@ -787,7 +784,7 @@ export const createEditor = <
     },
   };
 
-  const history = createHistory<T>(doc);
+  const history = createHistory(editor);
 
   editor.on("change", () => {
     onChange(doc);
