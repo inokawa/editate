@@ -582,7 +582,7 @@
 <main>
   <div class="wrap">
     <div class="note info" style="margin-bottom: 16px;">
-            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.6s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
+            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.5s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
             <pre><code>typescript: {
   reactDocgen: 'react-docgen-typescript',
 }</code></pre>
@@ -1304,7 +1304,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -4633,7 +4633,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -7927,7 +7927,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -10847,7 +10847,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -13701,7 +13701,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -16588,7 +16588,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -19508,7 +19508,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -22368,7 +22368,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -25237,7 +25237,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -28119,7 +28119,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -30971,7 +30971,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -33875,7 +33875,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -37204,7 +37204,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -40498,7 +40498,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -43418,7 +43418,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -46272,7 +46272,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -49159,7 +49159,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -52079,7 +52079,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -54939,7 +54939,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -57808,7 +57808,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -60690,7 +60690,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
@@ -63542,7 +63542,7 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
  */
 export function SetBlockAttr&lt;
   T extends DocNode,
-  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends InferBlockNode&lt;T&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
