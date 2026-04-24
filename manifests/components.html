@@ -643,6 +643,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -700,11 +701,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -750,11 +760,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -910,6 +930,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -951,13 +982,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -982,9 +1007,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -1033,7 +1062,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -1121,6 +1151,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -1145,7 +1183,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -1182,7 +1222,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -1226,7 +1266,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -1234,7 +1274,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -1242,7 +1282,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -1250,13 +1290,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -2890,7 +2941,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -2898,7 +2949,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -3039,7 +3090,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -3048,10 +3099,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -3921,6 +3972,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -3978,11 +4030,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -4028,11 +4089,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -4188,6 +4259,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -4229,13 +4311,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -4260,9 +4336,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -4311,7 +4391,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -4399,6 +4480,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -4423,7 +4512,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -4460,7 +4551,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -4504,7 +4595,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -4512,7 +4603,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -4520,7 +4611,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -4528,13 +4619,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -6168,7 +6270,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -6176,7 +6278,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -6317,7 +6419,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -6326,10 +6428,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -7164,6 +7266,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -7221,11 +7324,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -7271,11 +7383,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -7431,6 +7553,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -7472,13 +7605,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -7503,9 +7630,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -7554,7 +7685,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -7642,6 +7774,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -7666,7 +7806,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -7703,7 +7845,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -7747,7 +7889,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -7755,7 +7897,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -7763,7 +7905,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -7771,13 +7913,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -9411,7 +9564,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -9419,7 +9572,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -9560,7 +9713,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -9569,10 +9722,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -10033,6 +10186,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -10090,11 +10244,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -10140,11 +10303,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -10300,6 +10473,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -10341,13 +10525,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -10372,9 +10550,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -10423,7 +10605,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -10511,6 +10694,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -10535,7 +10726,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -10572,7 +10765,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -10616,7 +10809,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -10624,7 +10817,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -10632,7 +10825,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -10640,13 +10833,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -12280,7 +12484,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -12288,7 +12492,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -12429,7 +12633,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -12438,10 +12642,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -12836,6 +13040,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -12893,11 +13098,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -12943,11 +13157,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -13103,6 +13327,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -13144,13 +13379,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -13175,9 +13404,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -13226,7 +13459,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -13314,6 +13548,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -13338,7 +13580,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -13375,7 +13619,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -13419,7 +13663,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -13427,7 +13671,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -13435,7 +13679,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -13443,13 +13687,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -15083,7 +15338,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -15091,7 +15346,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -15232,7 +15487,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -15241,10 +15496,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -15672,6 +15927,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -15729,11 +15985,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -15779,11 +16044,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -15939,6 +16214,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -15980,13 +16266,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -16011,9 +16291,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -16062,7 +16346,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -16150,6 +16435,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -16174,7 +16467,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -16211,7 +16506,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -16255,7 +16550,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -16263,7 +16558,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -16271,7 +16566,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -16279,13 +16574,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -17919,7 +18225,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -17927,7 +18233,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -18068,7 +18374,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -18077,10 +18383,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -18541,6 +18847,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -18598,11 +18905,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -18648,11 +18964,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -18808,6 +19134,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -18849,13 +19186,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -18880,9 +19211,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -18931,7 +19266,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -19019,6 +19355,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -19043,7 +19387,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -19080,7 +19426,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -19124,7 +19470,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -19132,7 +19478,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -19140,7 +19486,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -19148,13 +19494,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -20788,7 +21145,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -20796,7 +21153,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -20937,7 +21294,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -20946,10 +21303,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -21350,6 +21707,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -21407,11 +21765,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -21457,11 +21824,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -21617,6 +21994,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -21658,13 +22046,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -21689,9 +22071,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -21740,7 +22126,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -21828,6 +22215,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -21852,7 +22247,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -21889,7 +22286,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -21933,7 +22330,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -21941,7 +22338,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -21949,7 +22346,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -21957,13 +22354,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -23597,7 +24005,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -23605,7 +24013,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -23746,7 +24154,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -23755,10 +24163,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -24168,6 +24576,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -24225,11 +24634,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -24275,11 +24693,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -24435,6 +24863,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -24476,13 +24915,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -24507,9 +24940,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -24558,7 +24995,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -24646,6 +25084,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -24670,7 +25116,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -24707,7 +25155,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -24751,7 +25199,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -24759,7 +25207,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -24767,7 +25215,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -24775,13 +25223,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -26415,7 +26874,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -26423,7 +26882,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -26564,7 +27023,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -26573,10 +27032,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -26999,6 +27458,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -27056,11 +27516,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -27106,11 +27575,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -27266,6 +27745,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -27307,13 +27797,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -27338,9 +27822,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -27389,7 +27877,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -27477,6 +27966,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -27501,7 +27998,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -27538,7 +28037,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -27582,7 +28081,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -27590,7 +28089,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -27598,7 +28097,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -27606,13 +28105,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -29246,7 +29756,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -29254,7 +29764,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -29395,7 +29905,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -29404,10 +29914,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -29800,6 +30310,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -29857,11 +30368,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -29907,11 +30427,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -30067,6 +30597,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -30108,13 +30649,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -30139,9 +30674,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -30190,7 +30729,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -30278,6 +30818,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -30302,7 +30850,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -30339,7 +30889,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -30383,7 +30933,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -30391,7 +30941,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -30399,7 +30949,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -30407,13 +30957,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -32047,7 +32608,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -32055,7 +32616,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -32196,7 +32757,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -32205,10 +32766,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -32653,6 +33214,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -32710,11 +33272,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -32760,11 +33331,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -32920,6 +33501,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -32961,13 +33553,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -32992,9 +33578,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -33043,7 +33633,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -33131,6 +33722,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -33155,7 +33754,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -33192,7 +33793,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -33236,7 +33837,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -33244,7 +33845,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -33252,7 +33853,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -33260,13 +33861,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -34900,7 +35512,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -34908,7 +35520,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -35049,7 +35661,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -35058,10 +35670,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -35931,6 +36543,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -35988,11 +36601,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -36038,11 +36660,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -36198,6 +36830,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -36239,13 +36882,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -36270,9 +36907,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -36321,7 +36962,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -36409,6 +37051,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -36433,7 +37083,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -36470,7 +37122,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -36514,7 +37166,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -36522,7 +37174,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -36530,7 +37182,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -36538,13 +37190,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -38178,7 +38841,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -38186,7 +38849,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -38327,7 +38990,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -38336,10 +38999,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -39174,6 +39837,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -39231,11 +39895,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -39281,11 +39954,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -39441,6 +40124,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -39482,13 +40176,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -39513,9 +40201,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -39564,7 +40256,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -39652,6 +40345,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -39676,7 +40377,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -39713,7 +40416,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -39757,7 +40460,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -39765,7 +40468,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -39773,7 +40476,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -39781,13 +40484,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -41421,7 +42135,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -41429,7 +42143,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -41570,7 +42284,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -41579,10 +42293,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -42043,6 +42757,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -42100,11 +42815,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -42150,11 +42874,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -42310,6 +43044,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -42351,13 +43096,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -42382,9 +43121,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -42433,7 +43176,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -42521,6 +43265,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -42545,7 +43297,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -42582,7 +43336,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -42626,7 +43380,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -42634,7 +43388,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -42642,7 +43396,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -42650,13 +43404,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -44290,7 +45055,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -44298,7 +45063,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -44439,7 +45204,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -44448,10 +45213,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -44846,6 +45611,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -44903,11 +45669,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -44953,11 +45728,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -45113,6 +45898,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -45154,13 +45950,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -45185,9 +45975,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -45236,7 +46030,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -45324,6 +46119,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -45348,7 +46151,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -45385,7 +46190,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -45429,7 +46234,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -45437,7 +46242,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -45445,7 +46250,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -45453,13 +46258,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -47093,7 +47909,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -47101,7 +47917,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -47242,7 +48058,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -47251,10 +48067,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -47682,6 +48498,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -47739,11 +48556,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -47789,11 +48615,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -47949,6 +48785,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -47990,13 +48837,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -48021,9 +48862,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -48072,7 +48917,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -48160,6 +49006,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -48184,7 +49038,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -48221,7 +49077,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -48265,7 +49121,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -48273,7 +49129,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -48281,7 +49137,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -48289,13 +49145,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -49929,7 +50796,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -49937,7 +50804,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -50078,7 +50945,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -50087,10 +50954,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -50551,6 +51418,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -50608,11 +51476,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -50658,11 +51535,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -50818,6 +51705,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -50859,13 +51757,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -50890,9 +51782,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -50941,7 +51837,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -51029,6 +51926,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -51053,7 +51958,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -51090,7 +51997,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -51134,7 +52041,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -51142,7 +52049,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -51150,7 +52057,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -51158,13 +52065,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -52798,7 +53716,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -52806,7 +53724,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -52947,7 +53865,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -52956,10 +53874,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -53360,6 +54278,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -53417,11 +54336,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -53467,11 +54395,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -53627,6 +54565,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -53668,13 +54617,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -53699,9 +54642,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -53750,7 +54697,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -53838,6 +54786,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -53862,7 +54818,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -53899,7 +54857,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -53943,7 +54901,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -53951,7 +54909,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -53959,7 +54917,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -53967,13 +54925,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -55607,7 +56576,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -55615,7 +56584,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -55756,7 +56725,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -55765,10 +56734,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -56178,6 +57147,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -56235,11 +57205,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -56285,11 +57264,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -56445,6 +57434,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -56486,13 +57486,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -56517,9 +57511,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -56568,7 +57566,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -56656,6 +57655,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -56680,7 +57687,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -56717,7 +57726,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -56761,7 +57770,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -56769,7 +57778,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -56777,7 +57786,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -56785,13 +57794,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -58425,7 +59445,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -58433,7 +59453,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -58574,7 +59594,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -58583,10 +59603,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -59009,6 +60029,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -59066,11 +60087,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -59116,11 +60146,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -59276,6 +60316,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -59317,13 +60368,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -59348,9 +60393,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -59399,7 +60448,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -59487,6 +60537,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -59511,7 +60569,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -59548,7 +60608,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -59592,7 +60652,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -59600,7 +60660,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -59608,7 +60668,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -59616,13 +60676,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -61256,7 +62327,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -61264,7 +62335,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -61405,7 +62476,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -61414,10 +62485,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
@@ -61810,6 +62881,7 @@ export {
   ReplaceAll,
   Format,
   ToggleFormat,
+  SetBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -61867,11 +62939,20 @@ type SetAttrOperation = Readonly&lt;{
   value: unknown;
 }&gt;;
 
+const TYPE_SET_NODE_ATTR = &quot;set_node_attr&quot;;
+type SetNodeAttrOperation = Readonly&lt;{
+  type: typeof TYPE_SET_NODE_ATTR;
+  path: Path;
+  key: string;
+  value: unknown;
+}&gt;;
+
 export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation;
+  | SetAttrOperation
+  | SetNodeAttrOperation;
 
 /**
  * @internal
@@ -61917,11 +62998,21 @@ export class Transaction {
     return this;
   }
 
-  attr(start: Position, end: Position, key: string, value: unknown): this {
+  format(start: Position, end: Position, key: string, value: unknown): this {
     this._ops.push({
       type: TYPE_SET_ATTR,
       start: start,
       end: end,
+      key: key,
+      value: value,
+    });
+    return this;
+  }
+
+  attr(at: Path, key: string, value: unknown): this {
+    this._ops.push({
+      type: TYPE_SET_NODE_ATTR,
+      path: at,
       key: key,
       value: value,
     });
@@ -62077,6 +63168,17 @@ const move = (
   ];
 };
 
+const replace = &lt;T extends DocNode&gt;(
+  doc: T,
+  start: number,
+  end: number,
+  lines: Fragment,
+): T =&gt; {
+  const sliced = doc.children.slice();
+  sliced.splice(start, end - start + 1, ...lines);
+  return { ...doc, children: sliced };
+};
+
 const replaceRange = &lt;T extends DocNode&gt;(
   doc: T,
   start: Position,
@@ -62118,13 +63220,7 @@ const replaceRange = &lt;T extends DocNode&gt;(
   }
   lines[0] = joinBlocks(before, lines[0]!);
 
-  const sliced = doc.children.slice();
-  sliced.splice(
-    normalizePath(startPath),
-    normalizePath(endPath) - normalizePath(startPath) + 1,
-    ...lines,
-  );
-  return { ...doc, children: sliced };
+  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
 
 /**
@@ -62149,9 +63245,13 @@ export const sliceFragment = (
   return sliced;
 };
 
+const isValidPath = (doc: DocNode, path: Path): boolean =&gt; {
+  return !path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length);
+};
+
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean =&gt; {
   // TODO improve
-  if (!path.length || (path[0]! &gt;= 0 &amp;&amp; path[0]! &lt; doc.children.length)) {
+  if (isValidPath(doc, path)) {
     if (offset &gt;= 0 &amp;&amp; offset &lt;= getBlockSize(blockAtPath(doc, path))) {
       return true;
     }
@@ -62200,7 +63300,8 @@ const rebasePosition = (position: Position, op: Operation): Position =&gt; {
       }
       break;
     }
-    case TYPE_SET_ATTR: {
+    case TYPE_SET_ATTR:
+    case TYPE_SET_NODE_ATTR: {
       break;
     }
     default: {
@@ -62288,6 +63389,14 @@ export const applyOperation = &lt;T extends DocNode&gt;(
       }
       break;
     }
+    case TYPE_SET_NODE_ATTR: {
+      const { path, key, value } = op;
+      if (isValidPath(doc, path)) {
+        const p = normalizePath(path);
+        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      }
+      break;
+    }
     default: {
       op satisfies never;
     }
@@ -62312,7 +63421,9 @@ import {
 import type { Editor } from &quot;./editor.js&quot;;
 import type {
   DocNode,
-  InferNode,
+  InferBlockNode,
+  InferInlineNode,
+  Path,
   Position,
   PositionRange,
   TextNode,
@@ -62349,7 +63460,7 @@ export function InsertText(
  */
 export function InsertNode&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  node: Exclude&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  node: Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   position: Position = this.selection[0],
 ) {
   this.apply(
@@ -62393,7 +63504,7 @@ type ToggleableKey&lt;T&gt; = {
  */
 export function Format&lt;
   T extends DocNode,
-  N extends Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;,
+  N extends Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;,
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(
   this: Editor&lt;T&gt;,
@@ -62401,7 +63512,7 @@ export function Format&lt;
   value: N[K],
   range: PositionRange = toRange(this.selection),
 ) {
-  this.apply(new Transaction().attr(...range, key, value));
+  this.apply(new Transaction().format(...range, key, value));
 }
 
 /**
@@ -62409,7 +63520,7 @@ export function Format&lt;
  */
 export function ToggleFormat&lt;T extends DocNode&gt;(
   this: Editor&lt;T&gt;,
-  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
+  key: Extract&lt;ToggleableKey&lt;Omit&lt;InferInlineNode&lt;T&gt;, &quot;text&quot;&gt;&gt;, string&gt;,
   range: PositionRange = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =&gt;
@@ -62417,13 +63528,24 @@ export function ToggleFormat&lt;T extends DocNode&gt;(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().attr(
+      new Transaction().format(
         ...range,
         key,
         texts.some((n) =&gt; !n[key as keyof typeof n]) ? true : false,
       ),
     );
   }
+}
+
+/**
+ * Insert node at the caret or specified position.
+ */
+export function SetBlockAttr&lt;
+  T extends DocNode,
+  N extends Omit&lt;InferBlockNode&lt;T&gt;, &quot;text&quot;&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
+  this.apply(new Transaction().attr(path, key, value));
 }
 
 
@@ -64057,7 +65179,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InlineNode, InferNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InlineNode, InferInlineNode } from &quot;../../doc/types.js&quot;;
 import { docToString } from &quot;../../doc/utils.js&quot;;
 import type { CopyHook } from &quot;./types.js&quot;;
 
@@ -64065,7 +65187,7 @@ import type { CopyHook } from &quot;./types.js&quot;;
  * An extension to handle copying to plain text.
  */
 export const plainCopy = &lt;T extends DocNode&gt;(
-  serializer?: (node: InferNode&lt;T&gt;) =&gt; string,
+  serializer?: (node: InferInlineNode&lt;T&gt;) =&gt; string,
 ): CopyHook =&gt; {
   return (dataTransfer, data) =&gt; {
     dataTransfer.setData(
@@ -64206,7 +65328,7 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
-import type { DocNode, InferNode, TextNode } from &quot;../../doc/types.js&quot;;
+import type { DocNode, InferInlineNode, TextNode } from &quot;../../doc/types.js&quot;;
 import { domToFragment } from &quot;../../dom/index.js&quot;;
 import { isCommentNode } from &quot;../../dom/parser.js&quot;;
 import type { PasteHook } from &quot;./types.js&quot;;
@@ -64215,10 +65337,10 @@ import type { PasteHook } from &quot;./types.js&quot;;
  * An extension to handle pasting / dropping from HTML.
  */
 export const htmlPaste = &lt;T extends DocNode&gt;(
-  serializeText: (t: string) =&gt; Extract&lt;InferNode&lt;T&gt;, TextNode&gt;,
+  serializeText: (t: string) =&gt; Extract&lt;InferInlineNode&lt;T&gt;, TextNode&gt;,
   serializers: ((
     node: HTMLElement,
-  ) =&gt; Exclude&lt;InferNode&lt;T&gt;, TextNode&gt; | void)[] = [],
+  ) =&gt; Exclude&lt;InferInlineNode&lt;T&gt;, TextNode&gt; | void)[] = [],
 ): PasteHook =&gt; {
   return (dataTransfer, config) =&gt; {
     const html = dataTransfer.getData(&quot;text/html&quot;);
