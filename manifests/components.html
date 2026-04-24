@@ -582,7 +582,7 @@
 <main>
   <div class="wrap">
     <div class="note info" style="margin-bottom: 16px;">
-            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.4s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
+            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.5s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
             <pre><code>typescript: {
   reactDocgen: 'react-docgen-typescript',
 }</code></pre>
@@ -721,7 +721,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -4083,7 +4085,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -7406,7 +7410,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -10355,7 +10361,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -13238,7 +13246,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -16154,7 +16164,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -19103,7 +19115,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -21992,7 +22006,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -24890,7 +24906,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -27801,7 +27819,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -30682,7 +30702,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -33615,7 +33637,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -36977,7 +37001,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -40300,7 +40326,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -43249,7 +43277,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -46132,7 +46162,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -49048,7 +49080,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -51997,7 +52031,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -54886,7 +54922,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -57784,7 +57822,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -60695,7 +60735,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
@@ -63576,7 +63618,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =&gt;
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
