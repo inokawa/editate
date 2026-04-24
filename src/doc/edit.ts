@@ -61,7 +61,9 @@ export type Operation =
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =>
-  type === TYPE_INSERT_NODE || type === TYPE_SET_ATTR;
+  type === TYPE_INSERT_NODE ||
+  type === TYPE_SET_ATTR ||
+  type === TYPE_SET_NODE_ATTR;
 
 export class Transaction {
   private readonly _ops: Operation[];
