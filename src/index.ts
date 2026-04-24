@@ -8,6 +8,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from "./commands.js";
 export { createEditor } from "./editor.js";
 export type { EditorOptions, Editor } from "./editor.js";

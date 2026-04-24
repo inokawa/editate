@@ -96,12 +96,13 @@ export const App = () => {
 
 ```tsx
 import { useState, useEffect, useRef, useMemo } from "react";
-import { createEditor, ToggleFormat } from "edix";
+import { createEditor, ToggleFormat, ToggleBlockAttr } from "edix";
 import * as z from "zod";
 
 const schema = z.strictObject({
   children: z.array(
     z.strictObject({
+      align: z.enum(["left", "right"]).optional(),
       children: z.array(
         z.strictObject({
           text: z.string(),
@@ -161,6 +162,13 @@ export const App = () => {
         >
           italic
         </button>
+        <button
+          onClick={() => {
+            editor.apply(ToggleBlockAttr, "align", "right", undefined);
+          }}
+        >
+          align
+        </button>
       </div>
       <div
         ref={ref}
@@ -171,7 +179,7 @@ export const App = () => {
         }}
       >
         {doc.children.map((b, i) => (
-          <div key={i}>
+          <div key={i} style={{ textAlign: b.align }}>
             {b.children.map((n, j) => (
               <span
                 key={j}

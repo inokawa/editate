@@ -1,5 +1,6 @@
 import { toRange } from "./doc/position.js";
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -133,4 +134,28 @@ export function SetBlockAttr<
   K extends Extract<keyof N, string>,
 >(this: Editor<T>, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr<
+  T extends DocNode,
+  N extends InferBlockNode<T>,
+  K extends Extract<keyof N, string>,
+>(
+  this: Editor<T>,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }

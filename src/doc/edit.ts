@@ -252,7 +252,10 @@ const normalizePath = (path: Path): number => {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode => {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode => {
   return doc.children[normalizePath(path)]!;
 };
 

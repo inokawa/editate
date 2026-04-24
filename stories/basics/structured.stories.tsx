@@ -19,6 +19,7 @@ import {
   filePaste,
   hotkey,
   InsertNode,
+  ToggleBlockAttr,
 } from "../../src";
 import * as v from "valibot";
 
@@ -75,9 +76,9 @@ export const Basic: StoryObj = {
           padding: 8,
         }}
       >
-        {doc.children.map((r, i) => (
+        {doc.children.map((b, i) => (
           <div key={i}>
-            {r.children.map((n, j) => (
+            {b.children.map((n, j) => (
               <span key={j}>{n.text || <br />}</span>
             ))}
           </div>
@@ -98,6 +99,7 @@ const richTextSchema = v.strictObject({
 const richSchema = v.strictObject({
   children: v.array(
     v.strictObject({
+      align: v.optional(v.picklist(["left", "right"])),
       children: v.array(richTextSchema),
     }),
   ),
@@ -152,6 +154,9 @@ export const RichText: StoryObj = {
     const toggleStrike = () => {
       editor.apply(ToggleFormat, "strike");
     };
+    const toggleAlign = () => {
+      editor.apply(ToggleBlockAttr, "align", "right", undefined);
+    };
 
     const editor = useMemo(
       () =>
@@ -183,6 +188,7 @@ export const RichText: StoryObj = {
           <button onClick={toggleItalic}>italic</button>
           <button onClick={toggleUnderline}>underline</button>
           <button onClick={toggleStrike}>strike</button>
+          <button onClick={toggleAlign}>align</button>
         </div>
         <div
           ref={ref}
@@ -192,9 +198,9 @@ export const RichText: StoryObj = {
             padding: 8,
           }}
         >
-          {doc.children.map((r, i) => (
-            <div key={i}>
-              {r.children.map((n, j) => (
+          {doc.children.map((b, i) => (
+            <div key={i} style={{ textAlign: b.align }}>
+              {b.children.map((n, j) => (
                 <Text key={j} node={n} />
               ))}
             </div>
@@ -407,9 +413,9 @@ export const Image: StoryObj = {
           padding: 8,
         }}
       >
-        {doc.children.map((r, i) => (
+        {doc.children.map((b, i) => (
           <div key={i}>
-            {r.children.map((t, j) =>
+            {b.children.map((t, j) =>
               "text" in t ? (
                 <span key={j}>{t.text || <br />}</span>
               ) : (
@@ -500,9 +506,9 @@ export const Video: StoryObj = {
           padding: 8,
         }}
       >
-        {doc.children.map((r, i) => (
+        {doc.children.map((b, i) => (
           <div key={i}>
-            {r.children.map((t, j) =>
+            {b.children.map((t, j) =>
               "text" in t ? (
                 <span key={j}>{t.text || <br />}</span>
               ) : (
@@ -617,9 +623,9 @@ export const Iframe: StoryObj = {
             padding: 8,
           }}
         >
-          {doc.children.map((r, i) => (
+          {doc.children.map((b, i) => (
             <div key={i}>
-              {r.children.map((t, j) =>
+              {b.children.map((t, j) =>
                 "text" in t ? (
                   <span key={j}>{t.text || <br />}</span>
                 ) : (
