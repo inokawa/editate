@@ -644,6 +644,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -911,7 +912,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -1175,6 +1179,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -1308,6 +1313,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -3454,9 +3483,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
         padding: 8,
       }}
     &gt;
-      {doc.children.map((r, i) =&gt; (
+      {doc.children.map((b, i) =&gt; (
         &lt;div key={i}&gt;
-          {r.children.map((n, j) =&gt; (
+          {b.children.map((n, j) =&gt; (
             &lt;span key={j}&gt;{n.text || &lt;br /&gt;}&lt;/span&gt;
           ))}
         &lt;/div&gt;
@@ -3503,6 +3532,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   const toggleStrike = () =&gt; {
     editor.apply(ToggleFormat, &quot;strike&quot;);
   };
+  const toggleAlign = () =&gt; {
+    editor.apply(ToggleBlockAttr, &quot;align&quot;, &quot;right&quot;, undefined);
+  };
 
   const editor = useMemo(
     () =&gt;
@@ -3534,6 +3566,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
         &lt;button onClick={toggleItalic}&gt;italic&lt;/button&gt;
         &lt;button onClick={toggleUnderline}&gt;underline&lt;/button&gt;
         &lt;button onClick={toggleStrike}&gt;strike&lt;/button&gt;
+        &lt;button onClick={toggleAlign}&gt;align&lt;/button&gt;
       &lt;/div&gt;
       &lt;div
         ref={ref}
@@ -3543,9 +3576,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
           padding: 8,
         }}
       &gt;
-        {doc.children.map((r, i) =&gt; (
-          &lt;div key={i}&gt;
-            {r.children.map((n, j) =&gt; (
+        {doc.children.map((b, i) =&gt; (
+          &lt;div key={i} style={{ textAlign: b.align }}&gt;
+            {b.children.map((n, j) =&gt; (
               &lt;Text key={j} node={n} /&gt;
             ))}
           &lt;/div&gt;
@@ -3731,9 +3764,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
         padding: 8,
       }}
     &gt;
-      {doc.children.map((r, i) =&gt; (
+      {doc.children.map((b, i) =&gt; (
         &lt;div key={i}&gt;
-          {r.children.map((t, j) =&gt;
+          {b.children.map((t, j) =&gt;
             &quot;text&quot; in t ? (
               &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
             ) : (
@@ -3811,9 +3844,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
         padding: 8,
       }}
     &gt;
-      {doc.children.map((r, i) =&gt; (
+      {doc.children.map((b, i) =&gt; (
         &lt;div key={i}&gt;
-          {r.children.map((t, j) =&gt;
+          {b.children.map((t, j) =&gt;
             &quot;text&quot; in t ? (
               &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
             ) : (
@@ -3901,9 +3934,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
           padding: 8,
         }}
       &gt;
-        {doc.children.map((r, i) =&gt; (
+        {doc.children.map((b, i) =&gt; (
           &lt;div key={i}&gt;
-            {r.children.map((t, j) =&gt;
+            {b.children.map((t, j) =&gt;
               &quot;text&quot; in t ? (
                 &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
               ) : (
@@ -3973,6 +4006,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -4240,7 +4274,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -4504,6 +4541,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -4637,6 +4675,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -7267,6 +7329,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -7534,7 +7597,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -7798,6 +7864,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -7931,6 +7998,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -10187,6 +10278,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -10454,7 +10546,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -10718,6 +10813,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -10851,6 +10947,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -13041,6 +13161,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -13308,7 +13429,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -13572,6 +13696,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -13705,6 +13830,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -15928,6 +16077,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -16195,7 +16345,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -16459,6 +16612,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -16592,6 +16746,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -18848,6 +19026,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -19115,7 +19294,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -19379,6 +19561,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -19512,6 +19695,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -21708,6 +21915,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -21975,7 +22183,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -22239,6 +22450,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -22372,6 +22584,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -24577,6 +24813,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -24844,7 +25081,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -25108,6 +25348,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -25241,6 +25482,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -27459,6 +27724,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -27726,7 +27992,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -27990,6 +28259,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -28123,6 +28393,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -30311,6 +30605,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -30578,7 +30873,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -30842,6 +31140,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -30975,6 +31274,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -33215,6 +33538,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -33482,7 +33806,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -33746,6 +34073,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -33879,6 +34207,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -36025,9 +36377,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
         padding: 8,
       }}
     &gt;
-      {doc.children.map((r, i) =&gt; (
+      {doc.children.map((b, i) =&gt; (
         &lt;div key={i}&gt;
-          {r.children.map((n, j) =&gt; (
+          {b.children.map((n, j) =&gt; (
             &lt;span key={j}&gt;{n.text || &lt;br /&gt;}&lt;/span&gt;
           ))}
         &lt;/div&gt;
@@ -36074,6 +36426,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
   const toggleStrike = () =&gt; {
     editor.apply(ToggleFormat, &quot;strike&quot;);
   };
+  const toggleAlign = () =&gt; {
+    editor.apply(ToggleBlockAttr, &quot;align&quot;, &quot;right&quot;, undefined);
+  };
 
   const editor = useMemo(
     () =&gt;
@@ -36105,6 +36460,7 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
         &lt;button onClick={toggleItalic}&gt;italic&lt;/button&gt;
         &lt;button onClick={toggleUnderline}&gt;underline&lt;/button&gt;
         &lt;button onClick={toggleStrike}&gt;strike&lt;/button&gt;
+        &lt;button onClick={toggleAlign}&gt;align&lt;/button&gt;
       &lt;/div&gt;
       &lt;div
         ref={ref}
@@ -36114,9 +36470,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
           padding: 8,
         }}
       &gt;
-        {doc.children.map((r, i) =&gt; (
-          &lt;div key={i}&gt;
-            {r.children.map((n, j) =&gt; (
+        {doc.children.map((b, i) =&gt; (
+          &lt;div key={i} style={{ textAlign: b.align }}&gt;
+            {b.children.map((n, j) =&gt; (
               &lt;Text key={j} node={n} /&gt;
             ))}
           &lt;/div&gt;
@@ -36302,9 +36658,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
         padding: 8,
       }}
     &gt;
-      {doc.children.map((r, i) =&gt; (
+      {doc.children.map((b, i) =&gt; (
         &lt;div key={i}&gt;
-          {r.children.map((t, j) =&gt;
+          {b.children.map((t, j) =&gt;
             &quot;text&quot; in t ? (
               &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
             ) : (
@@ -36382,9 +36738,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
         padding: 8,
       }}
     &gt;
-      {doc.children.map((r, i) =&gt; (
+      {doc.children.map((b, i) =&gt; (
         &lt;div key={i}&gt;
-          {r.children.map((t, j) =&gt;
+          {b.children.map((t, j) =&gt;
             &quot;text&quot; in t ? (
               &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
             ) : (
@@ -36472,9 +36828,9 @@ export type EditorPlugin&lt;A extends unknown[], T extends DocNode&gt; = (
           padding: 8,
         }}
       &gt;
-        {doc.children.map((r, i) =&gt; (
+        {doc.children.map((b, i) =&gt; (
           &lt;div key={i}&gt;
-            {r.children.map((t, j) =&gt;
+            {b.children.map((t, j) =&gt;
               &quot;text&quot; in t ? (
                 &lt;span key={j}&gt;{t.text || &lt;br /&gt;}&lt;/span&gt;
               ) : (
@@ -36544,6 +36900,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -36811,7 +37168,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -37075,6 +37435,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -37208,6 +37569,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -39838,6 +40223,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -40105,7 +40491,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -40369,6 +40758,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -40502,6 +40892,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -42758,6 +43172,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -43025,7 +43440,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -43289,6 +43707,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -43422,6 +43841,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -45612,6 +46055,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -45879,7 +46323,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -46143,6 +46590,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -46276,6 +46724,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -48499,6 +48971,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -48766,7 +49239,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -49030,6 +49506,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -49163,6 +49640,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -51419,6 +51920,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -51686,7 +52188,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -51950,6 +52455,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -52083,6 +52589,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -54279,6 +54809,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -54546,7 +55077,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -54810,6 +55344,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -54943,6 +55478,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -57148,6 +57707,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -57415,7 +57975,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -57679,6 +58242,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -57812,6 +58376,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -60030,6 +60618,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -60297,7 +60886,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -60561,6 +61153,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -60694,6 +61287,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
@@ -62882,6 +63499,7 @@ export {
   Format,
   ToggleFormat,
   SetBlockAttr,
+  ToggleBlockAttr,
 } from &quot;./commands.js&quot;;
 export { createEditor } from &quot;./editor.js&quot;;
 export type { EditorOptions, Editor } from &quot;./editor.js&quot;;
@@ -63149,7 +63767,10 @@ const normalizePath = (path: Path): number =&gt; {
   return path.length ? path[0]! : 0;
 };
 
-const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
+/**
+ * @internal
+ */
+export const blockAtPath = (doc: DocNode, path: Path): BlockNode =&gt; {
   return doc.children[normalizePath(path)]!;
 };
 
@@ -63413,6 +64034,7 @@ You can debug your component file in this playground: https://react-docgen.dev/p
 Code:
 import { toRange } from &quot;./doc/position.js&quot;;
 import {
+  blockAtPath,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -63546,6 +64168,30 @@ export function SetBlockAttr&lt;
   K extends Extract&lt;keyof N, string&gt;,
 &gt;(this: Editor&lt;T&gt;, key: K, value: N[K], path: Path = this.selection[0][0]) {
   this.apply(new Transaction().attr(path, key, value));
+}
+
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export function ToggleBlockAttr&lt;
+  T extends DocNode,
+  N extends InferBlockNode&lt;T&gt;,
+  K extends Extract&lt;keyof N, string&gt;,
+&gt;(
+  this: Editor&lt;T&gt;,
+  key: K,
+  onValue: N[K],
+  offValue: N[K],
+  path: Path = this.selection[0][0],
+) {
+  const block = blockAtPath(this.doc, path) as N;
+  this.apply(
+    new Transaction().attr(
+      path,
+      key,
+      block[key] === onValue ? offValue : onValue,
+    ),
+  );
 }
 
 
