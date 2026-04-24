@@ -1,5 +1,10 @@
 import { isBlockNode, isTextNode } from "./edit.js";
-import { type DocNode, type InlineNode, type TextNode } from "./types.js";
+import {
+  type BlockNode,
+  type DocNode,
+  type InlineNode,
+  type TextNode,
+} from "./types.js";
 
 /**
  * @internal
@@ -26,11 +31,12 @@ export const docToString = <T extends DocNode>(
 /**
  * @internal
  */
-export const stringToFragment = <T extends TextNode>(
+export const stringToFragment = <T extends TextNode, B extends BlockNode>(
   text: string,
   node?: T,
+  block?: B,
 ) => {
   return text
     .split("\n")
-    .map((l) => ({ children: [{ ...node, text: l } as T] }));
+    .map((l) => ({ ...block, children: [{ ...node, text: l } as T] }));
 };

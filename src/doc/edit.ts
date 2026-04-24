@@ -314,7 +314,7 @@ const replaceRange = <T extends DocNode>(
         anchorNode = maybeAnchor;
       }
     }
-    inserted = stringToFragment(inserted, anchorNode);
+    inserted = stringToFragment(inserted, anchorNode, before);
   }
 
   let lines: BlockNode[];
