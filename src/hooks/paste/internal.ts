@@ -2,7 +2,7 @@ import { INTERNAL_COPY_KEY } from "../utils.js";
 import type { PasteHook } from "./types.js";
 
 /**
- * An extension to handle pasting / dropping from edix editor instance.
+ * An extension to handle pasting / dropping from editor instance.
  */
 export const internalPaste = ({
   key = INTERNAL_COPY_KEY,

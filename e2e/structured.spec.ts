@@ -2,16 +2,16 @@ import { test, expect, Page } from "@playwright/test";
 import {
   getSelection,
   getText,
-  initEdixHelpers,
+  initEditateHelpers,
   NON_EDITABLE_PLACEHOLDER,
   insertAt,
   deleteAt,
   moveSelectionToOrigin,
-} from "./edix";
+} from "./editate";
 import { getEditable, type, loop, readClipboard, storyUrl } from "./utils";
 
 test.beforeEach(async ({ context }) => {
-  await initEdixHelpers(context);
+  await initEditateHelpers(context);
 });
 
 test.describe("smoke node", () => {

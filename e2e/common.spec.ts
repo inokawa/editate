@@ -2,7 +2,7 @@ import { test, expect, Page, Locator } from "@playwright/test";
 import {
   getSelection,
   getText,
-  initEdixHelpers,
+  initEditateHelpers,
   deleteAt,
   insertAt,
   insertLineBreakAt,
@@ -11,7 +11,7 @@ import {
   replaceAt,
   moveSelectionToOrigin,
   waitForStyleSet,
-} from "./edix";
+} from "./editate";
 import {
   getEditable,
   type,
@@ -22,7 +22,7 @@ import {
 } from "./utils";
 
 test.beforeEach(async ({ context }) => {
-  await initEdixHelpers(context);
+  await initEditateHelpers(context);
 });
 
 test.describe("feature detection", () => {

@@ -129,7 +129,7 @@ export const WithKuromojin: StoryObj = {
       (async () => {
         const tokenizer = await getTokenizer({
           dicPath: (import.meta as any).env.STORYBOOK_DEPLOY
-            ? "/edix/dict"
+            ? "/editate/dict"
             : "/dict",
         });
         setTokenizer(tokenizer);

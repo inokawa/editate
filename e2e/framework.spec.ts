@@ -2,14 +2,14 @@ import { test, expect } from "@playwright/test";
 import {
   getSelection,
   getText,
-  initEdixHelpers,
+  initEditateHelpers,
   insertAt,
   insertLineBreakAt,
-} from "./edix";
+} from "./editate";
 import { getEditable, type } from "./utils";
 
 test.beforeEach(async ({ context }) => {
-  await initEdixHelpers(context);
+  await initEditateHelpers(context);
 });
 
 test("smoke", async ({ page }) => {

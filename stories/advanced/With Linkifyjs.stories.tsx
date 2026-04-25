@@ -27,7 +27,7 @@ const Link = ({ href, children }: { href: string; children: string }) => {
 export const WithLinkifyjs: StoryObj = {
   render: () => {
     const [text, setText] = useState(
-      `Click this url https://github.com/inokawa/edix !`,
+      `Click this url https://github.com/inokawa/editate !`,
     );
 
     const ref = useRef<HTMLDivElement>(null);

@@ -5,24 +5,24 @@ import { SelectionSnapshot } from "../src/doc/types.ts";
 
 declare global {
   interface Window {
-    edix: typeof import("../src/dom/index.ts");
+    editate: typeof import("../src/dom/index.ts");
   }
 }
 
-const edixDom = esbuild
+const editateDom = esbuild
   .build({
     entryPoints: [path.join(import.meta.dirname, "../src/dom/index.ts")],
     bundle: true,
     write: false,
     format: "iife",
-    globalName: "edix",
+    globalName: "editate",
   })
   .then((r) => r.outputFiles[0].text);
 
-export const initEdixHelpers = async (context: BrowserContext) => {
+export const initEditateHelpers = async (context: BrowserContext) => {
   await context.addInitScript(`
-    ${await edixDom}
-    window.edix = edix;
+    ${await editateDom}
+    window.editate = editate;
     `);
 };
 
@@ -35,15 +35,15 @@ export const getText = async (
   return editable.evaluate(
     (element, [NON_EDITABLE_PLACEHOLDER, { blockTag }]) => {
       const document = element.ownerDocument;
-      return window.edix
+      return window.editate
         .domToFragment(
           element,
-          window.edix.createParser({
+          window.editate.createParser({
             _document: document,
             _isBlock: blockTag
               ? (n) => n.tagName === blockTag.toUpperCase()
-              : window.edix.defaultIsBlockNode,
-            _isVoid: window.edix.defaultIsVoidNode,
+              : window.editate.defaultIsBlockNode,
+            _isVoid: window.editate.defaultIsVoidNode,
           }),
           (text) => ({ text }),
           () => ({}),
@@ -67,15 +67,15 @@ export const getSeletedText = (
       const document = element.ownerDocument;
       const selection = document.getSelection()!;
       const range = selection.getRangeAt(0)!.cloneContents();
-      return window.edix
+      return window.editate
         .domToFragment(
           range,
-          window.edix.createParser({
+          window.editate.createParser({
             _document: document,
             _isBlock: blockTag
               ? (n) => n.tagName === blockTag.toUpperCase()
-              : window.edix.defaultIsBlockNode,
-            _isVoid: window.edix.defaultIsVoidNode,
+              : window.editate.defaultIsBlockNode,
+            _isVoid: window.editate.defaultIsVoidNode,
           }),
           (text) => ({ text }),
           () => ({}),
@@ -146,14 +146,14 @@ export const getSelection = (
   config: { blockTag?: string } = {},
 ): Promise<SelectionSnapshot> => {
   return editable.evaluate((element, { blockTag }) => {
-    return window.edix.takeSelectionSnapshot(
+    return window.editate.takeSelectionSnapshot(
       element,
-      window.edix.createParser({
+      window.editate.createParser({
         _document: element.ownerDocument,
         _isBlock: blockTag
           ? (n) => n.tagName === blockTag.toUpperCase()
-          : window.edix.defaultIsBlockNode,
-        _isVoid: window.edix.defaultIsVoidNode,
+          : window.editate.defaultIsBlockNode,
+        _isVoid: window.editate.defaultIsVoidNode,
       }),
     );
   }, config);
@@ -236,11 +236,11 @@ export const insertLineBreakAt = (
 //               startOffset: range.startOffset,
 //               endContainer: serializeNode(range.endContainer),
 //               endOffset: range.endOffset,
-//               js: window.edix.serializeRange(
+//               js: window.editate.serializeRange(
 //                 e,
 //                 {
 //                   _document: e.ownerDocument,
-//                   _isBlock: window.edix.defaultIsBlockNode,
+//                   _isBlock: window.editate.defaultIsBlockNode,
 //                 },
 //                 range
 //               ),

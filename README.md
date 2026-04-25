@@ -1,6 +1,6 @@
-# edix
+# editate
 
-![npm](https://img.shields.io/npm/v/edix) ![npm bundle size](https://img.shields.io/bundlephobia/minzip/edix) ![npm](https://img.shields.io/npm/dw/edix) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/inokawa/edix) [![check](https://github.com/inokawa/edix/actions/workflows/check.yml/badge.svg)](https://github.com/inokawa/edix/actions/workflows/check.yml) [![demo](https://github.com/inokawa/edix/actions/workflows/demo.yml/badge.svg)](https://github.com/inokawa/edix/actions/workflows/demo.yml)
+![npm](https://img.shields.io/npm/v/editate) ![npm bundle size](https://img.shields.io/bundlephobia/minzip/editate) ![npm](https://img.shields.io/npm/dw/editate) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/inokawa/editate) [![check](https://github.com/inokawa/editate/actions/workflows/check.yml/badge.svg)](https://github.com/inokawa/editate/actions/workflows/check.yml) [![demo](https://github.com/inokawa/editate/actions/workflows/demo.yml/badge.svg)](https://github.com/inokawa/editate/actions/workflows/demo.yml)
 
 > An experimental, type-safe, framework agnostic and small (5kB+) [contenteditable](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/contenteditable) state manager.
 
@@ -12,13 +12,13 @@ Web editing is so hard even today. There are excellent libraries to make complex
 
 ## Demo
 
-- [React Storybook](https://inokawa.github.io/edix/)
+- [React Storybook](https://inokawa.github.io/editate/)
 - [Framework examples](#other-examples)
 
 ## Install
 
 ```sh
-npm install edix
+npm install editate
 ```
 
 `typescript >=5.0` is recommended.
@@ -27,7 +27,7 @@ npm install edix
 
 Browser versions supporting [beforeinput event](https://developer.mozilla.org/en-US/docs/Web/API/Element/beforeinput_event#browser_compatibility) are supported.
 
-Mobile browsers are also supported, but with some issues (https://github.com/inokawa/edix/issues/97).
+Mobile browsers are also supported, but with some issues (https://github.com/inokawa/editate/issues/97).
 
 ## Getting started
 
@@ -49,7 +49,7 @@ Here is an example for React.
 
 ```tsx
 import { useState, useEffect, useRef } from "react";
-import { createPlainEditor } from "edix";
+import { createPlainEditor } from "editate";
 
 export const App = () => {
   const ref = useRef<HTMLDivElement>(null);
@@ -96,7 +96,7 @@ export const App = () => {
 
 ```tsx
 import { useState, useEffect, useRef, useMemo } from "react";
-import { createEditor, ToggleFormat, ToggleBlockAttr } from "edix";
+import { createEditor, ToggleFormat, ToggleBlockAttr } from "editate";
 import * as z from "zod";
 
 const schema = z.strictObject({
@@ -201,13 +201,13 @@ export const App = () => {
 
 ### Other examples
 
-- React ([Demo](https://inokawa.github.io/edix/react), [Source](./examples/react))
-- Vue ([Demo](https://inokawa.github.io/edix/vue), [Source](./examples/vue))
-- Svelte ([Demo](https://inokawa.github.io/edix/svelte), [Source](./examples/svelte))
-- Solid ([Demo](https://inokawa.github.io/edix/solid), [Source](./examples/solid))
-- Angular ([Demo](https://inokawa.github.io/edix/angular), [Source](./examples/angular))
-- Preact ([Demo](https://inokawa.github.io/edix/preact), [Source](./examples/preact))
-- Vanilla ([Demo](https://inokawa.github.io/edix/vanilla), [Source](./examples/vanilla))
+- React ([Demo](https://inokawa.github.io/editate/react), [Source](./examples/react))
+- Vue ([Demo](https://inokawa.github.io/editate/vue), [Source](./examples/vue))
+- Svelte ([Demo](https://inokawa.github.io/editate/svelte), [Source](./examples/svelte))
+- Solid ([Demo](https://inokawa.github.io/editate/solid), [Source](./examples/solid))
+- Angular ([Demo](https://inokawa.github.io/editate/angular), [Source](./examples/angular))
+- Preact ([Demo](https://inokawa.github.io/editate/preact), [Source](./examples/preact))
+- Vanilla ([Demo](https://inokawa.github.io/editate/vanilla), [Source](./examples/vanilla))
 
 ...and more! Contribution welcome!
 
@@ -215,12 +215,12 @@ export const App = () => {
 
 - [API reference](./docs/API.md)
 - [Storybook examples](./stories) for more usages
-- [DeepWiki](https://deepwiki.com/inokawa/edix)
+- [DeepWiki](https://deepwiki.com/inokawa/editate)
 
 ## Contribute
 
 All contributions are welcome.
-If you find a problem, feel free to create an [issue](https://github.com/inokawa/edix/issues) or a [PR](https://github.com/inokawa/edix/pulls). If you have a question, ask in [discussions](https://github.com/inokawa/edix/discussions).
+If you find a problem, feel free to create an [issue](https://github.com/inokawa/editate/issues) or a [PR](https://github.com/inokawa/editate/pulls). If you have a question, ask in [discussions](https://github.com/inokawa/editate/discussions).
 
 ### Making a Pull Request
 
