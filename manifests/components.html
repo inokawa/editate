@@ -582,7 +582,7 @@
 <main>
   <div class="wrap">
     <div class="note info" style="margin-bottom: 16px;">
-            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.5s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
+            <strong>Tip:</strong> You are using <code>react-docgen</code> (the default). Generation took <strong>0.6s</strong>. For higher quality prop types, consider switching to <code>react-docgen-typescript</code> in your <code>main.ts</code>:
             <pre><code>typescript: {
   reactDocgen: 'react-docgen-typescript',
 }</code></pre>
@@ -1823,6 +1823,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -2063,7 +2074,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -2102,6 +2112,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -2625,6 +2636,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -2865,7 +2887,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -2904,6 +2925,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -3371,8 +3393,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -5187,6 +5231,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -5427,7 +5482,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -5466,6 +5520,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -5989,6 +6044,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -6229,7 +6295,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -6268,6 +6333,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -6735,8 +6801,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -8512,6 +8600,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -8752,7 +8851,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -8791,6 +8889,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -9314,6 +9413,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -9554,7 +9664,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -9593,6 +9702,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -10060,8 +10170,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -11463,6 +11595,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -11703,7 +11846,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -11742,6 +11884,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -12265,6 +12408,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -12505,7 +12659,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -12544,6 +12697,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -13011,8 +13165,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -14348,6 +14524,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -14588,7 +14775,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -14627,6 +14813,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -15150,6 +15337,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -15390,7 +15588,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -15429,6 +15626,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -15896,8 +16094,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -17266,6 +17486,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -17506,7 +17737,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -17545,6 +17775,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -18068,6 +18299,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -18308,7 +18550,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -18347,6 +18588,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -18814,8 +19056,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -20217,6 +20481,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -20457,7 +20732,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -20496,6 +20770,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -21019,6 +21294,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -21259,7 +21545,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -21298,6 +21583,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -21765,8 +22051,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -23108,6 +23416,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -23348,7 +23667,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -23387,6 +23705,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -23910,6 +24229,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -24150,7 +24480,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -24189,6 +24518,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -24656,8 +24986,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -26008,6 +26360,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -26248,7 +26611,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -26287,6 +26649,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -26810,6 +27173,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -27050,7 +27424,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -27089,6 +27462,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -27556,8 +27930,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -28921,6 +29317,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -29161,7 +29568,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -29200,6 +29606,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -29723,6 +30130,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -29963,7 +30381,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -30002,6 +30419,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -30469,8 +30887,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -31804,6 +32244,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -32044,7 +32495,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -32083,6 +32533,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -32606,6 +33057,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -32846,7 +33308,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -32885,6 +33346,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -33352,8 +33814,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -34739,6 +35223,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -34979,7 +35474,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -35018,6 +35512,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -35541,6 +36036,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -35781,7 +36287,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -35820,6 +36325,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -36287,8 +36793,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -38103,6 +38631,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -38343,7 +38882,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -38382,6 +38920,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -38905,6 +39444,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -39145,7 +39695,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -39184,6 +39733,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -39651,8 +40201,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -41428,6 +42000,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -41668,7 +42251,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -41707,6 +42289,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -42230,6 +42813,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -42470,7 +43064,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -42509,6 +43102,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -42976,8 +43570,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -44379,6 +44995,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -44619,7 +45246,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -44658,6 +45284,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -45181,6 +45808,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -45421,7 +46059,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -45460,6 +46097,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -45927,8 +46565,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -47264,6 +47924,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -47504,7 +48175,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -47543,6 +48213,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -48066,6 +48737,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -48306,7 +48988,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -48345,6 +49026,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -48812,8 +49494,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -50182,6 +50886,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -50422,7 +51137,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -50461,6 +51175,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -50984,6 +51699,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -51224,7 +51950,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -51263,6 +51988,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -51730,8 +52456,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -53133,6 +53881,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -53373,7 +54132,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -53412,6 +54170,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -53935,6 +54694,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -54175,7 +54945,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -54214,6 +54983,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -54681,8 +55451,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -56024,6 +56816,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -56264,7 +57067,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -56303,6 +57105,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -56826,6 +57629,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -57066,7 +57880,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -57105,6 +57918,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -57572,8 +58386,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -58924,6 +59760,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -59164,7 +60011,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -59203,6 +60049,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -59726,6 +60573,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -59966,7 +60824,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -60005,6 +60862,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -60472,8 +61330,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -61837,6 +62717,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -62077,7 +62968,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -62116,6 +63006,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -62639,6 +63530,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -62879,7 +63781,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -62918,6 +63819,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -63385,8 +64287,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
@@ -64720,6 +65644,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -64960,7 +65895,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -64999,6 +65933,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -65522,6 +66457,17 @@ export const createEditor = &lt;
 
       setEditableState();
 
+      const cleanupOnChange = editor.on(&quot;change&quot;, () =&gt; {
+        if (!hasFocus) {
+          requestAnimationFrame(() =&gt; {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on(&quot;readonly&quot;, setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) =&gt; {
@@ -65762,7 +66708,6 @@ export const createEditor = &lt;
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) =&gt; {
@@ -65801,6 +66746,7 @@ export const createEditor = &lt;
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
@@ -66268,8 +67214,30 @@ Error:
 No suitable component definition found.
 You can debug your component file in this playground: https://react-docgen.dev/playground
 Code:
+export { debugPlugin } from &quot;./debug.js&quot;;
 export { singlelinePlugin } from &quot;./singleline.js&quot;;
 export type { EditorPlugin } from &quot;./types.js&quot;;
+
+
+File: /home/runner/work/edix/edix/src/plugins/debug.ts
+Error:
+No suitable component definition found.
+You can debug your component file in this playground: https://react-docgen.dev/playground
+Code:
+import type { Editor } from &quot;../editor.js&quot;;
+
+export function debugPlugin(this: Editor) {
+  const editor = this;
+  editor.hook(&quot;apply&quot;, (op) =&gt; {
+    console.log(&quot;apply&quot;, op);
+  });
+  editor.on(&quot;change&quot;, () =&gt; {
+    console.log(&quot;change&quot;, editor.doc);
+  });
+  editor.on(&quot;selectionchange&quot;, () =&gt; {
+    console.log(&quot;selectionchange&quot;, editor.selection);
+  });
+}
 
 
 File: /home/runner/work/edix/edix/src/plugins/singleline.ts
