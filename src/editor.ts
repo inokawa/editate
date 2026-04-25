@@ -474,6 +474,17 @@ export const createEditor = <
 
       setEditableState();
 
+      const cleanupOnChange = editor.on("change", () => {
+        if (!hasFocus) {
+          requestAnimationFrame(() => {
+            if (!hasFocus) {
+              // Set focus imperatively to return focus to the editor after a command execution via click.
+              // It must be queued after the MO callback because that may cause an additional selectionchange event.
+              element.focus({ preventScroll: true });
+            }
+          });
+        }
+      });
       const cleanupOnReadonly = editor.on("readonly", setEditableState);
 
       const copy = (dataTransfer: DataTransfer, fragment: Fragment) => {
@@ -714,7 +725,6 @@ export const createEditor = <
           if (afterSelection) {
             updateSelection(afterSelection);
           }
-          element.focus({ preventScroll: true });
         }
       };
       const onDragStart = (e: DragEvent) => {
@@ -753,6 +763,7 @@ export const createEditor = <
         if (disposed) return;
         disposed = true;
 
+        cleanupOnChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;

@@ -10,6 +10,7 @@ import {
   getSeletedText,
   replaceAt,
   moveSelectionToOrigin,
+  waitForStyleSet,
 } from "./edix";
 import {
   getEditable,
@@ -2131,6 +2132,91 @@ test.describe("keep selection on render", () => {
       [[], 0],
       [[], 0],
     ]);
+  });
+
+  test("richtext", async ({ page }) => {
+    await page.goto(storyUrl("basics-structured--rich-text"));
+
+    const editable = await getEditable(page);
+    const initialValue = await getText(editable);
+
+    await editable.focus();
+
+    expect(await getSelection(editable)).toEqual([
+      [[0], 0],
+      [[0], 0],
+    ]);
+
+    {
+      // Set block attr
+      const setPromise = waitForStyleSet(editable, "textAlign", "right");
+      await page.getByRole("button", { name: "align" }).click();
+      expect(await getText(editable)).toEqual(initialValue);
+      expect(await getSelection(editable)).toEqual([
+        [[0], 0],
+        [[0], 0],
+      ]);
+      expect(await setPromise).toBe(true);
+
+      // Select texts
+      await page.keyboard.press("Shift+ArrowRight");
+      const movedSelection = [
+        [[0], 0],
+        [[0], 1],
+      ];
+      expect(await getSelection(editable)).toEqual(movedSelection);
+
+      // Unset block attr
+      const unsetPromise = waitForStyleSet(
+        editable,
+        "textAlign",
+        "right",
+        true,
+      );
+      await page.getByRole("button", { name: "align" }).click();
+      expect(await getText(editable)).toEqual(initialValue);
+      expect(await getSelection(editable)).toEqual(movedSelection);
+      expect(await unsetPromise).toBe(true);
+    }
+
+    {
+      // Move caret
+      await page.keyboard.press("ArrowLeft");
+      await page.keyboard.press("ArrowDown");
+      await page.keyboard.press("ArrowRight");
+      expect(await getSelection(editable)).toEqual([
+        [[1], 1],
+        [[1], 1],
+      ]);
+
+      // Select texts
+      await page.keyboard.press("Shift+ArrowRight");
+      await page.keyboard.press("Shift+ArrowRight");
+      const selectedSelection = [
+        [[1], 1],
+        [[1], 3],
+      ];
+      expect(await getSelection(editable)).toEqual(selectedSelection);
+
+      // Set text format
+      const setPromise = waitForStyleSet(editable, "fontStyle", "italic");
+      await page.getByRole("button", { name: "italic" }).click();
+      expect(await getText(editable)).toEqual(initialValue);
+      expect(await getSelection(editable)).toEqual(selectedSelection);
+      expect(await setPromise).toBe(true);
+
+      // Unset text format
+      const unsetPromise = waitForStyleSet(
+        editable,
+        "fontStyle",
+        "italic",
+        true,
+      );
+      await page.getByRole("button", { name: "italic" }).click();
+      expect(await getText(editable)).toEqual(initialValue);
+      expect(await getSelection(editable)).toEqual(selectedSelection);
+      expect(await unsetPromise).toBe(true);
+    }
   });
 });
 

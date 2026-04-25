@@ -90,6 +90,57 @@ export const getSeletedText = (
   );
 };
 
+export const waitForStyleSet = (
+  editable: Locator,
+  key: keyof CSSStyleDeclaration,
+  value: string,
+  unset?: boolean,
+): Promise<boolean> => {
+  return editable.evaluate(
+    (element, [key, value, unset]) => {
+      return new Promise<boolean>((resolve) => {
+        const stringToStyle = (s: string): CSSStyleDeclaration => {
+          const e = document.createElement("div");
+          e.style.cssText = s;
+          return e.style;
+        };
+        const mo = new MutationObserver((records) => {
+          for (const r of records) {
+            if (r.type === "attributes") {
+              if (
+                r.attributeName === "style" &&
+                (unset
+                  ? stringToStyle(r.oldValue!)
+                  : (r.target as HTMLElement).style)[key] === value
+              ) {
+                mo.disconnect();
+                resolve(true);
+              }
+            } else if (r.type === "childList") {
+              if (
+                (unset ? [...r.removedNodes] : [...r.addedNodes]).some(
+                  (e) => (e as HTMLElement).style[key] === value,
+                )
+              ) {
+                mo.disconnect();
+                resolve(true);
+              }
+            }
+          }
+        });
+        mo.observe(element, {
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["style"],
+          attributeOldValue: true,
+          childList: true,
+        });
+      });
+    },
+    [key, value, unset] as const,
+  );
+};
+
 export const getSelection = (
   editable: Locator,
   config: { blockTag?: string } = {},
