@@ -334,7 +334,7 @@ export const createEditor = <
           const [nextDoc, nextSelection] = applyOperation(doc, selection, op);
           if (!isUnsafeOperation(op) || validate(nextDoc)) {
             doc = nextDoc;
-            selection = nextSelection;
+            updateSelection(nextSelection);
           }
         } catch (e) {
           // rollback
