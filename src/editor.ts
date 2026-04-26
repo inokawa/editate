@@ -453,7 +453,6 @@ export const createEditor = <
       element.ariaMultiLine = "true";
 
       let disposed = false;
-      let selectionReverted = false;
       let inputTransaction: [Transaction, SelectionSnapshot] | null = null;
       let isComposing = false;
       let hasFocus = false;
@@ -538,13 +537,9 @@ export const createEditor = <
           // Restore previous selection
           // Updating selection may schedule the next selectionchange event
           // It should be ignored especially in firefox not to confuse editor state
-          selectionReverted = setSelectionToDOM(
-            document,
-            element,
-            selection,
-            parserConfig,
-            true,
-          );
+          document.removeEventListener("selectionchange", onSelectionChange);
+          setSelectionToDOM(document, element, selection, parserConfig, true);
+          document.addEventListener("selectionchange", onSelectionChange);
         }
 
         if (inputTransaction) {
@@ -652,10 +647,6 @@ export const createEditor = <
       };
 
       const onSelectionChange = () => {
-        if (selectionReverted) {
-          selectionReverted = false;
-          return;
-        }
         // Safari may dispatch selectionchange event after dragstart
         if (hasFocus && !isComposing && !isDragging) {
           syncSelection();

@@ -72,10 +72,10 @@ const setRangeToSelection = (
   range: Range,
   force: boolean | undefined,
   backward?: boolean,
-): boolean => {
+): void => {
   const selection = getDOMSelection(root);
   if (!force && !getSelectionRangeInEditor(selection, root)) {
-    return false;
+    return;
   }
   selection.removeAllRanges();
   selection.addRange(range);
@@ -83,7 +83,6 @@ const setRangeToSelection = (
     selection.collapseToEnd();
     selection.extend(range.startContainer, range.startOffset);
   }
-  return true;
 };
 
 /**
@@ -95,7 +94,7 @@ export const setSelectionToDOM = (
   [anchor, focus]: SelectionSnapshot,
   config: ParserConfig,
   force?: boolean,
-): boolean => {
+): void => {
   const posDiff = comparePosition(anchor, focus);
   const isCollapsed = posDiff === 0;
   const backward = posDiff === 1;
@@ -117,12 +116,12 @@ export const setSelectionToDOM = (
 
   const domStart = findPosition(root, start, config);
   if (!domStart) {
-    return false;
+    return;
   }
 
   const domEnd = isCollapsed ? domStart : findPosition(root, end, config);
   if (!domEnd) {
-    return false;
+    return;
   }
 
   // https://w3c.github.io/contentEditable/#dfn-legal-caret-positions
@@ -153,7 +152,7 @@ export const setSelectionToDOM = (
     range.setEnd(endNode, endOffset);
   }
 
-  return setRangeToSelection(root, range, force, backward);
+  setRangeToSelection(root, range, force, backward);
 };
 
 type DOMPosition = [node: Text | Element, offsetAtNode: number];
