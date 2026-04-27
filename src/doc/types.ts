@@ -10,9 +10,12 @@ export interface BlockNode {
   readonly children: readonly InlineNode[];
 }
 
+export type Node = BlockNode | InlineNode;
+
 export interface DocNode {
   readonly children: readonly BlockNode[];
 }
+
 export type Fragment = DocNode["children"];
 
 type InferChild<T> = T extends { children: readonly (infer N)[] }

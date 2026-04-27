@@ -1,4 +1,4 @@
-import { is, isString, keys } from "../utils.js";
+import { is, keys } from "../utils.js";
 import { comparePath, comparePosition } from "./position.js";
 import type {
   DocNode,
@@ -9,6 +9,7 @@ import type {
   TextNode,
   Path,
   BlockNode,
+  Node,
 } from "./types.js";
 import { stringToFragment } from "./utils.js";
 
@@ -132,13 +133,12 @@ export class Transaction {
 /**
  * @internal
  */
-export const isTextNode = (node: InlineNode): node is TextNode =>
-  "text" in node;
+export const isTextNode = (node: Node): node is TextNode => "text" in node;
 
 /**
  * @internal
  */
-export const isBlockNode = (node: BlockNode | InlineNode): node is BlockNode =>
+export const isBlockNode = (node: Node): node is BlockNode =>
   "children" in node;
 
 const isSameNode = (a: InlineNode, b: InlineNode): boolean => {
@@ -154,7 +154,7 @@ const isSameNode = (a: InlineNode, b: InlineNode): boolean => {
   });
 };
 
-export const getNodeSize = (node: BlockNode | InlineNode): number =>
+export const getNodeSize = (node: Node): number =>
   isBlockNode(node)
     ? node.children.reduce((acc: number, n) => acc + getNodeSize(n), 0)
     : isTextNode(node)
@@ -216,33 +216,45 @@ export const joinBlocks = <T extends BlockNode>(...blocks: T[]): T => {
   };
 };
 
-const splitBlock = <T extends BlockNode>(block: T, offset: number): [T, T] => {
-  const nodes = block.children;
-  for (let i = 0; i < nodes.length; i++) {
-    const node = nodes[i]!;
+const getChildAt = <T extends BlockNode>(
+  { children }: T,
+  offset: number,
+): { _node: T["children"][number]; _index: number; _offset: number } | null => {
+  for (let i = 0; i < children.length; i++) {
+    const node = children[i]!;
     const size = getNodeSize(node);
     if (size > offset) {
-      const before = nodes.slice(0, i);
-      const after = nodes.slice(i + 1);
-      if (isTextNode(node)) {
-        const beforeText = node.text.slice(0, offset);
-        const afterText = node.text.slice(offset);
-        if (beforeText || !before.length) {
-          before.push({ ...node, text: beforeText });
-        }
-        if (afterText || !after.length) {
-          after.unshift({ ...node, text: afterText });
-        }
-      } else {
-        // node size must be 1
-        after.unshift(node);
-      }
-      return [
-        { ...block, children: before },
-        { ...block, children: after },
-      ];
+      return { _node: node, _index: i, _offset: offset };
     }
     offset -= size;
+  }
+  return null;
+};
+
+const splitBlock = <T extends BlockNode>(block: T, offset: number): [T, T] => {
+  const target = getChildAt(block, offset);
+  if (target) {
+    const { _node: node, _offset: nodeAtOffset, _index: i } = target;
+    const nodes = block.children;
+    const before = nodes.slice(0, i);
+    const after = nodes.slice(i + 1);
+    if (isTextNode(node)) {
+      const beforeText = node.text.slice(0, nodeAtOffset);
+      const afterText = node.text.slice(nodeAtOffset);
+      if (beforeText || !before.length) {
+        before.push({ ...node, text: beforeText });
+      }
+      if (afterText || !after.length) {
+        after.unshift({ ...node, text: afterText });
+      }
+    } else {
+      // node size must be 1
+      after.unshift(node);
+    }
+    return [
+      { ...block, children: before },
+      { ...block, children: after },
+    ];
   }
   return [block, { ...block, children: [] }];
 };
@@ -316,7 +328,7 @@ const replaceRange = <T extends DocNode>(
   doc: T,
   start: Position,
   end: Position,
-  inserted: Fragment | string,
+  inserted: Fragment,
 ): T => {
   const [startPath, startOffset] = start;
   const [endPath, endOffset] = end;
@@ -330,28 +342,14 @@ const replaceRange = <T extends DocNode>(
       ? splitBlock(getBlockAt(doc, endPath), endOffset)[1]
       : maybeAfter;
 
-  if (isString(inserted)) {
-    const beforeNodes = before.children;
-    // inherit style from previous text node
-    const beforeLength = beforeNodes.length;
-    let anchorNode: TextNode | undefined;
-    if (beforeLength) {
-      const maybeAnchor = beforeNodes[beforeLength - 1]!;
-      if (isTextNode(maybeAnchor)) {
-        anchorNode = maybeAnchor;
-      }
-    }
-    inserted = stringToFragment(inserted, anchorNode, before);
-  }
-
   let lines: BlockNode[];
   if (inserted.length) {
     lines = inserted.slice();
     lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
+    lines[0] = joinBlocks(before, lines[0]!);
   } else {
-    lines = [after];
+    lines = [joinBlocks(before, after)];
   }
-  lines[0] = joinBlocks(before, lines[0]!);
 
   return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
 };
@@ -380,10 +378,8 @@ export const sliceFragment = (
 
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean => {
   const block = getBlockAt(doc, path);
-  if (block) {
-    if (offset >= 0 && offset <= getNodeSize(block)) {
-      return true;
-    }
+  if (block && offset >= 0 && offset <= getNodeSize(block)) {
+    return true;
   }
   return false;
 };
@@ -484,7 +480,23 @@ export const applyOperation = <T extends DocNode>(
     case TYPE_INSERT_TEXT: {
       const { at, text } = op;
       if (isValidPosition(doc, at) && text) {
-        doc = replaceRange(doc, at, at, text);
+        // inherit style from previous block/text node
+        const block = getBlockAt(doc, at[0]);
+        const res = getChildAt(block, at[1] - 1);
+        let anchorNode: TextNode | undefined;
+        if (res) {
+          const node = res._node;
+          if (isTextNode(node)) {
+            anchorNode = node;
+          }
+        }
+
+        doc = replaceRange(
+          doc,
+          at,
+          at,
+          stringToFragment(text, anchorNode, block),
+        );
         selection = rebaseSelection(selection, op);
       }
       break;
