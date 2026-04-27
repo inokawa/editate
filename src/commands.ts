@@ -1,6 +1,6 @@
 import { toRange } from "./doc/position.js";
 import {
-  blockAtPath,
+  getBlockAt,
   getBlockSize,
   isTextNode,
   sliceFragment,
@@ -150,7 +150,7 @@ export function ToggleBlockAttr<
   offValue: N[K],
   path: Path = this.selection[0][0],
 ) {
-  const block = blockAtPath(this.doc, path) as N;
+  const block = getBlockAt(this.doc, path) as N;
   this.apply(
     new Transaction().attr(
       path,

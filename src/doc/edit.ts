@@ -257,8 +257,12 @@ const normalizePath = (path: Path): number => {
 /**
  * @internal
  */
-export const blockAtPath = (doc: DocNode, path: Path): BlockNode => {
+export const getBlockAt = (doc: DocNode, path: Path): BlockNode => {
   return doc.children[normalizePath(path)]!;
+};
+
+const getNodeAt = (doc: DocNode, path: Path): BlockNode | DocNode => {
+  return path.length ? doc.children[normalizePath(path)]! : doc;
 };
 
 const move = (
@@ -276,15 +280,42 @@ const move = (
   ];
 };
 
-const replace = <T extends DocNode>(
-  doc: T,
+const replace = <
+  T extends { readonly children: readonly BlockNode[] | readonly InlineNode[] },
+>(
+  node: T,
   start: number,
   end: number,
   lines: Fragment,
 ): T => {
-  const sliced = doc.children.slice();
+  const sliced = node.children.slice();
   sliced.splice(start, end - start + 1, ...lines);
-  return { ...doc, children: sliced };
+  return { ...node, children: sliced };
+};
+
+const replaceNodeAt = <
+  T extends { readonly children: readonly BlockNode[] | readonly InlineNode[] },
+>(
+  node: T,
+  path: Path,
+  afterNode: BlockNode,
+  i: number = 0,
+): T => {
+  if (i < path.length) {
+    const index = path[i]!;
+    const children = node.children;
+    return {
+      ...node,
+      children: [
+        ...children.slice(0, index),
+        // TODO improve type
+        replaceNodeAt(children[index]! as T, path, afterNode, i + 1),
+        ...children.slice(index + 1),
+      ],
+    };
+  }
+  // TODO improve type
+  return afterNode as T;
 };
 
 const replaceRange = <T extends DocNode>(
@@ -297,12 +328,12 @@ const replaceRange = <T extends DocNode>(
   const [endPath, endOffset] = end;
 
   const [before, maybeAfter] = splitBlock(
-    blockAtPath(doc, startPath),
+    getBlockAt(doc, startPath),
     startOffset,
   );
   const after =
     comparePosition(start, end) === -1
-      ? splitBlock(blockAtPath(doc, endPath), endOffset)[1]
+      ? splitBlock(getBlockAt(doc, endPath), endOffset)[1]
       : maybeAfter;
 
   if (isString(inserted)) {
@@ -360,7 +391,7 @@ const isValidPath = (doc: DocNode, path: Path): boolean => {
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean => {
   // TODO improve
   if (isValidPath(doc, path)) {
-    if (offset >= 0 && offset <= getBlockSize(blockAtPath(doc, path))) {
+    if (offset >= 0 && offset <= getBlockSize(getBlockAt(doc, path))) {
       return true;
     }
   }
@@ -499,9 +530,9 @@ export const applyOperation = <T extends DocNode>(
     }
     case TYPE_SET_NODE_ATTR: {
       const { path, key, value } = op;
-      if (isValidPath(doc, path)) {
-        const p = normalizePath(path);
-        doc = replace(doc, p, p, [{ ...blockAtPath(doc, path), [key]: value }]);
+      const node = getNodeAt(doc, path);
+      if (node) {
+        doc = replaceNodeAt(doc, path, { ...node, [key]: value });
       }
       break;
     }

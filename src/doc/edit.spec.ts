@@ -3360,6 +3360,36 @@ describe("set attr", () => {
     });
   });
 
+  it("update root node", () => {
+    const docText = "abcde";
+    const docText2 = "fghij";
+    const doc: Doc = {
+      children: [
+        { attr: 0, children: [{ attr: 0, text: docText }] },
+        { attr: 1, children: [{ attr: 0, text: docText2 }] },
+      ],
+    };
+    const sel: SelectionSnapshot = [
+      [[1], 2],
+      [[1], 2],
+    ];
+    const res = applyOperation(doc, sel, {
+      type: "set_node_attr",
+      path: [],
+      key: "foo",
+      value: "bar",
+    });
+
+    expect(res[0]).toEqual({
+      foo: "bar",
+      children: [
+        { attr: 0, children: [{ attr: 0, text: docText }] },
+        { attr: 1, children: [{ attr: 0, text: docText2 }] },
+      ],
+    });
+    expect(res[1]).toEqual(sel);
+  });
+
   it("update block node at start", () => {
     const docText = "abcde";
     const docText2 = "fghij";
