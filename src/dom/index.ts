@@ -203,7 +203,7 @@ const serializePosition = (
     return [[], 0];
   }
 
-  if (isElementNode(node) && !config._isVoid(node) && node.hasChildNodes()) {
+  if (isElementNode(node) && node.hasChildNodes()) {
     // If start/end of Range is not selectable node, it will have offset relative to its parent
     //      0  1       2               3
     // <div>aaaa<img /><span>bbbb</span></div>
