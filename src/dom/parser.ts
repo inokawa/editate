@@ -2,19 +2,11 @@ let walker: TreeWalker | null = null;
 let node: Node | null = null;
 let _token: TokenType | null = null;
 let config: ParserConfig | null = null;
+let parse: Parser | null = null;
 
-export interface ParserConfig {
-  /**
-   * @internal
-   */
+interface ParserConfig {
   readonly _document: Document;
-  /**
-   * @internal
-   */
   readonly _isBlock: (node: Element) => boolean;
-  /**
-   * @internal
-   */
   readonly _isVoid: (node: Element) => boolean;
 }
 
@@ -181,7 +173,7 @@ const isValidSoftBreak = (): boolean => {
   // <div><br/></div>             empty line
   // <div>[a]<br/></div>          type on empty line in Firefox
   const parent = node!.parentNode!;
-  return parse(() => {
+  return parse!(() => {
     while (nextNode()) {
       if (readToken()) {
         return true;
@@ -225,35 +217,38 @@ export const readNext = (): Exclude<TokenType, typeof TOKEN_NULL> | void => {
 /**
  * @internal
  */
-export const parse = <T>(
-  scopeFn: () => T,
-  root?: Node,
-  newConfig?: ParserConfig,
-  startNode?: Node,
-): T => {
-  const prevConfig = config;
-  const prevWalker = walker;
-  const prevNode = node;
-  const prevToken = _token;
-  try {
-    if (newConfig) {
-      config = newConfig;
-      walker = config._document.createTreeWalker(
-        root!,
-        SHOW_TEXT | SHOW_ELEMENT,
-      );
+export const createParser = (initConfig: ParserConfig): Parser => {
+  const parser: Parser = (scopeFn, root, startNode) => {
+    const prevConfig = config;
+    const prevParse = parse;
+    const prevWalker = walker;
+    const prevNode = node;
+    const prevToken = _token;
+    try {
+      if (!walker) {
+        config = initConfig;
+        parse = parser;
+        walker = config._document.createTreeWalker(
+          root!,
+          SHOW_TEXT | SHOW_ELEMENT,
+        );
+      }
+      if (startNode) {
+        walker!.currentNode = node = startNode;
+      }
+      return scopeFn();
+    } finally {
+      config = prevConfig;
+      parse = prevParse;
+      walker = prevWalker;
+      node = prevNode;
+      _token = prevToken;
+      if (walker && prevNode) {
+        walker.currentNode = prevNode;
+      }
     }
-    if (startNode) {
-      walker!.currentNode = node = startNode;
-    }
-    return scopeFn();
-  } finally {
-    config = prevConfig;
-    walker = prevWalker;
-    node = prevNode;
-    _token = prevToken;
-    if (walker && prevNode) {
-      walker.currentNode = prevNode;
-    }
-  }
+  };
+  return parser;
 };
+
+export type Parser = <T>(scopeFn: () => T, root?: Node, startNode?: Node) => T;

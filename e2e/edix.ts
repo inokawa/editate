@@ -38,13 +38,13 @@ export const getText = async (
       return window.edix
         .domToFragment(
           element,
-          {
+          window.edix.createParser({
             _document: document,
             _isBlock: blockTag
               ? (n) => n.tagName === blockTag.toUpperCase()
               : window.edix.defaultIsBlockNode,
             _isVoid: window.edix.defaultIsVoidNode,
-          },
+          }),
           (text) => ({ text }),
           () => ({}),
         )
@@ -70,13 +70,13 @@ export const getSeletedText = (
       return window.edix
         .domToFragment(
           range,
-          {
+          window.edix.createParser({
             _document: document,
             _isBlock: blockTag
               ? (n) => n.tagName === blockTag.toUpperCase()
               : window.edix.defaultIsBlockNode,
             _isVoid: window.edix.defaultIsVoidNode,
-          },
+          }),
           (text) => ({ text }),
           () => ({}),
         )
@@ -146,13 +146,16 @@ export const getSelection = (
   config: { blockTag?: string } = {},
 ): Promise<SelectionSnapshot> => {
   return editable.evaluate((element, { blockTag }) => {
-    return window.edix.takeSelectionSnapshot(element, {
-      _document: element.ownerDocument,
-      _isBlock: blockTag
-        ? (n) => n.tagName === blockTag.toUpperCase()
-        : window.edix.defaultIsBlockNode,
-      _isVoid: window.edix.defaultIsVoidNode,
-    });
+    return window.edix.takeSelectionSnapshot(
+      element,
+      window.edix.createParser({
+        _document: element.ownerDocument,
+        _isBlock: blockTag
+          ? (n) => n.tagName === blockTag.toUpperCase()
+          : window.edix.defaultIsBlockNode,
+        _isVoid: window.edix.defaultIsVoidNode,
+      }),
+    );
   }, config);
 };
 

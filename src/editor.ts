@@ -22,7 +22,7 @@ import {
   isUnsafeOperation,
   isValidSelection,
 } from "./doc/edit.js";
-import type { ParserConfig } from "./dom/parser.js";
+import { createParser } from "./dom/index.js";
 import { comparePosition, toRange } from "./doc/position.js";
 import type { EditorPlugin } from "./plugins/types.js";
 import {
@@ -460,11 +460,11 @@ export const createEditor = <
 
       const document = getCurrentDocument(element);
 
-      const parserConfig: ParserConfig = {
+      const parser = createParser({
         _document: document,
-        _isBlock: isBlock as ParserConfig["_isBlock"],
+        _isBlock: isBlock as (node: Element) => boolean,
         _isVoid: defaultIsVoidNode,
-      };
+      });
 
       const setEditableState = () => {
         element.contentEditable = readonly ? "false" : "true";
@@ -493,7 +493,7 @@ export const createEditor = <
       };
       const paste = (dataTransfer: DataTransfer): string | Fragment | void => {
         for (const ex of pasteHooks) {
-          const pasted = ex(dataTransfer, parserConfig);
+          const pasted = ex(dataTransfer, parser);
           if (pasted) {
             return pasted;
           }
@@ -504,11 +504,11 @@ export const createEditor = <
       const observer = createMutationObserver(element, () => {
         // TODO optimize
         // Mutation to selected DOM may change selection, so restore it.
-        setSelectionToDOM(document, element, selection, parserConfig);
+        setSelectionToDOM(document, element, selection, parser);
       });
 
       const syncSelection = () => {
-        updateSelection(takeSelectionSnapshot(element, parserConfig));
+        updateSelection(takeSelectionSnapshot(element, parser));
       };
 
       const flushInput = () => {
@@ -523,7 +523,7 @@ export const createEditor = <
           // Updating selection may schedule the next selectionchange event
           // It should be ignored especially in firefox not to confuse editor state
           document.removeEventListener("selectionchange", onSelectionChange);
-          setSelectionToDOM(document, element, selection, parserConfig, true);
+          setSelectionToDOM(document, element, selection, parser, true);
           document.addEventListener("selectionchange", onSelectionChange);
         }
 
@@ -581,7 +581,7 @@ export const createEditor = <
         const domRange = e.getTargetRanges()[0];
         if (domRange) {
           // Read input
-          const range = serializeRange(element, parserConfig, domRange);
+          const range = serializeRange(element, parser, domRange);
           let data =
             inputType === "insertParagraph" || inputType === "insertLineBreak"
               ? "\n"
@@ -679,7 +679,7 @@ export const createEditor = <
           document,
           element,
           e,
-          parserConfig,
+          parser,
         );
         if (dataTransfer && droppedPosition) {
           let afterSelection: SelectionSnapshot | undefined;

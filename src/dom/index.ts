@@ -1,6 +1,6 @@
 import {
   type TokenType,
-  parse,
+  type Parser,
   getNodeSize,
   getDomNode,
   isElementNode,
@@ -8,7 +8,6 @@ import {
   TOKEN_VOID,
   TOKEN_SOFT_BREAK,
   TOKEN_BLOCK,
-  type ParserConfig,
   nextBlock,
   readNext as next,
   parentBlock,
@@ -27,6 +26,7 @@ import type {
 } from "../doc/types.js";
 import { min } from "../utils.js";
 
+export { createParser } from "./parser.js";
 export { defaultIsBlockNode, defaultIsVoidNode } from "./default.js";
 
 // const DOCUMENT_POSITION_DISCONNECTED = 0x01;
@@ -91,7 +91,7 @@ export const setSelectionToDOM = (
   document: Document,
   root: Element,
   [anchor, focus]: SelectionSnapshot,
-  config: ParserConfig,
+  parse: Parser,
   force?: boolean,
 ): void => {
   const posDiff = comparePosition(anchor, focus);
@@ -113,12 +113,12 @@ export const setSelectionToDOM = (
     return setRangeToSelection(root, range, force);
   }
 
-  const domStart = findPosition(root, start, config);
+  const domStart = findPosition(root, start, parse);
   if (!domStart) {
     return;
   }
 
-  const domEnd = isCollapsed ? domStart : findPosition(root, end, config);
+  const domEnd = isCollapsed ? domStart : findPosition(root, end, parse);
   if (!domEnd) {
     return;
   }
@@ -159,43 +159,39 @@ type DOMPosition = [node: Text | Element, offsetAtNode: number];
 const findPosition = (
   root: Element,
   [path, offset]: Position,
-  config: ParserConfig,
+  parse: Parser,
 ): DOMPosition | undefined => {
-  return parse(
-    (): DOMPosition | undefined => {
-      let pathIndex = 0;
-      let type: TokenType | void;
-      while ((type = next())) {
-        if (type === TOKEN_BLOCK) {
-          if (pathIndex < path.length) {
-            for (
-              let blockIndex = path[pathIndex++]!;
-              blockIndex > 0;
-              blockIndex--
-            ) {
-              nextBlock();
-            }
+  return parse((): DOMPosition | undefined => {
+    let pathIndex = 0;
+    let type: TokenType | void;
+    while ((type = next())) {
+      if (type === TOKEN_BLOCK) {
+        if (pathIndex < path.length) {
+          for (
+            let blockIndex = path[pathIndex++]!;
+            blockIndex > 0;
+            blockIndex--
+          ) {
+            nextBlock();
           }
-        } else {
-          const size = getNodeSize();
-          if (offset <= size) {
-            return [getDomNode<typeof type>(), offset];
-          }
-          offset -= size;
         }
+      } else {
+        const size = getNodeSize();
+        if (offset <= size) {
+          return [getDomNode<typeof type>(), offset];
+        }
+        offset -= size;
       }
-      return;
-    },
-    root,
-    config,
-  );
+    }
+    return;
+  }, root);
 };
 
 const serializePosition = (
   root: Element,
   node: Node,
   offsetAtNode: number,
-  config: ParserConfig,
+  parse: Parser,
 ): Position => {
   let excludeEnd = true;
   if (root === node && !node.hasChildNodes()) {
@@ -263,7 +259,6 @@ const serializePosition = (
       return [path, offset + offsetAtNode];
     },
     root,
-    config,
     node,
   );
 };
@@ -273,15 +268,15 @@ const serializePosition = (
  */
 export const serializeRange = (
   root: Element,
-  config: ParserConfig,
+  parse: Parser,
   { startOffset, startContainer, endOffset, endContainer }: AbstractRange,
 ): PositionRange => {
-  const start = serializePosition(root, startContainer, startOffset, config);
+  const start = serializePosition(root, startContainer, startOffset, parse);
   return [
     start,
     startContainer === endContainer && startOffset === endOffset
       ? start
-      : serializePosition(root, endContainer, endOffset, config),
+      : serializePosition(root, endContainer, endOffset, parse),
   ];
 };
 
@@ -300,7 +295,7 @@ export const getEmptySelectionSnapshot = (): SelectionSnapshot => {
  */
 export const takeSelectionSnapshot = (
   root: Element,
-  config: ParserConfig,
+  parse: Parser,
 ): SelectionSnapshot => {
   const selection = getDOMSelection(root);
   const domRange = getSelectionRangeInEditor(selection, root);
@@ -308,7 +303,7 @@ export const takeSelectionSnapshot = (
     return getEmptySelectionSnapshot();
   }
 
-  const range = serializeRange(root, config, domRange);
+  const range = serializeRange(root, parse, domRange);
   const comp = compareDomPosition(selection.anchorNode!, selection.focusNode!);
 
   // https://stackoverflow.com/questions/9180405/detect-direction-of-user-selection-with-javascript
@@ -326,70 +321,66 @@ export const takeSelectionSnapshot = (
  */
 export const domToFragment = (
   root: Node,
-  config: ParserConfig,
+  parse: Parser,
   serializeText: (text: string) => TextNode,
   serializeVoid: (node: Element) => InlineNode | void,
 ): Fragment => {
-  return parse(
-    () => {
-      let type: TokenType | void;
-      let row: InlineNode[] | null = null;
-      let text = "";
-      let hasContent = false;
+  return parse(() => {
+    let type: TokenType | void;
+    let row: InlineNode[] | null = null;
+    let text = "";
+    let hasContent = false;
 
-      const rows: BlockNode[] = [];
+    const rows: BlockNode[] = [];
 
-      const completeText = () => {
-        if (text) {
-          if (!row) {
-            row = [];
-          }
-          row.push(serializeText(text));
-          text = "";
-        }
-      };
-      const completeRow = () => {
-        completeText();
-        if (!row && hasContent) {
+    const completeText = () => {
+      if (text) {
+        if (!row) {
           row = [];
         }
-        if (row) {
-          rows.push({ children: row });
-        }
-        row = null;
-        hasContent = false;
-      };
+        row.push(serializeText(text));
+        text = "";
+      }
+    };
+    const completeRow = () => {
+      completeText();
+      if (!row && hasContent) {
+        row = [];
+      }
+      if (row) {
+        rows.push({ children: row });
+      }
+      row = null;
+      hasContent = false;
+    };
 
-      while ((type = next())) {
-        if (type === TOKEN_BLOCK) {
-          completeRow();
-        } else {
-          hasContent = true;
+    while ((type = next())) {
+      if (type === TOKEN_BLOCK) {
+        completeRow();
+      } else {
+        hasContent = true;
 
-          if (type === TOKEN_TEXT) {
-            text += getDomNode<typeof type>().data;
-          } else if (type === TOKEN_VOID) {
-            completeText();
-            const docNode = serializeVoid(getDomNode<typeof type>());
-            if (docNode) {
-              row!.push(docNode);
-            }
-          } else if (type === TOKEN_SOFT_BREAK) {
-            completeRow();
+        if (type === TOKEN_TEXT) {
+          text += getDomNode<typeof type>().data;
+        } else if (type === TOKEN_VOID) {
+          completeText();
+          const docNode = serializeVoid(getDomNode<typeof type>());
+          if (docNode) {
+            row!.push(docNode);
           }
+        } else if (type === TOKEN_SOFT_BREAK) {
+          completeRow();
         }
       }
-      completeRow();
+    }
+    completeRow();
 
-      if (!rows.length) {
-        rows.push({ children: [] });
-      }
+    if (!rows.length) {
+      rows.push({ children: [] });
+    }
 
-      return rows;
-    },
-    root,
-    config,
-  );
+    return rows;
+  }, root);
 };
 
 /**
@@ -399,7 +390,7 @@ export const getPointedCaretPosition = (
   document: Document,
   root: Element,
   { clientX, clientY }: MouseEvent,
-  config: ParserConfig,
+  parse: Parser,
 ): Position | void => {
   // https://developer.mozilla.org/en-US/docs/Web/API/Document/caretPositionFromPoint
   // https://developer.mozilla.org/en-US/docs/Web/API/Document/caretRangeFromPoint
@@ -414,7 +405,7 @@ export const getPointedCaretPosition = (
         root,
         position.offsetNode,
         position.offset,
-        config,
+        parse,
       );
     }
   } else if (document.caretRangeFromPoint) {
@@ -424,7 +415,7 @@ export const getPointedCaretPosition = (
         root,
         range.startContainer,
         range.startOffset,
-        config,
+        parse,
       );
     }
   }
