@@ -244,14 +244,15 @@ const serializePosition = (
       let offset = 0;
       while (next()) {
         const comp = compareDomPosition(node, getDomNode());
-        if (
-          comp === 0 || // same object
-          comp & DOCUMENT_POSITION_CONTAINED_BY
-        ) {
+        // same object
+        if (comp === 0) {
           if (excludeEnd) {
             break;
           }
-        } else if (comp & DOCUMENT_POSITION_FOLLOWING) {
+        } else if (
+          comp &
+          (DOCUMENT_POSITION_FOLLOWING | DOCUMENT_POSITION_CONTAINED_BY)
+        ) {
           break;
         }
         offset += getNodeSize();
