@@ -262,7 +262,7 @@ const splitBlock = <T extends BlockNode>(block: T, offset: number): [T, T] => {
 /**
  * @internal
  */
-export const normalizePath = (path: Path): number => {
+export const flatPath = (path: Path): number => {
   // TODO support nested node
   return path.length ? path[0]! : 0;
 };
@@ -271,11 +271,11 @@ export const normalizePath = (path: Path): number => {
  * @internal
  */
 export const getBlockAt = (doc: DocNode, path: Path): BlockNode => {
-  return doc.children[normalizePath(path)]!;
+  return getNodeAt(doc, [flatPath(path)]);
 };
 
 const getNodeAt = (doc: DocNode, path: Path): BlockNode | DocNode => {
-  return path.length ? doc.children[normalizePath(path)]! : doc;
+  return path.length ? doc.children[flatPath(path)]! : doc;
 };
 
 const move = (
@@ -287,7 +287,7 @@ const move = (
   return [
     [
       // TODO support nested node
-      normalizePath(position[0]) + pathDiff,
+      flatPath(position[0]) + pathDiff,
     ],
     position[1] + (isSamePath ? offsetDiff : 0),
   ];
@@ -351,7 +351,7 @@ const replaceRange = <T extends DocNode>(
     lines = [joinBlocks(before, after)];
   }
 
-  return replace(doc, normalizePath(startPath), normalizePath(endPath), lines);
+  return replace(doc, flatPath(startPath), flatPath(endPath), lines);
 };
 
 /**
@@ -366,10 +366,7 @@ export const sliceFragment = (
     return [];
   }
 
-  const sliced = doc.children.slice(
-    normalizePath(start[0]),
-    normalizePath(end[0]) + 1,
-  );
+  const sliced = doc.children.slice(flatPath(start[0]), flatPath(end[0]) + 1);
   const lastIndex = sliced.length - 1;
   sliced[lastIndex] = splitBlock(sliced[lastIndex]!, end[1])[0];
   sliced[0] = splitBlock(sliced[0]!, start[1])[1];
@@ -398,7 +395,7 @@ const rebasePosition = (position: Position, op: Operation): Position => {
         // start <= end < position
         return move(
           position,
-          normalizePath(start[0]) - normalizePath(end[0]),
+          flatPath(start[0]) - flatPath(end[0]),
           start[1] - end[1],
           comparePath(end[0], position[0]) === 0,
         );
