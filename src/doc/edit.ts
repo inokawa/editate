@@ -311,7 +311,7 @@ const replaceNodeAt = <
 >(
   node: T,
   path: Path,
-  afterNode: BlockNode,
+  afterNode: Node,
   i: number = 0,
 ): T => {
   if (i < path.length) {
