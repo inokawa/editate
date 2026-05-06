@@ -219,10 +219,7 @@ const concatInlines = <T extends InlineNode>(a: T[], b: readonly T[]): void => {
   }
 };
 
-const concatBlocks = <T extends BlockNode>(
-  a: T[],
-  ...b: readonly T[]
-): void => {
+const concatBlocks = <T extends BlockNode>(a: T[], b: readonly T[]): void => {
   if (b.length) {
     const prevLength = a.length;
     a.push(...b);
@@ -260,32 +257,54 @@ const getChildAt = <T extends BlockNode>(
   return null;
 };
 
-const splitBlock = <T extends BlockNode>(block: T, offset: number): [T, T] => {
-  const target = getChildAt(block, offset);
-  if (target) {
-    const { _node: node, _offset: nodeAtOffset, _index: i } = target;
-    const nodes = block.children;
-    const before = nodes.slice(0, i);
-    const after = nodes.slice(i + 1);
-    if (isTextNode(node)) {
-      const beforeText = node.text.slice(0, nodeAtOffset);
-      const afterText = node.text.slice(nodeAtOffset);
-      if (beforeText || !before.length) {
-        before.push({ ...node, text: beforeText });
-      }
-      if (afterText || !after.length) {
-        after.unshift({ ...node, text: afterText });
-      }
-    } else {
-      // node size must be 1
-      after.unshift(node);
-    }
+const splitBlock = <T extends DocNode | BlockNode>(
+  block: T,
+  pos: Position,
+  i: number = 0,
+): [T, T] => {
+  const children = block.children;
+  const path = pos[0];
+  if (i < path.length) {
+    const p = path[i]!;
+    const [childBefore, childAfter] = splitBlock(
+      children[p]! as BlockNode, // TODO imporove
+      pos,
+      i + 1,
+    );
+    const before = children.slice(0, p);
+    const after = children.slice(p + 1);
+    before.push(childBefore);
+    after.unshift(childAfter);
     return [
       { ...block, children: before },
       { ...block, children: after },
     ];
+  } else {
+    const target = getChildAt(block, pos[1]);
+    if (target) {
+      const { _node: inline, _offset: nodeAtOffset, _index: i } = target;
+      const before = children.slice(0, i);
+      const after = children.slice(i + 1);
+      if (isTextNode(inline)) {
+        const beforeText = inline.text.slice(0, nodeAtOffset);
+        const afterText = inline.text.slice(nodeAtOffset);
+        if (beforeText || !before.length) {
+          before.push({ ...inline, text: beforeText });
+        }
+        if (afterText || !after.length) {
+          after.unshift({ ...inline, text: afterText });
+        }
+      } else {
+        // node size must be 1
+        after.unshift(inline);
+      }
+      return [
+        { ...block, children: before },
+        { ...block, children: after },
+      ];
+    }
+    return [block, { ...block, children: [] }];
   }
-  return [block, { ...block, children: [] }];
 };
 
 /**
@@ -359,42 +378,30 @@ const replaceRange = <T extends DocNode>(
   end: Position,
   inserted: Fragment,
 ): T => {
-  const [startPath, startOffset] = start;
-  const [endPath, endOffset] = end;
-
-  const [before, maybeAfter] = splitBlock(
-    getBlockAt(doc, startPath),
-    startOffset,
-  );
+  const [before, maybeAfter] = splitBlock(doc, start);
   const after =
-    comparePosition(start, end) === -1
-      ? splitBlock(getBlockAt(doc, endPath), endOffset)[1]
-      : maybeAfter;
+    comparePosition(start, end) === -1 ? splitBlock(doc, end)[1] : maybeAfter;
 
-  const array = [before];
-  concatBlocks(array, ...inserted);
-  concatBlocks(array, after);
+  const array = before.children.slice();
+  concatBlocks(array, inserted);
+  concatBlocks(array, after.children);
 
-  return replace(doc, flatPath(startPath), flatPath(endPath), array);
+  return { ...doc, children: array };
 };
 
 /**
  * @internal
  */
-export const sliceFragment = (
-  doc: DocNode,
+export const sliceFragment = <T extends DocNode>(
+  doc: T,
   start: Position,
   end: Position,
-): Fragment => {
+): T["children"] => {
   if (comparePosition(start, end) !== -1) {
     return [];
   }
 
-  const sliced = doc.children.slice(flatPath(start[0]), flatPath(end[0]) + 1);
-  const lastIndex = sliced.length - 1;
-  sliced[lastIndex] = splitBlock(sliced[lastIndex]!, end[1])[0];
-  sliced[0] = splitBlock(sliced[0]!, start[1])[1];
-  return sliced;
+  return splitBlock(splitBlock(doc, end)[0], start)[1].children;
 };
 
 const isValidPosition = (doc: DocNode, [path, offset]: Position): boolean => {
@@ -429,13 +436,16 @@ const rebasePosition = (position: Position, op: Operation): Position => {
     case TYPE_INSERT_TEXT:
     case TYPE_INSERT_NODE: {
       const at = op.at;
-      const lines =
-        op.type === TYPE_INSERT_TEXT ? stringToFragment(op.text) : op.fragment;
-
-      const lineLength = lines.length;
-      const lineDiff = lineLength - 1;
 
       if (comparePosition(position, at) !== -1) {
+        const lines =
+          op.type === TYPE_INSERT_TEXT
+            ? stringToFragment(op.text)
+            : op.fragment;
+
+        const lineLength = lines.length;
+        const lineDiff = lineLength - 1;
+
         // at <= position
         return move(
           position,
