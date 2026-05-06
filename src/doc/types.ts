@@ -16,6 +16,7 @@ export interface DocNode {
   readonly children: readonly BlockNode[];
 }
 
+// TODO improve type
 export type Fragment = DocNode["children"];
 
 type InferChild<T> = T extends { children: readonly (infer N)[] }
