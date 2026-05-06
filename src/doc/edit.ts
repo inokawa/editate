@@ -161,8 +161,8 @@ export const getNodeSize = (node: Node): number =>
       ? node.text.length
       : 1;
 
-const normalizeInline = <T extends InlineNode>(
-  array: T[],
+const normalizeInline = (
+  array: InlineNode[],
   start: number = 0,
   end: number = array.length - 1,
 ): void => {
@@ -193,8 +193,8 @@ const normalizeInline = <T extends InlineNode>(
   }
 };
 
-const normalizeBlock = <T extends BlockNode>(
-  array: T[],
+const normalizeBlock = (
+  array: BlockNode[],
   start: number = 0,
   end: number = array.length - 1,
 ): void => {
@@ -209,22 +209,16 @@ const normalizeBlock = <T extends BlockNode>(
   }
 };
 
-const concatInlines = <T extends InlineNode>(a: T[], b: readonly T[]): void => {
+const concat = <T extends Node>(
+  a: T[],
+  b: readonly T[],
+  normalize: (array: T[], start: number, end: number) => void,
+): void => {
   if (b.length) {
     const prevLength = a.length;
     a.push(...b);
     if (prevLength) {
-      normalizeInline(a, prevLength - 1, prevLength);
-    }
-  }
-};
-
-const concatBlocks = <T extends BlockNode>(a: T[], b: readonly T[]): void => {
-  if (b.length) {
-    const prevLength = a.length;
-    a.push(...b);
-    if (prevLength) {
-      normalizeBlock(a, prevLength - 1, prevLength);
+      normalize(a, prevLength - 1, prevLength);
     }
   }
 };
@@ -236,7 +230,7 @@ export const joinBlocks = <T extends BlockNode>(...blocks: T[]): T => {
   return {
     ...blocks[0]!,
     children: blocks.reduce((acc, b) => {
-      concatInlines(acc, b.children);
+      concat(acc, b.children, normalizeInline);
       return acc;
     }, []),
   };
@@ -383,8 +377,8 @@ const replaceRange = <T extends DocNode>(
     comparePosition(start, end) === -1 ? splitBlock(doc, end)[1] : maybeAfter;
 
   const array = before.children.slice();
-  concatBlocks(array, inserted);
-  concatBlocks(array, after.children);
+  concat(array, inserted, normalizeBlock);
+  concat(array, after.children, normalizeBlock);
 
   return { ...doc, children: array };
 };
