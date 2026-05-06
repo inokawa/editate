@@ -161,7 +161,7 @@ export const getNodeSize = (node: Node): number =>
       ? node.text.length
       : 1;
 
-const normalize = <T extends InlineNode>(
+const normalizeInline = <T extends InlineNode>(
   array: T[],
   start: number = 0,
   end: number = array.length - 1,
@@ -193,12 +193,41 @@ const normalize = <T extends InlineNode>(
   }
 };
 
-const concat = <T extends InlineNode>(a: T[], b: readonly T[]): void => {
+const normalizeBlock = <T extends BlockNode>(
+  array: T[],
+  start: number = 0,
+  end: number = array.length - 1,
+): void => {
+  let i = start + 1;
+  while (i <= end) {
+    const prev = array[i - 1]!;
+    const curr = array[i]!;
+    // merge block nodes
+    array[i - 1] = joinBlocks(prev, curr);
+    array.splice(i, 1);
+    end--;
+  }
+};
+
+const concatInlines = <T extends InlineNode>(a: T[], b: readonly T[]): void => {
   if (b.length) {
     const prevLength = a.length;
     a.push(...b);
     if (prevLength) {
-      normalize(a, prevLength - 1, prevLength);
+      normalizeInline(a, prevLength - 1, prevLength);
+    }
+  }
+};
+
+const concatBlocks = <T extends BlockNode>(
+  a: T[],
+  ...b: readonly T[]
+): void => {
+  if (b.length) {
+    const prevLength = a.length;
+    a.push(...b);
+    if (prevLength) {
+      normalizeBlock(a, prevLength - 1, prevLength);
     }
   }
 };
@@ -210,7 +239,7 @@ export const joinBlocks = <T extends BlockNode>(...blocks: T[]): T => {
   return {
     ...blocks[0]!,
     children: blocks.reduce((acc, b) => {
-      concat(acc, b.children);
+      concatInlines(acc, b.children);
       return acc;
     }, []),
   };
@@ -342,16 +371,11 @@ const replaceRange = <T extends DocNode>(
       ? splitBlock(getBlockAt(doc, endPath), endOffset)[1]
       : maybeAfter;
 
-  let lines: BlockNode[];
-  if (inserted.length) {
-    lines = inserted.slice();
-    lines[lines.length - 1] = joinBlocks(lines[lines.length - 1]!, after);
-    lines[0] = joinBlocks(before, lines[0]!);
-  } else {
-    lines = [joinBlocks(before, after)];
-  }
+  const array = [before];
+  concatBlocks(array, ...inserted);
+  concatBlocks(array, after);
 
-  return replace(doc, flatPath(startPath), flatPath(endPath), lines);
+  return replace(doc, flatPath(startPath), flatPath(endPath), array);
 };
 
 /**
