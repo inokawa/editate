@@ -301,24 +301,25 @@ const splitBlock = <T extends DocNode | BlockNode>(
   }
 };
 
-/**
- * @internal
- */
-export const flatPath = (path: Path): number => {
+const flatPath = (path: Path): number => {
   // TODO support nested node
   return path.length ? path[0]! : 0;
 };
 
+const getNodeAt = (
+  node: DocNode | BlockNode,
+  path: Path,
+): BlockNode | DocNode => {
+  for (let i = 0; i < path.length; i++) {
+    node = node.children[path[i]!]! as BlockNode; // TODO improve
+  }
+  return node;
+};
+
 /**
  * @internal
  */
-export const getBlockAt = (doc: DocNode, path: Path): BlockNode => {
-  return getNodeAt(doc, [flatPath(path)]);
-};
-
-const getNodeAt = (doc: DocNode, path: Path): BlockNode | DocNode => {
-  return path.length ? doc.children[flatPath(path)]! : doc;
-};
+export const getBlockAt: (doc: DocNode, path: Path) => BlockNode = getNodeAt;
 
 const move = (
   position: Position,
