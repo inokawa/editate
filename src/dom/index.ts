@@ -196,7 +196,7 @@ const serializePosition = (
   let excludeEnd = true;
   if (root === node && !node.hasChildNodes()) {
     // for placeholder
-    return [[], 0];
+    return [[0], 0];
   }
 
   if (isElementNode(node) && node.hasChildNodes()) {
@@ -230,7 +230,7 @@ const serializePosition = (
         }
 
         if (!blocks.length) {
-          return [];
+          return [0];
         }
 
         let i = 0;
@@ -285,8 +285,8 @@ export const serializeRange = (
  */
 export const getEmptySelectionSnapshot = (): SelectionSnapshot => {
   return [
-    [[], 0],
-    [[], 0],
+    [[0], 0],
+    [[0], 0],
   ];
 };
 
