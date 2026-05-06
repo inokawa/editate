@@ -486,11 +486,6 @@ export const createEditor = <
       });
       const cleanupOnReadonly = editor.on("readonly", setEditableState);
 
-      const copy = (dataTransfer: DataTransfer, fragment: Fragment) => {
-        for (const ex of copyHooks) {
-          ex(dataTransfer, fragment, element);
-        }
-      };
       const paste = (dataTransfer: DataTransfer): string | Fragment | void => {
         for (const ex of pasteHooks) {
           const pasted = ex(dataTransfer, parser);
@@ -638,21 +633,24 @@ export const createEditor = <
         }
       };
 
-      const copySelected = (dataTransfer: DataTransfer) => {
+      const copy = (dataTransfer: DataTransfer) => {
         syncSelection();
         if (comparePosition(...selection) !== 0) {
-          copy(dataTransfer, sliceFragment(doc, ...toRange(selection)));
+          const fragment = sliceFragment(doc, ...toRange(selection));
+          for (const ex of copyHooks) {
+            ex(dataTransfer, fragment, element);
+          }
         }
       };
 
       const onCopy = (e: ClipboardEvent) => {
         e.preventDefault();
-        copySelected(e.clipboardData!);
+        copy(e.clipboardData!);
       };
       const onCut = (e: ClipboardEvent) => {
         e.preventDefault();
         if (!readonly) {
-          copySelected(e.clipboardData!);
+          copy(e.clipboardData!);
           apply(new Transaction().delete(...toRange(selection)));
         }
       };
@@ -705,7 +703,7 @@ export const createEditor = <
       };
       const onDragStart = (e: DragEvent) => {
         isDragging = true;
-        copySelected(e.dataTransfer!);
+        copy(e.dataTransfer!);
       };
       const onDragEnd = () => {
         isDragging = false;
