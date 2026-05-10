@@ -13,7 +13,7 @@ import type {
   InferInlineNode,
   Path,
   Position,
-  PositionRange,
+  Range,
   TextNode,
 } from "./doc/types.js";
 
@@ -25,10 +25,7 @@ export type EditorCommand<A extends unknown[], T extends DocNode> = (
 /**
  * Delete content in the selection or specified range.
  */
-export function Delete(
-  this: Editor,
-  range: PositionRange = toRange(this.selection),
-) {
+export function Delete(this: Editor, range: Range = toRange(this.selection)) {
   this.apply(new Transaction().delete(...range));
 }
 
@@ -98,7 +95,7 @@ export function Format<
   this: Editor<T>,
   key: K,
   value: N[K],
-  range: PositionRange = toRange(this.selection),
+  range: Range = toRange(this.selection),
 ) {
   this.apply(new Transaction().format(...range, key, value));
 }
@@ -109,7 +106,7 @@ export function Format<
 export function ToggleFormat<T extends DocNode>(
   this: Editor<T>,
   key: Extract<ToggleableKey<Omit<InferInlineNode<T>, "text">>, string>,
-  range: PositionRange = toRange(this.selection),
+  range: Range = toRange(this.selection),
 ) {
   const texts = sliceFragment(this.doc, ...range).flatMap((n) =>
     n.children.filter(isTextNode),

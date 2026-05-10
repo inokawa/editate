@@ -1,5 +1,5 @@
 import { min } from "../utils.js";
-import type { Path, Position, PositionRange } from "./types.js";
+import type { Path, Position, Range } from "./types.js";
 
 /**
  * @internal
@@ -39,9 +39,6 @@ export const comparePosition = (
 /**
  * @internal
  */
-export const toRange = ([a, b]: readonly [
-  Position,
-  Position,
-]): PositionRange => {
+export const toRange = ([a, b]: readonly [Position, Position]): Range => {
   return comparePosition(a, b) === 1 ? [b, a] : [a, b];
 };

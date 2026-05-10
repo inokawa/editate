@@ -18,7 +18,7 @@ import type {
   Position,
   InlineNode,
   SelectionSnapshot,
-  PositionRange,
+  Range as DocRange,
   Fragment,
   TextNode,
   Path,
@@ -270,7 +270,7 @@ export const serializeRange = (
   root: Element,
   parse: Parser,
   { startOffset, startContainer, endOffset, endContainer }: AbstractRange,
-): PositionRange => {
+): DocRange => {
   const start = serializePosition(root, startContainer, startOffset, parse);
   return [
     start,

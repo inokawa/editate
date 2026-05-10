@@ -30,6 +30,6 @@ export type InferBlockNode<T extends DocNode> = InferBlock<T>;
 
 export type Path = readonly [number?];
 export type Position = readonly [path: Path, offset: number];
-export type PositionRange = readonly [start: Position, end: Position];
+export type Range = readonly [start: Position, end: Position];
 
 export type SelectionSnapshot = readonly [anchor: Position, focus: Position];
