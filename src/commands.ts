@@ -3,6 +3,7 @@ import {
   getNodeAt,
   getNodeSize,
   isTextNode,
+  offsetToPosition,
   sliceFragment,
   Transaction,
 } from "./doc/edit.js";
@@ -12,7 +13,6 @@ import type {
   InferBlockNode,
   InferInlineNode,
   Path,
-  Position,
   Range,
   TextNode,
 } from "./doc/types.js";
@@ -35,7 +35,7 @@ export function Delete(this: Editor, range: Range = toRange(this.selection)) {
 export function InsertText(
   this: Editor,
   text: string,
-  position: Position = this.selection[0],
+  position: number = this.selection[0],
 ) {
   this.apply(new Transaction().insertText(position, text));
 }
@@ -46,7 +46,7 @@ export function InsertText(
 export function InsertNode<T extends DocNode>(
   this: Editor<T>,
   node: Exclude<InferInlineNode<T>, TextNode>,
-  position: Position = this.selection[0],
+  position: number = this.selection[0],
 ) {
   this.apply(
     new Transaction().insertFragment(position, [{ children: [node] }]),
@@ -68,19 +68,11 @@ export function ReplaceDoc<T extends DocNode>(
   this: Editor<T>,
   fragment: T["children"],
 ) {
-  const doc = this.doc;
   // TODO revisit
   this.apply(
     new Transaction()
-      // TODO improve
-      .delete(
-        [[], 0],
-        [
-          [doc.children.length - 1],
-          getNodeSize(doc.children[doc.children.length - 1]!),
-        ],
-      )
-      .insertFragment([[], 0], fragment),
+      .delete(0, getNodeSize(this.doc))
+      .insertFragment(0, fragment),
   );
 }
 
@@ -133,7 +125,12 @@ export function SetBlockAttr<
   T extends DocNode,
   N extends InferBlockNode<T>,
   K extends Extract<keyof N, string>,
->(this: Editor<T>, key: K, value: N[K], path: Path = this.selection[0][0]) {
+>(
+  this: Editor<T>,
+  key: K,
+  value: N[K],
+  path: Path = offsetToPosition(this.doc, this.selection[0])[0],
+) {
   this.apply(new Transaction().attr(path, key, value));
 }
 
@@ -149,7 +146,7 @@ export function ToggleBlockAttr<
   key: K,
   onValue: N[K],
   offValue: N[K],
-  path: Path = this.selection[0][0],
+  path: Path = offsetToPosition(this.doc, this.selection[0])[0],
 ) {
   const block = getNodeAt(this.doc, path) as N;
   this.apply(

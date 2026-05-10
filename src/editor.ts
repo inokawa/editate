@@ -3,14 +3,13 @@ import {
   getCurrentDocument,
   takeSelectionSnapshot,
   setSelectionToDOM,
-  getEmptySelectionSnapshot,
   getPointedCaretPosition,
   defaultIsBlockNode,
   defaultIsVoidNode,
   serializeRange,
 } from "./dom/index.js";
 import { createMutationObserver } from "./dom/mutation.js";
-import type { DocNode, Fragment, SelectionSnapshot } from "./doc/types.js";
+import type { DocNode, Fragment, Selection } from "./doc/types.js";
 import { is, isFunction, isString, microtask } from "./utils.js";
 import type { EditorCommand } from "./commands.js";
 import {
@@ -20,9 +19,12 @@ import {
   type Operation,
   isUnsafeOperation,
   isValidSelection,
+  domSelectionToSelection,
+  selectionToDomSelection,
+  positionToOffset,
 } from "./doc/edit.js";
 import { createParser } from "./dom/index.js";
-import { comparePosition, toRange } from "./doc/position.js";
+import { isCollapsed, toRange } from "./doc/position.js";
 import type { EditorPlugin } from "./plugins/types.js";
 import {
   type CopyHook,
@@ -161,7 +163,7 @@ type EditorHookMap = {
  */
 export interface Editor<T extends DocNode = DocNode> {
   readonly doc: T;
-  selection: SelectionSnapshot;
+  selection: Selection;
   /**
    * The getter/setter for the editor's read-only state.
    * `true` to read-only. `false` to editable.
@@ -218,7 +220,7 @@ export const createEditor = <
   onChange,
   onError = console.error,
 }: EditorOptions<T, S>): Editor<T> => {
-  let selection: SelectionSnapshot = getEmptySelectionSnapshot();
+  let selection: Selection = [0, 0];
 
   const validate = (value: T, onError: (m: string) => void): boolean => {
     if (!schema) {
@@ -330,11 +332,10 @@ export const createEditor = <
     }
   };
 
-  const updateSelection = (s: SelectionSnapshot) => {
+  const updateSelection = (s: Selection) => {
     if (
       isValidSelection(doc, s) &&
-      (comparePosition(selection[0], s[0]) ||
-        comparePosition(selection[1], s[1]))
+      (selection[0] !== s[0] || selection[1] !== s[1])
     ) {
       selection = s;
       publish("selectionchange");
@@ -419,7 +420,7 @@ export const createEditor = <
       element.ariaMultiLine = "true";
 
       let disposed = false;
-      let inputTransaction: [Transaction, SelectionSnapshot] | null = null;
+      let inputTransaction: [Transaction, Selection] | null = null;
       let isComposing = false;
       let hasFocus = false;
       let isDragging = false;
@@ -465,11 +466,19 @@ export const createEditor = <
       const observer = createMutationObserver(element, () => {
         // TODO optimize
         // Mutation to selected DOM may change selection, so restore it.
-        setSelectionToDOM(document, element, selection, parser);
+        setSelectionToDOM(
+          document,
+          element,
+          selectionToDomSelection(doc, selection),
+          selection[0] - selection[1],
+          parser,
+        );
       });
 
       const syncSelection = () => {
-        updateSelection(takeSelectionSnapshot(element, parser));
+        updateSelection(
+          domSelectionToSelection(doc, takeSelectionSnapshot(element, parser)),
+        );
       };
 
       const flushInput = () => {
@@ -484,7 +493,14 @@ export const createEditor = <
           // Updating selection may schedule the next selectionchange event
           // It should be ignored especially in firefox not to confuse editor state
           document.removeEventListener("selectionchange", onSelectionChange);
-          setSelectionToDOM(document, element, selection, parser, true);
+          setSelectionToDOM(
+            document,
+            element,
+            selectionToDomSelection(doc, selection),
+            selection[0] - selection[1],
+            parser,
+            true,
+          );
           document.addEventListener("selectionchange", onSelectionChange);
         }
 
@@ -542,7 +558,10 @@ export const createEditor = <
         const domRange = e.getTargetRanges()[0];
         if (domRange) {
           // Read input
-          const range = serializeRange(element, parser, domRange);
+          const range = domSelectionToSelection(
+            doc,
+            serializeRange(element, parser, domRange),
+          );
           let data =
             inputType === "insertParagraph" || inputType === "insertLineBreak"
               ? "\n"
@@ -560,7 +579,7 @@ export const createEditor = <
             inputTransaction = [new Transaction(), selection];
           }
           tr = inputTransaction[0];
-          if (comparePosition(...range) !== 0) {
+          if (!isCollapsed(range)) {
             // replace or delete
             tr.delete(...range);
           }
@@ -601,7 +620,7 @@ export const createEditor = <
 
       const copy = (dataTransfer: DataTransfer) => {
         syncSelection();
-        if (comparePosition(...selection) !== 0) {
+        if (!isCollapsed(selection)) {
           const fragment = sliceFragment(doc, ...toRange(selection));
           for (const ex of copyHooks) {
             ex(dataTransfer, fragment, element);
@@ -646,20 +665,21 @@ export const createEditor = <
           parser,
         );
         if (dataTransfer && droppedPosition) {
-          let afterSelection: SelectionSnapshot | undefined;
+          let afterSelection: Selection | undefined;
           const tr = new Transaction();
           if (isDragging) {
             tr.delete(...toRange(selection));
           }
           const pasted = paste(dataTransfer);
           if (pasted) {
-            const pos = tr.transform(droppedPosition);
+            const offset = positionToOffset(doc, droppedPosition);
+            const pos = tr.transform(offset);
             if (isString(pasted)) {
               tr.insertText(pos, pasted);
             } else {
               tr.insertFragment(pos, pasted);
             }
-            afterSelection = [pos, tr.transform(droppedPosition)];
+            afterSelection = [pos, tr.transform(offset)];
           }
           apply(tr);
           if (afterSelection) {

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { applyOperation, isValidSelection } from "./edit.js";
-import { type SelectionSnapshot } from "./types.js";
+import { applyOperation, getNodeSize, isValidSelection } from "./edit.js";
+import { type Selection } from "./types.js";
 import { is } from "../utils.js";
 
 type Doc = {
@@ -20,31 +20,6 @@ const deleteAt = (targetStr: string, index: number, length: number): string => {
   return targetStr.slice(0, index) + targetStr.slice(index + length);
 };
 
-const moveOffset = (
-  selection: SelectionSnapshot,
-  offset: number | { anchor?: number; focus?: number },
-): SelectionSnapshot => {
-  const anchorOffset =
-    typeof offset === "number" ? offset : (offset.anchor ?? 0);
-  const focusOffset = typeof offset === "number" ? offset : (offset.focus ?? 0);
-  return [
-    [selection[0][0], selection[0][1] + anchorOffset],
-    [selection[1][0], selection[1][1] + focusOffset],
-  ];
-};
-
-const moveLine = (
-  [anchor, focus]: SelectionSnapshot,
-  line: number | { anchor?: number; focus?: number },
-): SelectionSnapshot => {
-  const anchorLine = typeof line === "number" ? line : (line.anchor ?? 0);
-  const focusLine = typeof line === "number" ? line : (line.focus ?? 0);
-  return [
-    [[(anchor[0].length ? anchor[0][0]! : 0) + anchorLine], anchor[1]],
-    [[(focus[0].length ? focus[0][0]! : 0) + focusLine], focus[1]],
-  ];
-};
-
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -58,64 +33,15 @@ it("discard if error", () => {
       { attr: 1, children: [{ attr: 0, text: docText2 }] },
     ],
   };
-  const sel: SelectionSnapshot = [
-    [[1], 2],
-    [[1], 2],
-  ];
+  const sel: Selection = [2, 2];
 
   expect(() =>
-    applyOperation(doc, sel, { type: "insert_node" } as any),
+    applyOperation(doc, sel, { type: "insert_node", at: 0 } as any),
   ).toThrow();
 });
 
 describe("insert text", () => {
   describe("validation", () => {
-    it("path less than min", () => {
-      const docText = "abcde";
-      const docText2 = "fghij";
-      const doc: Doc = {
-        children: [
-          { attr: 0, children: [{ attr: 0, text: docText }] },
-          { attr: 1, children: [{ attr: 0, text: docText2 }] },
-        ],
-      };
-      const sel: SelectionSnapshot = [
-        [[1], 2],
-        [[1], 2],
-      ];
-      const res = applyOperation(doc, sel, {
-        type: "insert_text",
-        at: [[-1], 0],
-        text: "test",
-      });
-
-      expect(is(res[0], doc)).toBe(true);
-      expect(res[1]).toEqual(sel);
-    });
-
-    it("path more than max", () => {
-      const docText = "abcde";
-      const docText2 = "fghij";
-      const doc: Doc = {
-        children: [
-          { attr: 0, children: [{ attr: 0, text: docText }] },
-          { attr: 1, children: [{ attr: 0, text: docText2 }] },
-        ],
-      };
-      const sel: SelectionSnapshot = [
-        [[1], 2],
-        [[1], 2],
-      ];
-      const res = applyOperation(doc, sel, {
-        type: "insert_text",
-        at: [[100], 0],
-        text: "test",
-      });
-
-      expect(is(res[0], doc)).toBe(true);
-      expect(res[1]).toEqual(sel);
-    });
-
     it("offset less than min", () => {
       const docText = "abcde";
       const docText2 = "fghij";
@@ -125,13 +51,10 @@ describe("insert text", () => {
           { attr: 1, children: [{ attr: 0, text: docText2 }] },
         ],
       };
-      const sel: SelectionSnapshot = [
-        [[1], 2],
-        [[1], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "insert_text",
-        at: [[0], -1],
+        at: -1,
         text: "test",
       });
 
@@ -148,13 +71,10 @@ describe("insert text", () => {
           { attr: 1, children: [{ attr: 0, text: docText2 }] },
         ],
       };
-      const sel: SelectionSnapshot = [
-        [[1], 2],
-        [[1], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "insert_text",
-        at: [[0], 100],
+        at: 100,
         text: "test",
       });
 
@@ -171,13 +91,10 @@ describe("insert text", () => {
           { attr: 1, children: [{ attr: 0, text: docText2 }] },
         ],
       };
-      const sel: SelectionSnapshot = [
-        [[1], 2],
-        [[1], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "insert_text",
-        at: [[0], 1],
+        at: 1,
         text: "",
       });
 
@@ -192,14 +109,11 @@ describe("insert text", () => {
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 1],
-        [[0], 3],
-      ];
+      const sel: Selection = [1, 3];
       const text = "ABC";
       const res = applyOperation(doc, sel, {
         type: "insert_text",
-        at: [[0], 2],
+        at: 2,
         text: text,
       });
 
@@ -211,7 +125,7 @@ describe("insert text", () => {
           },
         ],
       });
-      expect(res[1]).toEqual(moveOffset(sel, { focus: text.length }));
+      expect(res[1]).toEqual([sel[0], sel[1] + text.length]);
     });
 
     it("insert line break inside selection", () => {
@@ -219,13 +133,10 @@ describe("insert text", () => {
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 1],
-        [[0], 3],
-      ];
+      const sel: Selection = [1, 3];
       const res = applyOperation(doc, sel, {
         type: "insert_text",
-        at: [[0], 2],
+        at: 2,
         text: "\n",
       });
 
@@ -236,11 +147,7 @@ describe("insert text", () => {
           { attr: 0, children: [{ attr: 0, text: after }] },
         ],
       });
-      expect(res[1]).toEqual(
-        moveLine(moveOffset(sel, { focus: -before.length }), {
-          focus: 1,
-        }),
-      );
+      expect(res[1]).toEqual([sel[0], sel[1] + 1]);
     });
 
     it("insert lines inside selection", () => {
@@ -248,16 +155,14 @@ describe("insert text", () => {
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 1],
-        [[0], 3],
-      ];
+      const sel: Selection = [1, 3];
       const text = "ABC";
       const text2 = "DEFG";
+      const insertedText = text + "\n" + text2;
       const res = applyOperation(doc, sel, {
         type: "insert_text",
-        at: [[0], 2],
-        text: text + "\n" + text2,
+        at: 2,
+        text: insertedText,
       });
 
       const [before, after] = splitAt(docText, 2);
@@ -267,11 +172,7 @@ describe("insert text", () => {
           { attr: 0, children: [{ attr: 0, text: text2 + after }] },
         ],
       });
-      expect(res[1]).toEqual(
-        moveLine(moveOffset(sel, { focus: -before.length + text2.length }), {
-          focus: 1,
-        }),
-      );
+      expect(res[1]).toEqual([sel[0], sel[1] + insertedText.length]);
     });
   });
 
@@ -284,14 +185,11 @@ describe("insert text", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], 1],
+      at: 1,
       text: text,
     });
 
@@ -301,7 +199,7 @@ describe("insert text", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     });
-    expect(res[1]).toEqual(sel);
+    expect(res[1]).toEqual([sel[0] + text.length, sel[1] + text.length]);
   });
 
   it("insert line break at previous line", () => {
@@ -313,13 +211,10 @@ describe("insert text", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], 1],
+      at: 1,
       text: "\n",
     });
 
@@ -331,7 +226,7 @@ describe("insert text", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     });
-    expect(res[1]).toEqual(moveLine(sel, 1));
+    expect(res[1]).toEqual([sel[0] + 1, sel[1] + 1]);
   });
 
   it("insert lines at previous line", () => {
@@ -343,16 +238,14 @@ describe("insert text", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const text = "ABC";
     const text2 = "DEFG";
+    const insertedText = text + "\n" + text2;
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], 1],
-      text: text + "\n" + text2,
+      at: 1,
+      text: insertedText,
     });
 
     const [before, after] = splitAt(docText, 1);
@@ -363,7 +256,10 @@ describe("insert text", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     });
-    expect(res[1]).toEqual(moveLine(sel, 1));
+    expect(res[1]).toEqual([
+      sel[0] + insertedText.length,
+      sel[1] + insertedText.length,
+    ]);
   });
 
   it("insert text before caret", () => {
@@ -371,14 +267,11 @@ describe("insert text", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], 1],
+      at: 1,
       text: text,
     });
 
@@ -387,7 +280,7 @@ describe("insert text", () => {
         { attr: 0, children: [{ attr: 0, text: insertAt(docText, 1, text) }] },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, text.length));
+    expect(res[1]).toEqual([sel[0] + text.length, sel[1] + text.length]);
   });
 
   it("insert line break before caret", () => {
@@ -395,13 +288,10 @@ describe("insert text", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], 1],
+      at: 1,
       text: "\n",
     });
 
@@ -412,7 +302,7 @@ describe("insert text", () => {
         { attr: 0, children: [{ attr: 0, text: after }] },
       ],
     });
-    expect(res[1]).toEqual(moveLine(moveOffset(sel, -before.length), 1));
+    expect(res[1]).toEqual([sel[0] + 1, sel[1] + 1]);
   });
 
   it("insert lines before caret", () => {
@@ -420,16 +310,14 @@ describe("insert text", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const text2 = "DEFG";
+    const insertedText = text + "\n" + text2;
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], 1],
-      text: text + "\n" + text2,
+      at: 1,
+      text: insertedText,
     });
 
     const [before, after] = splitAt(docText, 1);
@@ -439,9 +327,10 @@ describe("insert text", () => {
         { attr: 0, children: [{ attr: 0, text: text2 + after }] },
       ],
     });
-    expect(res[1]).toEqual(
-      moveLine(moveOffset(sel, -before.length + text2.length), 1),
-    );
+    expect(res[1]).toEqual([
+      sel[0] + insertedText.length,
+      sel[1] + insertedText.length,
+    ]);
   });
 
   it("insert text on caret", () => {
@@ -449,14 +338,11 @@ describe("insert text", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], 2],
+      at: 2,
       text: text,
     });
 
@@ -465,7 +351,7 @@ describe("insert text", () => {
         { attr: 0, children: [{ attr: 0, text: insertAt(docText, 2, text) }] },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, text.length));
+    expect(res[1]).toEqual([sel[0] + text.length, sel[1] + text.length]);
   });
 
   it("insert line break on caret", () => {
@@ -473,13 +359,10 @@ describe("insert text", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], 2],
+      at: 2,
       text: "\n",
     });
 
@@ -490,7 +373,7 @@ describe("insert text", () => {
         { attr: 0, children: [{ attr: 0, text: after }] },
       ],
     });
-    expect(res[1]).toEqual(moveLine(moveOffset(sel, -before.length), 1));
+    expect(res[1]).toEqual([sel[0] + 1, sel[1] + 1]);
   });
 
   it("insert lines on caret", () => {
@@ -498,16 +381,14 @@ describe("insert text", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const text2 = "DEFG";
+    const insertedText = text + "\n" + text2;
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], 2],
-      text: text + "\n" + text2,
+      at: 2,
+      text: insertedText,
     });
 
     const [before, after] = splitAt(docText, 2);
@@ -517,9 +398,10 @@ describe("insert text", () => {
         { attr: 0, children: [{ attr: 0, text: text2 + after }] },
       ],
     });
-    expect(res[1]).toEqual(
-      moveLine(moveOffset(sel, -before.length + text2.length), 1),
-    );
+    expect(res[1]).toEqual([
+      sel[0] + insertedText.length,
+      sel[1] + insertedText.length,
+    ]);
   });
 
   it("insert text after caret", () => {
@@ -527,14 +409,11 @@ describe("insert text", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], 3],
+      at: 3,
       text: text,
     });
 
@@ -551,13 +430,10 @@ describe("insert text", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], 3],
+      at: 3,
       text: "\n",
     });
 
@@ -576,15 +452,12 @@ describe("insert text", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const text2 = "DEFG";
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], 3],
+      at: 3,
       text: text + "\n" + text2,
     });
 
@@ -607,14 +480,11 @@ describe("insert text", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[1], 1],
+      at: docText.length + 1 + 1,
       text: text,
     });
 
@@ -636,13 +506,10 @@ describe("insert text", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[1], 1],
+      at: docText.length + 1 + 1,
       text: "\n",
     });
 
@@ -666,15 +533,12 @@ describe("insert text", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const text2 = "DEFG";
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[1], 1],
+      at: docText.length + 1 + 1,
       text: text + "\n" + text2,
     });
 
@@ -700,14 +564,11 @@ describe("insert text", () => {
         { attr: 2, children: [{ attr: 0, text: docText3 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[1], 1],
+      at: docText.length + 1 + 1,
       text: text,
     });
 
@@ -718,7 +579,7 @@ describe("insert text", () => {
         { attr: 2, children: [{ attr: 0, text: docText3 }] },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, text.length));
+    expect(res[1]).toEqual([sel[0] + text.length, sel[1] + text.length]);
   });
 
   it("insert text after caret at middle line", () => {
@@ -732,14 +593,11 @@ describe("insert text", () => {
         { attr: 2, children: [{ attr: 0, text: docText3 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[1], 3],
+      at: docText.length + 1 + 3,
       text: text,
     });
 
@@ -762,13 +620,10 @@ describe("insert text", () => {
         { attr: 1, children: [{ attr: 2, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[1], 0],
+      at: docText.length + 1,
       text: "\n",
     });
     expect(res[0]).toEqual({
@@ -790,13 +645,10 @@ describe("insert text", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[1], 1],
+      at: docText.length + 1 + 1,
       text: "\n",
     });
 
@@ -820,13 +672,10 @@ describe("insert text", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], docText.length],
+      at: docText.length,
       text: "\n",
     });
     expect(res[0]).toEqual({
@@ -853,14 +702,11 @@ describe("insert text", () => {
         },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], docText.length],
+      at: docText.length,
       text: text,
     });
 
@@ -892,15 +738,12 @@ describe("insert text", () => {
         },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const text2 = "DEFG";
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], docText.length],
+      at: docText.length,
       text: text + "\n" + text2,
     });
 
@@ -933,13 +776,10 @@ describe("insert text", () => {
         },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "insert_text",
-      at: [[0], docText.length],
+      at: docText.length,
       text: "\n",
     });
 
@@ -955,52 +795,6 @@ describe("insert text", () => {
 
 describe("insert node", () => {
   describe("validation", () => {
-    it("path less than min", () => {
-      const docText = "abcde";
-      const docText2 = "fghij";
-      const doc: Doc = {
-        children: [
-          { attr: 0, children: [{ attr: 0, text: docText }] },
-          { attr: 1, children: [{ attr: 0, text: docText2 }] },
-        ],
-      };
-      const sel: SelectionSnapshot = [
-        [[1], 2],
-        [[1], 2],
-      ];
-      const res = applyOperation(doc, sel, {
-        type: "insert_node",
-        at: [[-1], 0],
-        fragment: [{ children: [{ text: "test" }] }],
-      });
-
-      expect(is(res[0], doc)).toBe(true);
-      expect(res[1]).toEqual(sel);
-    });
-
-    it("path more than max", () => {
-      const docText = "abcde";
-      const docText2 = "fghij";
-      const doc: Doc = {
-        children: [
-          { attr: 0, children: [{ attr: 0, text: docText }] },
-          { attr: 1, children: [{ attr: 0, text: docText2 }] },
-        ],
-      };
-      const sel: SelectionSnapshot = [
-        [[1], 2],
-        [[1], 2],
-      ];
-      const res = applyOperation(doc, sel, {
-        type: "insert_node",
-        at: [[100], 0],
-        fragment: [{ children: [{ text: "test" }] }],
-      });
-
-      expect(is(res[0], doc)).toBe(true);
-      expect(res[1]).toEqual(sel);
-    });
-
     it("offset less than min", () => {
       const docText = "abcde";
       const docText2 = "fghij";
@@ -1010,13 +804,10 @@ describe("insert node", () => {
           { attr: 1, children: [{ attr: 0, text: docText2 }] },
         ],
       };
-      const sel: SelectionSnapshot = [
-        [[1], 2],
-        [[1], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "insert_node",
-        at: [[0], -1],
+        at: -1,
         fragment: [{ children: [{ text: "test" }] }],
       });
 
@@ -1033,13 +824,10 @@ describe("insert node", () => {
           { attr: 1, children: [{ attr: 0, text: docText2 }] },
         ],
       };
-      const sel: SelectionSnapshot = [
-        [[1], 2],
-        [[1], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "insert_node",
-        at: [[0], 100],
+        at: 100,
         fragment: [{ children: [{ text: "test" }] }],
       });
 
@@ -1056,13 +844,10 @@ describe("insert node", () => {
           { attr: 1, children: [{ attr: 0, text: docText2 }] },
         ],
       };
-      const sel: SelectionSnapshot = [
-        [[1], 2],
-        [[1], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "insert_node",
-        at: [[0], 1],
+        at: 1,
         fragment: [],
       });
 
@@ -1080,14 +865,11 @@ describe("insert node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 1],
+      at: 1,
       fragment: [{ children: [{ text }] }],
     });
 
@@ -1105,7 +887,7 @@ describe("insert node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     });
-    expect(res[1]).toEqual(sel);
+    expect(res[1]).toEqual([sel[0] + text.length, sel[1] + text.length]);
   });
 
   it("insert lines at previous line", () => {
@@ -1117,15 +899,12 @@ describe("insert node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const text = "ABC";
     const text2 = "DEFG";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 1],
+      at: 1,
       fragment: [
         { children: [{ text: text }] },
         { children: [{ text: text2 }] },
@@ -1140,7 +919,10 @@ describe("insert node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     });
-    expect(res[1]).toEqual(moveLine(sel, 1));
+    expect(res[1]).toEqual([
+      sel[0] + text.length + 1 + text2.length,
+      sel[1] + text.length + 1 + text2.length,
+    ]);
   });
 
   it("insert text with attr at previous line", () => {
@@ -1152,14 +934,11 @@ describe("insert node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 1],
+      at: 1,
       fragment: [{ children: [{ text, foo: "bar" }] }],
     });
 
@@ -1177,7 +956,7 @@ describe("insert node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     });
-    expect(res[1]).toEqual(sel);
+    expect(res[1]).toEqual([sel[0] + text.length, sel[1] + text.length]);
   });
 
   it("insert text with the same attr at previous line", () => {
@@ -1189,14 +968,11 @@ describe("insert node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 1],
+      at: 1,
       fragment: [{ children: [{ text, attr: 0 }] }],
     });
 
@@ -1207,7 +983,7 @@ describe("insert node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     });
-    expect(res[1]).toEqual(sel);
+    expect(res[1]).toEqual([sel[0] + text.length, sel[1] + text.length]);
   });
 
   it("insert void at previous line", () => {
@@ -1219,13 +995,10 @@ describe("insert node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 1],
+      at: 1,
       fragment: [{ children: [{ foo: "bar" }] }],
     });
 
@@ -1243,7 +1016,7 @@ describe("insert node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     });
-    expect(res[1]).toEqual(sel);
+    expect(res[1]).toEqual([sel[0] + 1, sel[1] + 1]);
   });
 
   it("insert text before caret", () => {
@@ -1251,14 +1024,11 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 1],
+      at: 1,
       fragment: [{ children: [{ text }] }],
     });
 
@@ -1275,7 +1045,7 @@ describe("insert node", () => {
         },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, text.length));
+    expect(res[1]).toEqual([sel[0] + text.length, sel[1] + text.length]);
   });
 
   it("insert lines before caret", () => {
@@ -1283,15 +1053,12 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const text2 = "DEFG";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 1],
+      at: 1,
       fragment: [
         { children: [{ text: text }] },
         { children: [{ text: text2 }] },
@@ -1305,9 +1072,10 @@ describe("insert node", () => {
         { children: [{ text: text2 }, { attr: 0, text: after }] },
       ],
     });
-    expect(res[1]).toEqual(
-      moveLine(moveOffset(sel, -before.length + text2.length), 1),
-    );
+    expect(res[1]).toEqual([
+      sel[0] + text.length + 1 + text2.length,
+      sel[1] + text.length + 1 + text2.length,
+    ]);
   });
 
   it("insert text with attr before caret", () => {
@@ -1315,14 +1083,11 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 1],
+      at: 1,
       fragment: [{ children: [{ text, foo: "bar" }] }],
     });
 
@@ -1339,7 +1104,7 @@ describe("insert node", () => {
         },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, text.length));
+    expect(res[1]).toEqual([sel[0] + text.length, sel[1] + text.length]);
   });
 
   it("insert text with the same attr before caret", () => {
@@ -1347,14 +1112,11 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 1],
+      at: 1,
       fragment: [{ children: [{ text, attr: 0 }] }],
     });
 
@@ -1364,7 +1126,7 @@ describe("insert node", () => {
         { attr: 0, children: [{ attr: 0, text: before + text + after }] },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, text.length));
+    expect(res[1]).toEqual([sel[0] + text.length, sel[1] + text.length]);
   });
 
   it("insert void before caret", () => {
@@ -1372,13 +1134,10 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 1],
+      at: 1,
       fragment: [{ children: [{ foo: "bar" }] }],
     });
 
@@ -1395,7 +1154,7 @@ describe("insert node", () => {
         },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, 1));
+    expect(res[1]).toEqual([sel[0] + 1, sel[1] + 1]);
   });
 
   it("insert text on caret", () => {
@@ -1403,14 +1162,11 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 2],
+      at: 2,
       fragment: [{ children: [{ text }] }],
     });
 
@@ -1427,7 +1183,7 @@ describe("insert node", () => {
         },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, text.length));
+    expect(res[1]).toEqual([sel[0] + text.length, sel[1] + text.length]);
   });
 
   it("insert lines on caret", () => {
@@ -1435,15 +1191,12 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const text2 = "DEFG";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 2],
+      at: 2,
       fragment: [
         { children: [{ text: text }] },
         { children: [{ text: text2 }] },
@@ -1457,9 +1210,10 @@ describe("insert node", () => {
         { children: [{ text: text2 }, { attr: 0, text: after }] },
       ],
     });
-    expect(res[1]).toEqual(
-      moveLine(moveOffset(sel, -before.length + text2.length), 1),
-    );
+    expect(res[1]).toEqual([
+      sel[0] + text.length + 1 + text2.length,
+      sel[1] + text.length + 1 + text2.length,
+    ]);
   });
 
   it("insert text with attr on caret", () => {
@@ -1467,14 +1221,11 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 2],
+      at: 2,
       fragment: [{ children: [{ text, foo: "bar" }] }],
     });
 
@@ -1491,7 +1242,7 @@ describe("insert node", () => {
         },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, text.length));
+    expect(res[1]).toEqual([sel[0] + text.length, sel[1] + text.length]);
   });
 
   it("insert text with the same attr on caret", () => {
@@ -1499,14 +1250,11 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 2],
+      at: 2,
       fragment: [{ children: [{ text, attr: 0 }] }],
     });
 
@@ -1516,7 +1264,7 @@ describe("insert node", () => {
         { attr: 0, children: [{ attr: 0, text: before + text + after }] },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, text.length));
+    expect(res[1]).toEqual([sel[0] + text.length, sel[1] + text.length]);
   });
 
   it("insert void on caret", () => {
@@ -1524,13 +1272,10 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 2],
+      at: 2,
       fragment: [{ children: [{ foo: "bar" }] }],
     });
 
@@ -1547,7 +1292,7 @@ describe("insert node", () => {
         },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, 1));
+    expect(res[1]).toEqual([sel[0] + 1, sel[1] + 1]);
   });
 
   it("insert text inside selection", () => {
@@ -1555,14 +1300,11 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 1],
-      [[0], 3],
-    ];
+    const sel: Selection = [1, 3];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 2],
+      at: 2,
       fragment: [{ children: [{ text }] }],
     });
 
@@ -1579,7 +1321,7 @@ describe("insert node", () => {
         },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, { focus: text.length }));
+    expect(res[1]).toEqual([sel[0], sel[1] + text.length]);
   });
 
   it("insert lines inside selection", () => {
@@ -1587,15 +1329,12 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 1],
-      [[0], 3],
-    ];
+    const sel: Selection = [1, 3];
     const text = "ABC";
     const text2 = "DEFG";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 2],
+      at: 2,
       fragment: [
         { children: [{ text: text }] },
         { children: [{ text: text2 }] },
@@ -1609,11 +1348,7 @@ describe("insert node", () => {
         { children: [{ text: text2 }, { attr: 0, text: after }] },
       ],
     });
-    expect(res[1]).toEqual(
-      moveLine(moveOffset(sel, { focus: -before.length + text2.length }), {
-        focus: 1,
-      }),
-    );
+    expect(res[1]).toEqual([sel[0], sel[1] + text.length + 1 + text2.length]);
   });
 
   it("insert text with attr inside selection", () => {
@@ -1621,14 +1356,11 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 1],
-      [[0], 3],
-    ];
+    const sel: Selection = [1, 3];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 2],
+      at: 2,
       fragment: [{ children: [{ text, foo: "bar" }] }],
     });
 
@@ -1645,7 +1377,7 @@ describe("insert node", () => {
         },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, { focus: text.length }));
+    expect(res[1]).toEqual([sel[0], sel[1] + text.length]);
   });
 
   it("insert text with the same attr inside selection", () => {
@@ -1653,14 +1385,11 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 1],
-      [[0], 3],
-    ];
+    const sel: Selection = [1, 3];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 2],
+      at: 2,
       fragment: [{ children: [{ text, attr: 0 }] }],
     });
 
@@ -1670,7 +1399,7 @@ describe("insert node", () => {
         { attr: 0, children: [{ attr: 0, text: before + text + after }] },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, { focus: text.length }));
+    expect(res[1]).toEqual([sel[0], sel[1] + text.length]);
   });
 
   it("insert void inside selection", () => {
@@ -1678,13 +1407,10 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 1],
-      [[0], 3],
-    ];
+    const sel: Selection = [1, 3];
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 2],
+      at: 2,
       fragment: [{ children: [{ foo: "bar" }] }],
     });
 
@@ -1701,7 +1427,7 @@ describe("insert node", () => {
         },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, { focus: 1 }));
+    expect(res[1]).toEqual([sel[0], sel[1] + 1]);
   });
 
   it("insert text after caret", () => {
@@ -1709,14 +1435,11 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 3],
+      at: 3,
       fragment: [{ children: [{ text }] }],
     });
 
@@ -1741,15 +1464,12 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const text2 = "DEFG";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 3],
+      at: 3,
       fragment: [
         { children: [{ text: text }] },
         { children: [{ text: text2 }] },
@@ -1771,14 +1491,11 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 3],
+      at: 3,
       fragment: [{ children: [{ text, foo: "bar" }] }],
     });
 
@@ -1803,14 +1520,11 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 3],
+      at: 3,
       fragment: [{ children: [{ text, attr: 0 }] }],
     });
 
@@ -1828,13 +1542,10 @@ describe("insert node", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[0], 3],
+      at: 3,
       fragment: [{ children: [{ foo: "bar" }] }],
     });
 
@@ -1863,14 +1574,11 @@ describe("insert node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[1], 1],
+      at: docText.length + 1 + 1,
       fragment: [{ children: [{ text }] }],
     });
 
@@ -1900,15 +1608,12 @@ describe("insert node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const text2 = "DEFG";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[1], 1],
+      at: docText.length + 1 + 1,
       fragment: [
         { children: [{ text: text }] },
         { children: [{ text: text2 }] },
@@ -1935,14 +1640,11 @@ describe("insert node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[1], 1],
+      at: docText.length + 1 + 1,
       fragment: [{ children: [{ text, foo: "bar" }] }],
     });
 
@@ -1972,14 +1674,11 @@ describe("insert node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const text = "ABC";
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[1], 1],
+      at: docText.length + 1 + 1,
       fragment: [{ children: [{ text, attr: 0 }] }],
     });
 
@@ -2002,13 +1701,10 @@ describe("insert node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "insert_node",
-      at: [[1], 1],
+      at: docText.length + 1 + 1,
       fragment: [{ children: [{ foo: "bar" }] }],
     });
 
@@ -2032,57 +1728,16 @@ describe("insert node", () => {
 
 describe("delete", () => {
   describe("validation", () => {
-    it("path less than min", () => {
-      const docText = "abcde";
-      const doc: Doc = {
-        children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
-      };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
-      const res = applyOperation(doc, sel, {
-        type: "delete",
-        start: [[-1], 0],
-        end: [[0], 1],
-      });
-
-      expect(is(res[0], doc)).toBe(true);
-      expect(res[1]).toEqual(sel);
-    });
-
-    it("path more than max", () => {
-      const docText = "abcde";
-      const doc: Doc = {
-        children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
-      };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
-      const res = applyOperation(doc, sel, {
-        type: "delete",
-        start: [[0], 0],
-        end: [[100], 1],
-      });
-
-      expect(is(res[0], doc)).toBe(true);
-      expect(res[1]).toEqual(sel);
-    });
-
     it("offset less than min", () => {
       const docText = "abcde";
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "delete",
-        start: [[0], -1],
-        end: [[0], 1],
+        start: -1,
+        end: 1,
       });
 
       expect(is(res[0], doc)).toBe(true);
@@ -2094,14 +1749,11 @@ describe("delete", () => {
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "delete",
-        start: [[0], 0],
-        end: [[0], 100],
+        start: 0,
+        end: 100,
       });
 
       expect(is(res[0], doc)).toBe(true);
@@ -2113,14 +1765,11 @@ describe("delete", () => {
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "delete",
-        start: [[0], 1],
-        end: [[0], 1],
+        start: 1,
+        end: 1,
       });
 
       expect(is(res[0], doc)).toBe(true);
@@ -2132,14 +1781,11 @@ describe("delete", () => {
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "delete",
-        start: [[0], 2],
-        end: [[0], 1],
+        start: 2,
+        end: 1,
       });
 
       expect(is(res[0], doc)).toBe(true);
@@ -2153,14 +1799,11 @@ describe("delete", () => {
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 4],
-      ];
+      const sel: Selection = [2, 4];
       const res = applyOperation(doc, sel, {
         type: "delete",
-        start: [[0], 1],
-        end: [[0], 5],
+        start: 1,
+        end: 5,
       });
 
       expect(res[0]).toEqual({
@@ -2168,10 +1811,7 @@ describe("delete", () => {
           { attr: 0, children: [{ attr: 0, text: deleteAt(docText, 1, 4) }] },
         ],
       });
-      expect(res[1]).toEqual([
-        [[0], 1],
-        [[0], 1],
-      ]);
+      expect(res[1]).toEqual([1, 1]);
     });
 
     it("delete text around selection anchor", () => {
@@ -2179,14 +1819,11 @@ describe("delete", () => {
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 4],
-      ];
+      const sel: Selection = [2, 4];
       const res = applyOperation(doc, sel, {
         type: "delete",
-        start: [[0], 1],
-        end: [[0], 3],
+        start: 1,
+        end: 3,
       });
 
       expect(res[0]).toEqual({
@@ -2194,7 +1831,7 @@ describe("delete", () => {
           { attr: 0, children: [{ attr: 0, text: deleteAt(docText, 1, 2) }] },
         ],
       });
-      expect(res[1]).toEqual(moveOffset(sel, { anchor: 1 - 2, focus: -2 }));
+      expect(res[1]).toEqual([sel[0] + 1 - 2, sel[1] - 2]);
     });
 
     it("delete text around selection focus", () => {
@@ -2202,14 +1839,11 @@ describe("delete", () => {
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 4],
-      ];
+      const sel: Selection = [2, 4];
       const res = applyOperation(doc, sel, {
         type: "delete",
-        start: [[0], 3],
-        end: [[0], 5],
+        start: 3,
+        end: 5,
       });
 
       expect(res[0]).toEqual({
@@ -2217,7 +1851,7 @@ describe("delete", () => {
           { attr: 0, children: [{ attr: 0, text: deleteAt(docText, 3, 2) }] },
         ],
       });
-      expect(res[1]).toEqual(moveOffset(sel, { focus: 1 - 2 }));
+      expect(res[1]).toEqual([sel[0], sel[1] + 1 - 2]);
     });
 
     it("delete line break inside selection", () => {
@@ -2229,14 +1863,11 @@ describe("delete", () => {
           { attr: 1, children: [{ attr: 0, text: docText2 }] },
         ],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[1], 2],
-      ];
+      const sel: Selection = [2, docText.length + 1 + 2];
       const res = applyOperation(doc, sel, {
         type: "delete",
-        start: [[0], 3],
-        end: [[1], 1],
+        start: 3,
+        end: docText.length + 1 + 1,
       });
 
       expect(res[0]).toEqual({
@@ -2252,10 +1883,7 @@ describe("delete", () => {
           },
         ],
       });
-      expect(res[1]).toEqual([
-        [[0], 2],
-        [[0], 3 + 1],
-      ]);
+      expect(res[1]).toEqual([2, 3 + 1]);
     });
   });
 
@@ -2268,14 +1896,11 @@ describe("delete", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[0], 1],
-      end: [[0], 2],
+      start: 1,
+      end: 2,
     });
 
     expect(res[0]).toEqual({
@@ -2284,7 +1909,7 @@ describe("delete", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     });
-    expect(res[1]).toEqual(sel);
+    expect(res[1]).toEqual([sel[0] - 1, sel[1] - 1]);
   });
 
   it("delete line break at previous line", () => {
@@ -2296,15 +1921,12 @@ describe("delete", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 3],
-      [[1], 3],
-    ];
+    const sel: Selection = [docText.length + 1 + 3, docText.length + 1 + 3];
 
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[0], 2],
-      end: [[1], 1],
+      start: 2,
+      end: docText.length + 1 + 1,
     });
 
     expect(res[0]).toEqual({
@@ -2322,10 +1944,7 @@ describe("delete", () => {
         },
       ],
     });
-    expect(res[1]).toEqual([
-      [[0], 2 + (3 - 1)],
-      [[0], 2 + (3 - 1)],
-    ]);
+    expect(res[1]).toEqual([2 + (3 - 1), 2 + (3 - 1)]);
   });
 
   it("delete lines at previous line", () => {
@@ -2339,14 +1958,15 @@ describe("delete", () => {
         { attr: 2, children: [{ attr: 0, text: docText3 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[2], 3],
-      [[2], 3],
+    const sel: Selection = [
+      docText.length + 1 + docText2.length + 1 + 3,
+      docText.length + 1 + docText2.length + 1 + 3,
     ];
+    const deleteLength = docText.length + 1 + 2;
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[0], 0],
-      end: [[1], 2],
+      start: 0,
+      end: deleteLength,
     });
 
     expect(res[0]).toEqual({
@@ -2355,7 +1975,7 @@ describe("delete", () => {
         { attr: 2, children: [{ attr: 0, text: docText3 }] },
       ],
     });
-    expect(res[1]).toEqual(moveLine(sel, -1));
+    expect(res[1]).toEqual([sel[0] - deleteLength, sel[1] - deleteLength]);
   });
 
   it("delete text before caret", () => {
@@ -2363,14 +1983,11 @@ describe("delete", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 3],
-      [[0], 3],
-    ];
+    const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[0], 1],
-      end: [[0], 2],
+      start: 1,
+      end: 2,
     });
 
     expect(res[0]).toEqual({
@@ -2378,7 +1995,7 @@ describe("delete", () => {
         { attr: 0, children: [{ attr: 0, text: deleteAt(docText, 1, 1) }] },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, -1));
+    expect(res[1]).toEqual([sel[0] + -1, sel[1] + -1]);
   });
 
   it("delete text just before caret", () => {
@@ -2386,14 +2003,11 @@ describe("delete", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 3],
-      [[0], 3],
-    ];
+    const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[0], 2],
-      end: [[0], 3],
+      start: 2,
+      end: 3,
     });
 
     expect(res[0]).toEqual({
@@ -2401,7 +2015,7 @@ describe("delete", () => {
         { attr: 0, children: [{ attr: 0, text: deleteAt(docText, 2, 1) }] },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, -1));
+    expect(res[1]).toEqual([sel[0] + -1, sel[1] + -1]);
   });
 
   it("delete text around caret", () => {
@@ -2409,14 +2023,11 @@ describe("delete", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 3],
-      [[0], 3],
-    ];
+    const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[0], 2],
-      end: [[0], 4],
+      start: 2,
+      end: 4,
     });
 
     expect(res[0]).toEqual({
@@ -2424,7 +2035,7 @@ describe("delete", () => {
         { attr: 0, children: [{ attr: 0, text: deleteAt(docText, 2, 2) }] },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, -1));
+    expect(res[1]).toEqual([sel[0] + -1, sel[1] + -1]);
   });
 
   it("delete text just after caret", () => {
@@ -2432,14 +2043,11 @@ describe("delete", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 3],
-      [[0], 3],
-    ];
+    const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[0], 3],
-      end: [[0], 4],
+      start: 3,
+      end: 4,
     });
 
     expect(res[0]).toEqual({
@@ -2455,14 +2063,11 @@ describe("delete", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 3],
-      [[0], 3],
-    ];
+    const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[0], 4],
-      end: [[0], 5],
+      start: 4,
+      end: 5,
     });
 
     expect(res[0]).toEqual({
@@ -2482,14 +2087,11 @@ describe("delete", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[1], 1],
-      end: [[1], 2],
+      start: docText.length + 1 + 1,
+      end: docText.length + 1 + 2,
     });
 
     expect(res[0]).toEqual({
@@ -2512,14 +2114,11 @@ describe("delete", () => {
         { attr: 2, children: [{ attr: 0, text: docText3 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[1], 1],
-      end: [[2], 1],
+      start: docText.length + 1 + 1,
+      end: docText.length + 1 + docText2.length + 1 + 1,
     });
 
     expect(res[0]).toEqual({
@@ -2552,14 +2151,11 @@ describe("delete", () => {
         { attr: 2, children: [{ attr: 0, text: docText3 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[1], 0],
-      end: [[2], 1],
+      start: docText.length + 1,
+      end: docText.length + 1 + docText2.length + 1 + 1,
     });
 
     expect(res[0]).toEqual({
@@ -2590,14 +2186,11 @@ describe("delete", () => {
         { attr: 2, children: [{ attr: 0, text: docText3 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 3],
-      [[1], 3],
-    ];
+    const sel: Selection = [docText.length + 1 + 3, docText.length + 1 + 3];
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[1], 1],
-      end: [[1], 2],
+      start: docText.length + 1 + 1,
+      end: docText.length + 1 + 2,
     });
 
     expect(res[0]).toEqual({
@@ -2607,7 +2200,7 @@ describe("delete", () => {
         { attr: 2, children: [{ attr: 0, text: docText3 }] },
       ],
     });
-    expect(res[1]).toEqual(moveOffset(sel, -1));
+    expect(res[1]).toEqual([sel[0] + -1, sel[1] + -1]);
   });
 
   it("delete text after caret at middle line", () => {
@@ -2621,14 +2214,11 @@ describe("delete", () => {
         { attr: 2, children: [{ attr: 0, text: docText3 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[1], 3],
-      end: [[1], 4],
+      start: docText.length + 1 + 3,
+      end: docText.length + 1 + 4,
     });
 
     expect(res[0]).toEqual({
@@ -2650,15 +2240,12 @@ describe("delete", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
 
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[0], docText.length],
-      end: [[1], 0],
+      start: docText.length,
+      end: docText.length + 1,
     });
 
     expect(res[0]).toEqual({
@@ -2687,15 +2274,12 @@ describe("delete", () => {
         { attr: 2, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
 
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[0], docText.length],
-      end: [[1], 0],
+      start: docText.length,
+      end: docText.length + 1,
     });
 
     expect(res[0]).toEqual({
@@ -2717,15 +2301,12 @@ describe("delete", () => {
         { attr: 2, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
 
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[1], 0],
-      end: [[2], 0],
+      start: docText.length + 1,
+      end: docText.length + 2,
     });
 
     expect(res[0]).toEqual({
@@ -2751,15 +2332,12 @@ describe("delete", () => {
         },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
 
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[0], docText.length],
-      end: [[0], docText.length + 1],
+      start: docText.length,
+      end: docText.length + 1,
     });
 
     expect(res[0]).toEqual({
@@ -2790,15 +2368,12 @@ describe("delete", () => {
         },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
 
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[0], docText.length - 1],
-      end: [[0], docText.length],
+      start: docText.length - 1,
+      end: docText.length,
     });
 
     expect(res[0]).toEqual({
@@ -2824,15 +2399,12 @@ describe("delete", () => {
         { attr: 1, children: [{ attr: 2, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
 
     const res = applyOperation(doc, sel, {
       type: "delete",
-      start: [[0], docText.length],
-      end: [[1], 0],
+      start: docText.length,
+      end: docText.length + 1,
     });
 
     expect(res[0]).toEqual({
@@ -2858,61 +2430,16 @@ describe("delete", () => {
 
 describe("format", () => {
   describe("validation", () => {
-    it("path less than min", () => {
-      const docText = "abcde";
-      const doc: Doc = {
-        children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
-      };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
-      const res = applyOperation(doc, sel, {
-        type: "set_attr",
-        start: [[-1], 0],
-        end: [[0], 1],
-        key: "foo",
-        value: "bar",
-      });
-
-      expect(is(res[0], doc)).toBe(true);
-      expect(res[1]).toEqual(sel);
-    });
-
-    it("path more than max", () => {
-      const docText = "abcde";
-      const doc: Doc = {
-        children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
-      };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
-      const res = applyOperation(doc, sel, {
-        type: "set_attr",
-        start: [[0], 0],
-        end: [[100], 1],
-        key: "foo",
-        value: "bar",
-      });
-
-      expect(is(res[0], doc)).toBe(true);
-      expect(res[1]).toEqual(sel);
-    });
-
     it("offset less than min", () => {
       const docText = "abcde";
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "set_attr",
-        start: [[0], -1],
-        end: [[0], 1],
+        start: -1,
+        end: 1,
         key: "foo",
         value: "bar",
       });
@@ -2926,14 +2453,11 @@ describe("format", () => {
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "set_attr",
-        start: [[0], 0],
-        end: [[0], 100],
+        start: 0,
+        end: 100,
         key: "foo",
         value: "bar",
       });
@@ -2947,14 +2471,11 @@ describe("format", () => {
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "set_attr",
-        start: [[0], 1],
-        end: [[0], 1],
+        start: 1,
+        end: 1,
         key: "foo",
         value: "bar",
       });
@@ -2968,14 +2489,11 @@ describe("format", () => {
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "set_attr",
-        start: [[0], 2],
-        end: [[0], 1],
+        start: 2,
+        end: 1,
         key: "foo",
         value: "bar",
       });
@@ -2994,14 +2512,11 @@ describe("format", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const res = applyOperation(doc, sel, {
       type: "set_attr",
-      start: [[0], 1],
-      end: [[0], 2],
+      start: 1,
+      end: 2,
       key: "foo",
       value: "bar",
     });
@@ -3031,15 +2546,12 @@ describe("format", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 3],
-      [[1], 3],
-    ];
+    const sel: Selection = [docText.length + 1 + 3, docText.length + 1 + 3];
 
     const res = applyOperation(doc, sel, {
       type: "set_attr",
-      start: [[0], 2],
-      end: [[1], 1],
+      start: 2,
+      end: docText.length + 1 + 1,
       key: "foo",
       value: "bar",
     });
@@ -3070,14 +2582,11 @@ describe("format", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 3],
-      [[0], 3],
-    ];
+    const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
       type: "set_attr",
-      start: [[0], 1],
-      end: [[0], 2],
+      start: 1,
+      end: 2,
       key: "foo",
       value: "bar",
     });
@@ -3102,14 +2611,11 @@ describe("format", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 3],
-      [[0], 3],
-    ];
+    const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
       type: "set_attr",
-      start: [[0], 2],
-      end: [[0], 3],
+      start: 2,
+      end: 3,
       key: "foo",
       value: "bar",
     });
@@ -3138,14 +2644,11 @@ describe("format", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [2, docText.length + 1 + 2];
     const res = applyOperation(doc, sel, {
       type: "set_attr",
-      start: [[0], 3],
-      end: [[1], 1],
+      start: 3,
+      end: docText.length + 1 + 1,
       key: "foo",
       value: "bar",
     });
@@ -3176,14 +2679,11 @@ describe("format", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 3],
-      [[0], 3],
-    ];
+    const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
       type: "set_attr",
-      start: [[0], 3],
-      end: [[0], 4],
+      start: 3,
+      end: 4,
       key: "foo",
       value: "bar",
     });
@@ -3208,14 +2708,11 @@ describe("format", () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 3],
-      [[0], 3],
-    ];
+    const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
       type: "set_attr",
-      start: [[0], 4],
-      end: [[0], 5],
+      start: 4,
+      end: 5,
       key: "foo",
       value: "bar",
     });
@@ -3243,14 +2740,11 @@ describe("format", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "set_attr",
-      start: [[1], 1],
-      end: [[1], 2],
+      start: docText.length + 1 + 1,
+      end: docText.length + 1 + 2,
       key: "foo",
       value: "bar",
     });
@@ -3282,14 +2776,11 @@ describe("format", () => {
         { attr: 2, children: [{ attr: 0, text: docText3 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[0], 2],
-      [[0], 2],
-    ];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "set_attr",
-      start: [[1], 1],
-      end: [[2], 1],
+      start: docText.length + 1 + 1,
+      end: docText.length + 1 + docText2.length + 1 + 1,
       key: "foo",
       value: "bar",
     });
@@ -3324,10 +2815,7 @@ describe("set attr", () => {
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "set_node_attr",
         path: [-1],
@@ -3344,10 +2832,7 @@ describe("set attr", () => {
       const doc: Doc = {
         children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
       };
-      const sel: SelectionSnapshot = [
-        [[0], 2],
-        [[0], 2],
-      ];
+      const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
         type: "set_node_attr",
         path: [100],
@@ -3369,10 +2854,7 @@ describe("set attr", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const res = applyOperation(doc, sel, {
       type: "set_node_attr",
       path: [],
@@ -3399,10 +2881,7 @@ describe("set attr", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const res = applyOperation(doc, sel, {
       type: "set_node_attr",
       path: [0],
@@ -3428,10 +2907,7 @@ describe("set attr", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: SelectionSnapshot = [
-      [[1], 2],
-      [[1], 2],
-    ];
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const res = applyOperation(doc, sel, {
       type: "set_node_attr",
       path: [1],
@@ -3450,43 +2926,12 @@ describe("set attr", () => {
 });
 
 describe(isValidSelection.name, () => {
-  it("path less than min", () => {
-    const docText = "abcde";
-    const doc: Doc = {
-      children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
-    };
-    expect(
-      isValidSelection(doc, [
-        [[-1], 0],
-        [[0], 1],
-      ]),
-    ).toBe(false);
-  });
-
-  it("path more than max", () => {
-    const docText = "abcde";
-    const doc: Doc = {
-      children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
-    };
-    expect(
-      isValidSelection(doc, [
-        [[0], 0],
-        [[100], 1],
-      ]),
-    ).toBe(false);
-  });
-
   it("offset less than min", () => {
     const docText = "abcde";
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    expect(
-      isValidSelection(doc, [
-        [[0], -1],
-        [[0], 1],
-      ]),
-    ).toBe(false);
+    expect(isValidSelection(doc, [-1, 1])).toBe(false);
   });
 
   it("offset more than max", () => {
@@ -3494,12 +2939,7 @@ describe(isValidSelection.name, () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    expect(
-      isValidSelection(doc, [
-        [[0], 0],
-        [[0], 100],
-      ]),
-    ).toBe(false);
+    expect(isValidSelection(doc, [0, 100])).toBe(false);
   });
 
   it("should select cursor", () => {
@@ -3507,12 +2947,7 @@ describe(isValidSelection.name, () => {
     const doc: Doc = {
       children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
     };
-    expect(
-      isValidSelection(doc, [
-        [[0], 1],
-        [[0], 1],
-      ]),
-    ).toBe(true);
+    expect(isValidSelection(doc, [1, 1])).toBe(true);
   });
 
   it("should select text at line", () => {
@@ -3528,8 +2963,8 @@ describe(isValidSelection.name, () => {
     };
     expect(
       isValidSelection(doc, [
-        [[1], 1],
-        [[2], 1],
+        docText.length + 1 + 1,
+        docText.length + 1 + docText2.length + 1 + 1,
       ]),
     ).toBe(true);
   });
@@ -3543,12 +2978,7 @@ describe(isValidSelection.name, () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    expect(
-      isValidSelection(doc, [
-        [[0], 2],
-        [[1], 1],
-      ]),
-    ).toBe(true);
+    expect(isValidSelection(doc, [2, docText.length + 1 + 1])).toBe(true);
   });
 
   it("should select all", () => {
@@ -3560,14 +2990,6 @@ describe(isValidSelection.name, () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    expect(
-      isValidSelection(doc, [
-        [[0], 0],
-        [
-          [doc.children.length - 1],
-          doc.children[doc.children.length - 1]!.children[0]!.text.length - 1,
-        ],
-      ]),
-    ).toBe(true);
+    expect(isValidSelection(doc, [0, getNodeSize(doc)])).toBe(true);
   });
 });

@@ -13,12 +13,10 @@ import {
   parentBlock,
   readToken,
 } from "./parser.js";
-import { comparePosition } from "../doc/position.js";
 import type {
-  Position,
+  DomPosition,
   InlineNode,
   SelectionSnapshot,
-  Range as DocRange,
   Fragment,
   TextNode,
   Path,
@@ -91,12 +89,12 @@ export const setSelectionToDOM = (
   document: Document,
   root: Element,
   [anchor, focus]: SelectionSnapshot,
+  posDiff: number, // TODO remove
   parse: Parser,
   force?: boolean,
 ): void => {
-  const posDiff = comparePosition(anchor, focus);
   const isCollapsed = posDiff === 0;
-  const backward = posDiff === 1;
+  const backward = posDiff > 0;
   const start = backward ? focus : anchor;
   const end = backward ? anchor : focus;
   // special path for empty content with empty selection, necessary for placeholder
@@ -158,7 +156,7 @@ type DOMPosition = [node: Text | Element, offsetAtNode: number];
 
 const findPosition = (
   root: Element,
-  [path, offset]: Position,
+  [path, offset]: DomPosition,
   parse: Parser,
 ): DOMPosition | undefined => {
   return parse((): DOMPosition | undefined => {
@@ -192,7 +190,7 @@ const serializePosition = (
   node: Node,
   offsetAtNode: number,
   parse: Parser,
-): Position => {
+): DomPosition => {
   let excludeEnd = true;
   if (root === node && !node.hasChildNodes()) {
     // for placeholder
@@ -270,23 +268,13 @@ export const serializeRange = (
   root: Element,
   parse: Parser,
   { startOffset, startContainer, endOffset, endContainer }: AbstractRange,
-): DocRange => {
+): [DomPosition, DomPosition] => {
   const start = serializePosition(root, startContainer, startOffset, parse);
   return [
     start,
     startContainer === endContainer && startOffset === endOffset
       ? start
       : serializePosition(root, endContainer, endOffset, parse),
-  ];
-};
-
-/**
- * @internal
- */
-export const getEmptySelectionSnapshot = (): SelectionSnapshot => {
-  return [
-    [[0], 0],
-    [[0], 0],
   ];
 };
 
@@ -300,7 +288,10 @@ export const takeSelectionSnapshot = (
   const selection = getDOMSelection(root);
   const domRange = getSelectionRangeInEditor(selection, root);
   if (!domRange) {
-    return getEmptySelectionSnapshot();
+    return [
+      [[0], 0],
+      [[0], 0],
+    ];
   }
 
   const range = serializeRange(root, parse, domRange);
@@ -391,7 +382,7 @@ export const getPointedCaretPosition = (
   root: Element,
   { clientX, clientY }: MouseEvent,
   parse: Parser,
-): Position | void => {
+): DomPosition | void => {
   // https://developer.mozilla.org/en-US/docs/Web/API/Document/caretPositionFromPoint
   // https://developer.mozilla.org/en-US/docs/Web/API/Document/caretRangeFromPoint
   //          caretPositionFromPoint caretRangeFromPoint

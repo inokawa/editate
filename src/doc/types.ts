@@ -28,8 +28,12 @@ type InferBlock<T> = T extends { children: readonly (infer N)[] }
 export type InferInlineNode<T extends DocNode> = InferChild<T>;
 export type InferBlockNode<T extends DocNode> = InferBlock<T>;
 
-export type Path = readonly [number?];
-export type Position = readonly [path: Path, offset: number];
-export type Range = readonly [start: Position, end: Position];
+export type Path = readonly number[];
+export type DomPosition = readonly [path: Path, offset: number];
+export type Range = readonly [start: number, end: number];
 
-export type SelectionSnapshot = readonly [anchor: Position, focus: Position];
+export type Selection = readonly [anchor: number, focus: number];
+export type SelectionSnapshot = readonly [
+  anchor: DomPosition,
+  focus: DomPosition,
+];

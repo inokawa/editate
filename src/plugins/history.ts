@@ -1,6 +1,6 @@
 import { ReplaceDoc } from "../commands.js";
 import { rebaseSelection, type Operation } from "../doc/edit.js";
-import type { DocNode, SelectionSnapshot } from "../doc/types.js";
+import type { DocNode, Selection } from "../doc/types.js";
 import type { Editor } from "../editor.js";
 import { hotkey } from "../hooks/keyboard.js";
 import { is } from "../utils.js";
@@ -12,7 +12,7 @@ const BATCH_HISTORY_TIME = 500;
  * @internal
  */
 export function historyPlugin<T extends DocNode>(this: Editor<T>) {
-  type History = [T, SelectionSnapshot, Operation[]];
+  type History = [T, Selection, Operation[]];
   let index = 0;
   let prevTime = 0;
   let undoOrRedoing = false;
