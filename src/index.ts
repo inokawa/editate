@@ -4,7 +4,7 @@ export {
   InsertText,
   InsertNode,
   ReplaceText,
-  ReplaceAll,
+  ReplaceDoc,
   Format,
   ToggleFormat,
   SetBlockAttr,

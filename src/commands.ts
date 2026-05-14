@@ -62,10 +62,14 @@ export function ReplaceText(this: Editor, text: string) {
 }
 
 /**
- * Replace all content in the editor.
+ * Replace document in the editor.
  */
-export function ReplaceAll(this: Editor, text: string) {
+export function ReplaceDoc<T extends DocNode>(
+  this: Editor<T>,
+  fragment: T["children"],
+) {
   const doc = this.doc;
+  // TODO revisit
   this.apply(
     new Transaction()
       // TODO improve
@@ -76,7 +80,7 @@ export function ReplaceAll(this: Editor, text: string) {
           getNodeSize(doc.children[doc.children.length - 1]!),
         ],
       )
-      .insertText([[], 0], text),
+      .insertFragment([[], 0], fragment),
   );
 }
 
