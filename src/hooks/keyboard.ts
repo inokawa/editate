@@ -1,3 +1,8 @@
+/**
+ * Functions to handle keyboard events.
+ *
+ * Return `true` if you want to stop propagation.
+ */
 export type KeyboardHook = (keyboard: KeyboardEvent) => boolean | void;
 
 /**
