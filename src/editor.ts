@@ -1,5 +1,4 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import { createHistory } from "./history.js";
 import {
   getCurrentDocument,
   takeSelectionSnapshot,
@@ -30,9 +29,9 @@ import {
   type PasteHook,
   plainCopy,
   plainPaste,
-  hotkey,
   type KeyboardHook,
 } from "./hooks/index.js";
+import { historyPlugin } from "./plugins/history.js";
 
 const empty: unknown[] = [];
 
@@ -162,7 +161,7 @@ type EditorHookMap = {
  */
 export interface Editor<T extends DocNode = DocNode> {
   readonly doc: T;
-  readonly selection: SelectionSnapshot;
+  selection: SelectionSnapshot;
   /**
    * The getter/setter for the editor's read-only state.
    * `true` to read-only. `false` to editable.
@@ -349,9 +348,9 @@ export const createEditor = <
     get selection() {
       return selection;
     },
-    // set selection(value) {
-    //   updateSelection(value);
-    // },
+    set selection(value) {
+      updateSelection(value);
+    },
     get readonly() {
       return readonly;
     },
@@ -737,46 +736,11 @@ export const createEditor = <
     },
   };
 
-  const history = createHistory(editor);
+  editor.use(historyPlugin);
 
   editor.on("change", () => {
     onChange(doc);
   });
-
-  editor.hook(
-    "keyboard",
-    hotkey(
-      "z",
-      () => {
-        if (!readonly) {
-          const nextHistory = history.undo();
-          if (nextHistory) {
-            doc = nextHistory[0];
-            updateSelection(nextHistory[1]);
-            publish("change");
-          }
-        }
-      },
-      { mod: true },
-    ),
-  );
-  editor.hook(
-    "keyboard",
-    hotkey(
-      "z",
-      () => {
-        if (!readonly) {
-          const nextHistory = history.redo();
-          if (nextHistory) {
-            doc = nextHistory[0];
-            updateSelection(nextHistory[1]);
-            publish("change");
-          }
-        }
-      },
-      { mod: true, shift: true },
-    ),
-  );
 
   if (keyboard) {
     keyboard.forEach((h) => {

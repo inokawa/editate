@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { createPlainEditor, hotkey, ReplaceAll } from "../../src";
+import { createPlainEditor, hotkey, ReplaceDoc } from "../../src";
 
 export default {
   component: createPlainEditor,
@@ -536,7 +536,10 @@ export const Combobox: StoryObj = {
     );
 
     const complete = (i: number) => {
-      editor.apply(ReplaceAll, filtered[i]);
+      editor.apply(
+        ReplaceDoc,
+        filtered[i].split("\n").map((text) => ({ children: [{ text }] })),
+      );
       setIndex(-1);
     };
 
