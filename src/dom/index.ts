@@ -195,7 +195,7 @@ const serializePosition = (
   let excludeEnd = true;
   if (root === node && !node.hasChildNodes()) {
     // for placeholder
-    return [[0], 0];
+    return [[], 0];
   }
 
   if (isElementNode(node) && node.hasChildNodes()) {
@@ -229,7 +229,7 @@ const serializePosition = (
         }
 
         if (!blocks.length) {
-          return [0];
+          return [];
         }
 
         let i = 0;
