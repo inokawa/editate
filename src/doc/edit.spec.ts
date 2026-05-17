@@ -2475,6 +2475,93 @@ describe("delete", () => {
     });
     expect(res[1]).toEqual(sel);
   });
+
+  describe("single line document", () => {
+    it("delete text before caret", () => {
+      const docText = "abcde";
+      const doc = { attr: 0, children: [{ attr: 0, text: docText }] };
+      const sel: Selection = [3, 3];
+      const res = applyOperation(doc, sel, {
+        type: "delete",
+        start: 1,
+        end: 2,
+      });
+
+      expect(res[0]).toEqual({
+        attr: 0,
+        children: [{ attr: 0, text: deleteAt(docText, 1, 1) }],
+      });
+      expect(res[1]).toEqual([sel[0] + -1, sel[1] + -1]);
+    });
+
+    it("delete text just before caret", () => {
+      const docText = "abcde";
+      const doc = { attr: 0, children: [{ attr: 0, text: docText }] };
+      const sel: Selection = [3, 3];
+      const res = applyOperation(doc, sel, {
+        type: "delete",
+        start: 2,
+        end: 3,
+      });
+
+      expect(res[0]).toEqual({
+        attr: 0,
+        children: [{ attr: 0, text: deleteAt(docText, 2, 1) }],
+      });
+      expect(res[1]).toEqual([sel[0] + -1, sel[1] + -1]);
+    });
+
+    it("delete text around caret", () => {
+      const docText = "abcde";
+      const doc = { attr: 0, children: [{ attr: 0, text: docText }] };
+      const sel: Selection = [3, 3];
+      const res = applyOperation(doc, sel, {
+        type: "delete",
+        start: 2,
+        end: 4,
+      });
+
+      expect(res[0]).toEqual({
+        attr: 0,
+        children: [{ attr: 0, text: deleteAt(docText, 2, 2) }],
+      });
+      expect(res[1]).toEqual([sel[0] + -1, sel[1] + -1]);
+    });
+
+    it("delete text just after caret", () => {
+      const docText = "abcde";
+      const doc = { attr: 0, children: [{ attr: 0, text: docText }] };
+      const sel: Selection = [3, 3];
+      const res = applyOperation(doc, sel, {
+        type: "delete",
+        start: 3,
+        end: 4,
+      });
+
+      expect(res[0]).toEqual({
+        attr: 0,
+        children: [{ attr: 0, text: deleteAt(docText, 3, 1) }],
+      });
+      expect(res[1]).toEqual(sel);
+    });
+
+    it("delete text after caret", () => {
+      const docText = "abcde";
+      const doc = { attr: 0, children: [{ attr: 0, text: docText }] };
+      const sel: Selection = [3, 3];
+      const res = applyOperation(doc, sel, {
+        type: "delete",
+        start: 4,
+        end: 5,
+      });
+
+      expect(res[0]).toEqual({
+        attr: 0,
+        children: [{ attr: 0, text: deleteAt(docText, 4, 1) }],
+      });
+      expect(res[1]).toEqual(sel);
+    });
+  });
 });
 
 describe("format", () => {
