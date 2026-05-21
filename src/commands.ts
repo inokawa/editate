@@ -5,7 +5,7 @@ import {
   isTextNode,
   offsetToPosition,
   sliceFragment,
-  Transaction,
+  Edit,
 } from "./doc/edit.js";
 import type { Editor } from "./editor.js";
 import type {
@@ -26,7 +26,7 @@ export type EditorCommand<A extends unknown[], T extends DocNode> = (
  * Delete content in the selection or specified range.
  */
 export function Delete(this: Editor, range: Range = toRange(this.selection)) {
-  this.apply(new Transaction().delete(...range));
+  this.apply(new Edit().delete(...range));
 }
 
 /**
@@ -37,7 +37,7 @@ export function InsertText(
   text: string,
   position: number = this.selection[0],
 ) {
-  this.apply(new Transaction().insertText(position, text));
+  this.apply(new Edit().insertText(position, text));
 }
 
 /**
@@ -48,9 +48,7 @@ export function InsertNode<T extends DocNode>(
   node: Exclude<InferInlineNode<T>, TextNode>,
   position: number = this.selection[0],
 ) {
-  this.apply(
-    new Transaction().insertFragment(position, [{ children: [node] }]),
-  );
+  this.apply(new Edit().insertFragment(position, [{ children: [node] }]));
 }
 
 /**
@@ -58,7 +56,7 @@ export function InsertNode<T extends DocNode>(
  */
 export function ReplaceText(this: Editor, text: string) {
   const [start, end] = toRange(this.selection);
-  this.apply(new Transaction().delete(start, end).insertText(start, text));
+  this.apply(new Edit().delete(start, end).insertText(start, text));
 }
 
 /**
@@ -70,9 +68,7 @@ export function ReplaceDoc<T extends DocNode>(
 ) {
   // TODO revisit
   this.apply(
-    new Transaction()
-      .delete(0, getNodeSize(this.doc))
-      .insertFragment(0, fragment),
+    new Edit().delete(0, getNodeSize(this.doc)).insertFragment(0, fragment),
   );
 }
 
@@ -93,7 +89,7 @@ export function Format<
   value: N[K],
   range: Range = toRange(this.selection),
 ) {
-  this.apply(new Transaction().format(...range, key, value));
+  this.apply(new Edit().format(...range, key, value));
 }
 
 /**
@@ -109,7 +105,7 @@ export function ToggleFormat<T extends DocNode>(
   );
   if (texts.length) {
     this.apply(
-      new Transaction().format(
+      new Edit().format(
         ...range,
         key,
         texts.some((n) => !n[key as keyof typeof n]) ? true : false,
@@ -131,7 +127,7 @@ export function SetBlockAttr<
   value: N[K],
   path: Path = offsetToPosition(this.doc, this.selection[0])[0],
 ) {
-  this.apply(new Transaction().attr(path, key, value));
+  this.apply(new Edit().attr(path, key, value));
 }
 
 /**
@@ -150,10 +146,6 @@ export function ToggleBlockAttr<
 ) {
   const block = getNodeAt(this.doc, path) as N;
   this.apply(
-    new Transaction().attr(
-      path,
-      key,
-      block[key] === onValue ? offValue : onValue,
-    ),
+    new Edit().attr(path, key, block[key] === onValue ? offValue : onValue),
   );
 }

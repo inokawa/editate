@@ -1,4 +1,4 @@
-export { Transaction } from "./doc/edit.js";
+export { Edit } from "./doc/edit.js";
 export {
   Delete,
   InsertText,

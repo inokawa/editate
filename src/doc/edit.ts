@@ -64,7 +64,10 @@ export type Operation =
 export const isUnsafeOperation = ({ type }: Operation): boolean =>
   type === OP_INSERT_NODE || type === OP_SET_ATTR || type === OP_SET_NODE_ATTR;
 
-export class Transaction {
+/**
+ * An object that represents edits to be applied to a document.
+ */
+export class Edit {
   private readonly _ops: Operation[];
 
   constructor(ops?: readonly Operation[]) {
