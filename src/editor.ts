@@ -93,10 +93,15 @@ type InputType =
   | "deleteByComposition"
   | "insertFromComposition";
 
-export type EditorFunction<A extends unknown[], T extends DocNode> = (
+type EditorCommand<A extends unknown[], T extends DocNode = DocNode> = (
   editor: Editor<T>,
   ...args: A
-) => void;
+) => void | undefined;
+
+type EditorQuery<A extends unknown[], V, T extends DocNode = DocNode> = (
+  editor: Editor<T>,
+  ...args: A
+) => V;
 
 /**
  * Options of {@link createEditor}.
@@ -179,10 +184,11 @@ export interface Editor<T extends DocNode = DocNode> {
   apply(tr: Transaction): this;
   /**
    * Executes a function with editor bound as context.
-   * @param fn {@link EditorFunction}
-   * @param args arguments of {@link EditorFunction}
+   * @param fn {@link EditorCommand} or {@link EditorQuery}
+   * @param args arguments of the function
    */
-  exec<A extends unknown[]>(fn: EditorFunction<A, T>, ...args: A): this;
+  exec<A extends unknown[]>(fn: EditorCommand<A, T>, ...args: A): this;
+  exec<A extends unknown[], V>(fn: EditorQuery<A, V, T>, ...args: A): V;
   /**
    * A function to subscribe editor events.
    * @returns cleanup function
@@ -390,9 +396,15 @@ export const createEditor = <
         }
       };
     },
-    exec: (fn, ...args) => {
-      fn(editor, ...args);
-      return editor;
+    exec: (
+      fn: EditorCommand<any, T> | EditorQuery<any, unknown, T>,
+      ...args: unknown[]
+    ): any => {
+      const result = fn(editor, ...args);
+      if (typeof result === "undefined") {
+        return editor;
+      }
+      return result;
     },
     input: (element) => {
       if (
