@@ -1,7 +1,6 @@
 import type { Editor } from "../editor.js";
 
-export function debugPlugin(this: Editor) {
-  const editor = this;
+export function debugPlugin(editor: Editor) {
   editor.hook("apply", (op) => {
     console.log("apply", op);
   });

@@ -1,8 +1,7 @@
 import { joinBlocks } from "../doc/edit.js";
 import type { Editor } from "../editor.js";
 
-export function singlelinePlugin(this: Editor) {
-  const editor = this;
+export function singlelinePlugin(editor: Editor) {
   editor.hook("mount", (element) => {
     element.ariaMultiLine = null;
   });

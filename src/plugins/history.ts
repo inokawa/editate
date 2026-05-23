@@ -11,12 +11,11 @@ const BATCH_HISTORY_TIME = 500;
 /**
  * @internal
  */
-export function historyPlugin<T extends DocNode>(this: Editor<T>) {
+export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
   type History = [T, Selection, Operation[]];
   let index = 0;
   let prevTime = 0;
   let undoOrRedoing = false;
-  const editor = this;
   const now = Date.now;
   const histories: History[] = [[editor.doc, editor.selection, []]];
 

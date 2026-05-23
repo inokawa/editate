@@ -18,37 +18,40 @@ import type {
 } from "./doc/types.js";
 
 export type EditorCommand<A extends unknown[], T extends DocNode> = (
-  this: Editor<T>,
+  editor: Editor<T>,
   ...args: A
 ) => void;
 
 /**
  * Delete content in the selection or specified range.
  */
-export function Delete(this: Editor, range: Range = toRange(this.selection)) {
-  this.apply(new Transaction().delete(...range));
+export function Delete(
+  editor: Editor,
+  range: Range = toRange(editor.selection),
+) {
+  editor.apply(new Transaction().delete(...range));
 }
 
 /**
  * Insert text at the caret or specified position.
  */
 export function InsertText(
-  this: Editor,
+  editor: Editor,
   text: string,
-  position: number = this.selection[0],
+  position: number = editor.selection[0],
 ) {
-  this.apply(new Transaction().insertText(position, text));
+  editor.apply(new Transaction().insertText(position, text));
 }
 
 /**
  * Insert node at the caret or specified position.
  */
 export function InsertNode<T extends DocNode>(
-  this: Editor<T>,
+  editor: Editor<T>,
   node: Exclude<InferInlineNode<T>, TextNode>,
-  position: number = this.selection[0],
+  position: number = editor.selection[0],
 ) {
-  this.apply(
+  editor.apply(
     new Transaction().insertFragment(position, [{ children: [node] }]),
   );
 }
@@ -56,22 +59,22 @@ export function InsertNode<T extends DocNode>(
 /**
  * Replace text in the selection or specified range.
  */
-export function ReplaceText(this: Editor, text: string) {
-  const [start, end] = toRange(this.selection);
-  this.apply(new Transaction().delete(start, end).insertText(start, text));
+export function ReplaceText(editor: Editor, text: string) {
+  const [start, end] = toRange(editor.selection);
+  editor.apply(new Transaction().delete(start, end).insertText(start, text));
 }
 
 /**
  * Replace document in the editor.
  */
 export function ReplaceDoc<T extends DocNode>(
-  this: Editor<T>,
+  editor: Editor<T>,
   fragment: T["children"],
 ) {
   // TODO revisit
-  this.apply(
+  editor.apply(
     new Transaction()
-      .delete(0, getNodeSize(this.doc))
+      .delete(0, getNodeSize(editor.doc))
       .insertFragment(0, fragment),
   );
 }
@@ -88,27 +91,27 @@ export function Format<
   N extends Omit<InferInlineNode<T>, "text">,
   K extends Extract<keyof N, string>,
 >(
-  this: Editor<T>,
+  editor: Editor<T>,
   key: K,
   value: N[K],
-  range: Range = toRange(this.selection),
+  range: Range = toRange(editor.selection),
 ) {
-  this.apply(new Transaction().format(...range, key, value));
+  editor.apply(new Transaction().format(...range, key, value));
 }
 
 /**
  * Toggle formatting in the selection or specified range.
  */
 export function ToggleFormat<T extends DocNode>(
-  this: Editor<T>,
+  editor: Editor<T>,
   key: Extract<ToggleableKey<Omit<InferInlineNode<T>, "text">>, string>,
-  range: Range = toRange(this.selection),
+  range: Range = toRange(editor.selection),
 ) {
-  const texts = sliceFragment(this.doc, ...range).flatMap((n) =>
+  const texts = sliceFragment(editor.doc, ...range).flatMap((n) =>
     n.children.filter(isTextNode),
   );
   if (texts.length) {
-    this.apply(
+    editor.apply(
       new Transaction().format(
         ...range,
         key,
@@ -126,12 +129,12 @@ export function SetBlockAttr<
   N extends InferBlockNode<T>,
   K extends Extract<keyof N, string>,
 >(
-  this: Editor<T>,
+  editor: Editor<T>,
   key: K,
   value: N[K],
-  path: Path = offsetToPosition(this.doc, this.selection[0])[0],
+  path: Path = offsetToPosition(editor.doc, editor.selection[0])[0],
 ) {
-  this.apply(new Transaction().attr(path, key, value));
+  editor.apply(new Transaction().attr(path, key, value));
 }
 
 /**
@@ -142,14 +145,14 @@ export function ToggleBlockAttr<
   N extends InferBlockNode<T>,
   K extends Extract<keyof N, string>,
 >(
-  this: Editor<T>,
+  editor: Editor<T>,
   key: K,
   onValue: N[K],
   offValue: N[K],
-  path: Path = offsetToPosition(this.doc, this.selection[0])[0],
+  path: Path = offsetToPosition(editor.doc, editor.selection[0])[0],
 ) {
-  const block = getNodeAt(this.doc, path) as N;
-  this.apply(
+  const block = getNodeAt(editor.doc, path) as N;
+  editor.apply(
     new Transaction().attr(
       path,
       key,

@@ -361,7 +361,7 @@ export const createEditor = <
     },
     apply: (tr: Transaction | EditorCommand<any, T>, ...args: unknown[]) => {
       if (isFunction(tr)) {
-        tr.call(editor, ...args);
+        tr(editor, ...args);
       } else {
         apply(tr);
       }
@@ -392,7 +392,7 @@ export const createEditor = <
       };
     },
     use: (plugin, ...args) => {
-      plugin.call(editor, ...args);
+      plugin(editor, ...args);
       return editor;
     },
     input: (element) => {
