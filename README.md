@@ -31,17 +31,16 @@ Mobile browsers are also supported, but with some issues (https://github.com/ino
 
 ## Getting started
 
-1. Define your contents declaratively. There are rules you have to follow:
-   - You must render `<br/>` in empty row (limitation of contenteditable).
-   - If `singleline` option is
-     - `false` or undefined, direct children of the root are treated as rows. They must be elements, not text.
-     - `true`, direct children of the root are treated as inline nodes.
-   - (TODO)
-
-2. Initialize `Editor` with `createPlainEditor`/`createEditor`.
-3. Call `Editor.input` on mount, with `HTMLElement` which is the root of editable contents.
-4. Update your state with `onChange`, which will be called on edit.
-5. Call returned function from `Editor.input` on unmount for cleanup.
+1. Define your document as a state.
+2. Define your editor view declaratively. There are rules you have to follow:
+   - You must render all texts in the document as Text nodes in DOM.
+   - You must render `<br/>` in empty blocks (limitation of contenteditable).
+   - You must render hard breaks in the document as [block element](https://github.com/inokawa/edix/blob/ecd70f084f2fbb54d36bfd3b682f2dd8bbc3f547/src/dom/default.ts#L25).
+   - You must render void nodes in the document as [void element](https://github.com/inokawa/edix/blob/ecd70f084f2fbb54d36bfd3b682f2dd8bbc3f547/src/dom/default.ts#L47).
+3. Use `createPlainEditor`/`createEditor` to initialize `Editor` with the document.
+4. Call `Editor.input` on mount, with `HTMLElement` which is the root of editor view.
+5. Update your state with `onChange`, which will be called on edit.
+6. Call returned function from `Editor.input` on unmount for cleanup.
 
 Here is an example for React.
 
@@ -53,26 +52,27 @@ import { createPlainEditor } from "edix";
 
 export const App = () => {
   const ref = useRef<HTMLDivElement>(null);
+  // 1. Define state
   const [text, setText] = useState("Hello world.");
 
   useEffect(() => {
-    // 2. init
+    // 3. init
     const editor = createPlainEditor({
       text: text,
       onChange: (v) => {
-        // 4. update state
+        // 5. update state
         setText(v);
       },
     });
-    // 3. bind to DOM
+    // 4. bind to DOM
     const cleanup = editor.input(ref.current);
     return () => {
-      // 5. cleanup DOM
+      // 6. cleanup DOM
       cleanup();
     };
   }, []);
 
-  // 1. render contents from state
+  // 2. render from state
   return (
     <div
       ref={ref}
