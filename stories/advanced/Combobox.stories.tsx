@@ -536,7 +536,7 @@ export const Combobox: StoryObj = {
     );
 
     const complete = (i: number) => {
-      editor.apply(ReplaceDoc, [{ children: [{ text: filtered[i] }] }]);
+      editor.exec(ReplaceDoc, [{ children: [{ text: filtered[i] }] }]);
       setIndex(-1);
     };
 

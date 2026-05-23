@@ -143,19 +143,19 @@ export const RichText: StoryObj = {
     });
 
     const toggleBold = () => {
-      editor.apply(ToggleFormat, "bold");
+      editor.exec(ToggleFormat, "bold");
     };
     const toggleItalic = () => {
-      editor.apply(ToggleFormat, "italic");
+      editor.exec(ToggleFormat, "italic");
     };
     const toggleUnderline = () => {
-      editor.apply(ToggleFormat, "underline");
+      editor.exec(ToggleFormat, "underline");
     };
     const toggleStrike = () => {
-      editor.apply(ToggleFormat, "strike");
+      editor.exec(ToggleFormat, "strike");
     };
     const toggleAlign = () => {
-      editor.apply(ToggleBlockAttr, "align", "right", undefined);
+      editor.exec(ToggleBlockAttr, "align", "right", undefined);
     };
 
     const editor = useMemo(
@@ -259,7 +259,7 @@ export const Tag: StoryObj = {
           ],
           paste: [internalPaste(), plainPaste()],
           onChange: setDoc,
-        }).use(singlelinePlugin),
+        }).exec(singlelinePlugin),
       [],
     );
 
@@ -287,7 +287,7 @@ export const Tag: StoryObj = {
               const label = labelRef.current?.value;
               const value = valueRef.current?.value;
               if (!label || !value) return;
-              editor.apply(InsertNode, { type: "tag", value, label });
+              editor.exec(InsertNode, { type: "tag", value, label });
             }}
           >
             insert

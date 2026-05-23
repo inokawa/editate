@@ -17,11 +17,6 @@ import type {
   TextNode,
 } from "./doc/types.js";
 
-export type EditorCommand<A extends unknown[], T extends DocNode> = (
-  editor: Editor<T>,
-  ...args: A
-) => void;
-
 /**
  * Delete content in the selection or specified range.
  */

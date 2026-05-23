@@ -35,7 +35,7 @@ export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
       index--;
       const currentDoc = editor.doc;
       undoOrRedoing = true;
-      editor.apply(ReplaceDoc, get()[0].children);
+      editor.exec(ReplaceDoc, get()[0].children);
       undoOrRedoing = false;
       if (!is(currentDoc, editor.doc)) {
         editor.selection = sel;
@@ -48,7 +48,7 @@ export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
       const [doc, sel, ops] = get();
       const currentDoc = editor.doc;
       undoOrRedoing = true;
-      editor.apply(ReplaceDoc, doc.children);
+      editor.exec(ReplaceDoc, doc.children);
       undoOrRedoing = false;
       if (!is(currentDoc, editor.doc)) {
         editor.selection = ops.reduce(

@@ -261,7 +261,7 @@ export const Command: StoryObj = {
             />
             <button
               onClick={() => {
-                editor.apply(InsertText, insertText);
+                editor.exec(InsertText, insertText);
               }}
             >
               insert
@@ -270,7 +270,7 @@ export const Command: StoryObj = {
           <div>
             <button
               onClick={() => {
-                editor.apply(Delete);
+                editor.exec(Delete);
               }}
             >
               delete selection

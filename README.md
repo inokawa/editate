@@ -150,21 +150,21 @@ export const App = () => {
       <div>
         <button
           onClick={() => {
-            editor.apply(ToggleFormat, "bold");
+            editor.exec(ToggleFormat, "bold");
           }}
         >
           bold
         </button>
         <button
           onClick={() => {
-            editor.apply(ToggleFormat, "italic");
+            editor.exec(ToggleFormat, "italic");
           }}
         >
           italic
         </button>
         <button
           onClick={() => {
-            editor.apply(ToggleBlockAttr, "align", "right", undefined);
+            editor.exec(ToggleBlockAttr, "align", "right", undefined);
           }}
         >
           align
