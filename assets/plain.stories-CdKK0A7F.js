@@ -1,4 +1,4 @@
-import{c as e,i as t}from"./preload-helper-DbRxMUml.js";import{S as n}from"./iframe-Dcg8yHaN.js";import{t as r}from"./jsx-runtime-CP4-wa-Y.js";import{h as i,n as a,p as o,t as s}from"./src-eWI3vcA3.js";var c,l,u,d,f,p,m,h,g,_,v,y,b,x;t((()=>{c=e(n()),s(),l=r(),u={component:a},d={render:()=>{let e=(0,c.useRef)(null),[t,n]=(0,c.useState)(``);return(0,c.useEffect)(()=>{if(e.current)return a({text:t,onChange:n}).input(e.current)},[]),(0,l.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t.split(`
+import{c as e,i as t}from"./preload-helper-DbRxMUml.js";import{S as n}from"./iframe-aH7Vha_S.js";import{t as r}from"./jsx-runtime-CP4-wa-Y.js";import{h as i,n as a,p as o,t as s}from"./src-BGPyqQm2.js";var c,l,u,d,f,p,m,h,g,_,v,y,b,x;t((()=>{c=e(n()),s(),l=r(),u={component:a},d={render:()=>{let e=(0,c.useRef)(null),[t,n]=(0,c.useState)(``);return(0,c.useEffect)(()=>{if(e.current)return a({text:t,onChange:n}).input(e.current)},[]),(0,l.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t.split(`
 `).map((e,t)=>(0,l.jsx)(`div`,{children:e||(0,l.jsx)(`br`,{})},t))})}},f={render:()=>{let e=(0,c.useRef)(null),[t,n]=(0,c.useState)(`Hello world.
 こんにちは。
 👍❤️🧑‍🧑‍🧒`);return(0,c.useEffect)(()=>{if(e.current)return a({text:t,onChange:n}).input(e.current)},[]),(0,l.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t.split(`
@@ -11,7 +11,7 @@ import{c as e,i as t}from"./preload-helper-DbRxMUml.js";import{S as n}from"./ifr
 `})]})}},g={render:()=>{let e=(0,c.useRef)(null),[t,n]=(0,c.useState)(`Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`),[r,i]=(0,c.useState)(`dolor`);(0,c.useEffect)(()=>{if(e.current)return a({text:t,onChange:n}).input(e.current)},[]);let o=r?RegExp(`(${r})`):null;return(0,l.jsxs)(`div`,{children:[(0,l.jsxs)(`div`,{children:[(0,l.jsx)(`label`,{htmlFor:`search`,children:`search word`}),(0,l.jsx)(`input`,{name:`search`,value:r,onChange:e=>i(e.target.value)})]}),(0,l.jsx)(`div`,{ref:e,style:{background:`white`},children:t.split(`
 `).map((e,t)=>(0,l.jsx)(`div`,{children:e?(o?e.split(o):[e]).map((e,t)=>e===r?(0,l.jsx)(`mark`,{children:e},t):(0,l.jsx)(`span`,{children:e},t)):(0,l.jsx)(`br`,{})},t))})]})}},_={render:()=>{let e=(0,c.useRef)(null),[t,n]=(0,c.useState)(`Hello world.
 こんにちは。
-👍❤️🧑‍🧑‍🧒`),r=(0,c.useMemo)(()=>a({text:t,onChange:n}),[]);(0,c.useEffect)(()=>{if(e.current)return r.input(e.current)},[]);let[s,u]=(0,c.useState)(`text`);return(0,l.jsxs)(`div`,{children:[(0,l.jsxs)(`div`,{style:{padding:4},children:[(0,l.jsxs)(`div`,{children:[(0,l.jsx)(`input`,{value:s,onChange:e=>{u(e.target.value)}}),(0,l.jsx)(`button`,{onClick:()=>{r.apply(i,s)},children:`insert`})]}),(0,l.jsx)(`div`,{children:(0,l.jsx)(`button`,{onClick:()=>{r.apply(o)},children:`delete selection`})}),(0,l.jsxs)(`div`,{children:[(0,l.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`move`,`forward`,`character`),e.current?.focus()},children:`move forward`}),(0,l.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`move`,`backward`,`character`),e.current?.focus()},children:`move backward`}),(0,l.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`extend`,`forward`,`character`),e.current?.focus()},children:`move focus forward`}),(0,l.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`extend`,`backward`,`character`),e.current?.focus()},children:`move focus backward`})]})]}),(0,l.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t.split(`
+👍❤️🧑‍🧑‍🧒`),r=(0,c.useMemo)(()=>a({text:t,onChange:n}),[]);(0,c.useEffect)(()=>{if(e.current)return r.input(e.current)},[]);let[s,u]=(0,c.useState)(`text`);return(0,l.jsxs)(`div`,{children:[(0,l.jsxs)(`div`,{style:{padding:4},children:[(0,l.jsxs)(`div`,{children:[(0,l.jsx)(`input`,{value:s,onChange:e=>{u(e.target.value)}}),(0,l.jsx)(`button`,{onClick:()=>{r.exec(i,s)},children:`insert`})]}),(0,l.jsx)(`div`,{children:(0,l.jsx)(`button`,{onClick:()=>{r.exec(o)},children:`delete selection`})}),(0,l.jsxs)(`div`,{children:[(0,l.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`move`,`forward`,`character`),e.current?.focus()},children:`move forward`}),(0,l.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`move`,`backward`,`character`),e.current?.focus()},children:`move backward`}),(0,l.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`extend`,`forward`,`character`),e.current?.focus()},children:`move focus forward`}),(0,l.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`extend`,`backward`,`character`),e.current?.focus()},children:`move focus backward`})]})]}),(0,l.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t.split(`
 `).map((e,t)=>(0,l.jsx)(`div`,{children:e||(0,l.jsx)(`br`,{})},t))})]})}},v={render:()=>{let e=(0,c.useRef)(null),[t,n]=(0,c.useState)(`Hello world.
 こんにちは。
 👍❤️🧑‍🧑‍🧒`);return(0,c.useEffect)(()=>{if(e.current)return a({text:t,isBlock:e=>!!e.dataset.line,onChange:n}).input(e.current)},[]),(0,l.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t.split(`
@@ -195,14 +195,14 @@ two !
             setInsertText(e.target.value);
           }} />
             <button onClick={() => {
-            editor.apply(InsertText, insertText);
+            editor.exec(InsertText, insertText);
           }}>
               insert
             </button>
           </div>
           <div>
             <button onClick={() => {
-            editor.apply(Delete);
+            editor.exec(Delete);
           }}>
               delete selection
             </button>
