@@ -315,7 +315,7 @@ export const createEditor = <
               );
               if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
                 doc = nextDoc;
-                selection = nextSelection;
+                updateSelection(nextSelection);
               }
             } catch (e) {
               // rollback
