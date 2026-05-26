@@ -1,5 +1,5 @@
 import { ReplaceDoc } from "../commands.js";
-import { rebaseSelection, type Operation } from "../doc/edit.js";
+import { rebase, type Operation } from "../doc/edit.js";
 import type { DocNode, Selection } from "../doc/types.js";
 import type { Editor } from "../editor.js";
 import { hotkey } from "../hooks/keyboard.js";
@@ -51,10 +51,7 @@ export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
       editor.exec(ReplaceDoc, doc.children);
       undoOrRedoing = false;
       if (!is(currentDoc, editor.doc)) {
-        editor.selection = ops.reduce(
-          (acc, op) => rebaseSelection(acc, op),
-          sel,
-        );
+        editor.selection = [rebase(sel[0], ops), rebase(sel[1], ops)];
       }
     }
   };

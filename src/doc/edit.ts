@@ -435,10 +435,7 @@ const rebasePosition = (position: number, op: Operation): number => {
   return position;
 };
 
-/**
- * @internal
- */
-export const rebaseSelection = (
+const rebaseSelection = (
   [anchor, focus]: Selection,
   op: Operation,
 ): Selection => {
