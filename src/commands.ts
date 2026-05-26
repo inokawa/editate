@@ -21,9 +21,9 @@ import type {
  */
 export function Delete(
   editor: Editor,
-  [start, end]: Range = toRange(editor.selection),
+  range: Range = toRange(editor.selection),
 ) {
-  editor.apply({ type: "delete", start, end });
+  editor.apply({ type: "delete", range });
 }
 
 /**
@@ -56,10 +56,10 @@ export function InsertNode<T extends DocNode>(
  * Replace text in the selection or specified range.
  */
 export function ReplaceText(editor: Editor, text: string) {
-  const [start, end] = toRange(editor.selection);
+  const range = toRange(editor.selection);
   editor
-    .apply({ type: "delete", start, end })
-    .apply({ type: "insert_text", at: start, text });
+    .apply({ type: "delete", range })
+    .apply({ type: "insert_text", at: range[0], text });
 }
 
 /**
@@ -71,7 +71,7 @@ export function ReplaceDoc<T extends DocNode>(
 ) {
   // TODO revisit
   editor
-    .apply({ type: "delete", start: 0, end: getNodeSize(editor.doc) })
+    .apply({ type: "delete", range: [0, getNodeSize(editor.doc)] })
     .apply({ type: "insert_node", at: 0, fragment });
 }
 
@@ -90,9 +90,9 @@ export function Format<
   editor: Editor<T>,
   key: K,
   value: N[K],
-  [start, end]: Range = toRange(editor.selection),
+  range: Range = toRange(editor.selection),
 ) {
-  editor.apply({ type: "set_attr", start, end, key, value });
+  editor.apply({ type: "set_attr", range, key, value });
 }
 
 /**
@@ -109,8 +109,7 @@ export function ToggleFormat<T extends DocNode>(
   if (texts.length) {
     editor.apply({
       type: "set_attr",
-      start: range[0],
-      end: range[1],
+      range,
       key,
       value: texts.some((n) => !n[key as keyof typeof n]) ? true : false,
     });

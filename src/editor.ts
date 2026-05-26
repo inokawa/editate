@@ -594,7 +594,7 @@ export const createEditor = <
           tr = inputTransaction[0];
           if (!isCollapsed(range)) {
             // replace or delete
-            tr.push({ type: "delete", start: range[0], end: range[1] });
+            tr.push({ type: "delete", range });
           }
           if (data) {
             // replace or insert
@@ -649,16 +649,16 @@ export const createEditor = <
         e.preventDefault();
         if (!readonly) {
           copy(e.clipboardData!);
-          const range = toRange(selection);
-          apply({ type: "delete", start: range[0], end: range[1] });
+          apply({ type: "delete", range: toRange(selection) });
         }
       };
       const onPaste = (e: ClipboardEvent) => {
         e.preventDefault();
         const pasted = paste(e.clipboardData!);
         if (pasted) {
-          const [start, end] = toRange(selection);
-          const tr: Operation[] = [{ type: "delete", start, end }];
+          const range = toRange(selection);
+          const start = range[0];
+          const tr: Operation[] = [{ type: "delete", range }];
           if (isString(pasted)) {
             tr.push({ type: "insert_text", at: start, text: pasted });
           } else {
@@ -682,8 +682,7 @@ export const createEditor = <
           let afterSelection: Selection | undefined;
           const tr: Operation[] = [];
           if (isDragging) {
-            const range = toRange(selection);
-            tr.push({ type: "delete", start: range[0], end: range[1] });
+            tr.push({ type: "delete", range: toRange(selection) });
           }
           const pasted = paste(dataTransfer);
           if (pasted) {

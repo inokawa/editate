@@ -10,14 +10,14 @@ import type {
   Node,
   DomPosition,
   SelectionSnapshot,
+  Range,
 } from "./types.js";
 import { stringToFragment } from "./utils.js";
 
 const OP_DELETE = "delete";
 type DeleteOperation = Readonly<{
   type: typeof OP_DELETE;
-  start: number;
-  end: number;
+  range: Range;
 }>;
 
 const OP_INSERT_TEXT = "insert_text";
@@ -37,8 +37,7 @@ type InsertNodeOperation = Readonly<{
 const OP_SET_ATTR = "set_attr";
 type SetAttrOperation = Readonly<{
   type: typeof OP_SET_ATTR;
-  start: number;
-  end: number;
+  range: Range;
   key: string;
   value: unknown;
 }>;
@@ -401,7 +400,9 @@ export const rebase = (position: number, ops: readonly Operation[]): number => {
 const rebasePosition = (position: number, op: Operation): number => {
   switch (op.type) {
     case OP_DELETE: {
-      const { start, end } = op;
+      const {
+        range: [start, end],
+      } = op;
 
       if (position >= start) {
         // start <= position
@@ -466,7 +467,9 @@ export const applyOperation = <T extends DocNode>(
 ): [T, Selection] => {
   switch (op.type) {
     case OP_DELETE: {
-      const { start, end } = op;
+      const {
+        range: [start, end],
+      } = op;
       if (
         isValidPosition(doc, start) &&
         isValidPosition(doc, end) &&
@@ -511,7 +514,11 @@ export const applyOperation = <T extends DocNode>(
       break;
     }
     case OP_SET_ATTR: {
-      const { start, end, key, value } = op;
+      const {
+        range: [start, end],
+        key,
+        value,
+      } = op;
       if (
         isValidPosition(doc, start) &&
         isValidPosition(doc, end) &&
