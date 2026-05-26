@@ -13,7 +13,6 @@ import type { DocNode, Fragment, Selection } from "./doc/types.js";
 import { is, isFunction, isString, microtask } from "./utils.js";
 import {
   applyOperation,
-  Transaction,
   sliceFragment,
   type Operation,
   isUnsafeOperation,
@@ -21,6 +20,7 @@ import {
   domSelectionToSelection,
   selectionToDomSelection,
   positionToOffset,
+  rebase,
 } from "./doc/edit.js";
 import { createParser } from "./dom/index.js";
 import { isCollapsed, toRange } from "./doc/position.js";
@@ -179,9 +179,9 @@ export interface Editor<T extends DocNode = DocNode> {
   readonly: boolean;
   /**
    * Dispatches editing operations.
-   * @param tr {@link Transaction}
+   * @param op {@link Operation}
    */
-  apply(tr: Transaction): this;
+  apply(op: Operation | Operation[]): this;
   /**
    * Executes a function with editor bound as context.
    * @param fn {@link EditorCommand} or {@link EditorQuery}
@@ -288,56 +288,61 @@ export const createEditor = <
     }
   };
 
-  const apply = (tr: Transaction) => {
+  const apply = (op: Operation | Operation[]) => {
     if (!readonly) {
-      const currentDoc = doc;
-      const applyHooks = getHook("apply");
-      const length = applyHooks.length;
-
-      for (let op of tr.ops) {
-        let index = 0;
-
-        const dispatch = () => {
-          if (index < length) {
-            const i = index;
-            applyHooks[index]!(op, next);
-            if (i === index) {
-              next();
-            }
-          } else if (index === length) {
-            index++;
-
-            try {
-              const [nextDoc, nextSelection] = applyOperation(
-                doc,
-                selection,
-                op,
-              );
-              if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
-                doc = nextDoc;
-                selection = nextSelection;
-              }
-            } catch (e) {
-              // rollback
-              onError("rollback operation: " + e);
-            }
-          }
-        };
-
-        const next = (o?: Operation): void => {
-          if (o) {
-            op = o;
-          }
-          index++;
-          dispatch();
-        };
-
-        dispatch();
+      if (Array.isArray(op)) {
+        for (const o of op) {
+          applyOp(o);
+        }
+      } else {
+        applyOp(op);
       }
+    }
+    return editor;
+  };
 
-      if (!is(currentDoc, doc)) {
-        publish("change");
+  const applyOp = (op: Operation) => {
+    const currentDoc = doc;
+    const applyHooks = getHook("apply");
+    const length = applyHooks.length;
+
+    let index = 0;
+
+    const dispatch = () => {
+      if (index < length) {
+        const i = index;
+        applyHooks[index]!(op, next);
+        if (i === index) {
+          next();
+        }
+      } else if (index === length) {
+        index++;
+
+        try {
+          const [nextDoc, nextSelection] = applyOperation(doc, selection, op);
+          if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+            doc = nextDoc;
+            selection = nextSelection;
+          }
+        } catch (e) {
+          // rollback
+          onError("rollback operation: " + e);
+        }
       }
+    };
+
+    const next = (o?: Operation): void => {
+      if (o) {
+        op = o;
+      }
+      index++;
+      dispatch();
+    };
+
+    dispatch();
+
+    if (!is(currentDoc, doc)) {
+      publish("change");
     }
   };
 
@@ -368,10 +373,7 @@ export const createEditor = <
       readonly = value;
       publish("readonly");
     },
-    apply: (tr: Transaction) => {
-      apply(tr);
-      return editor;
-    },
+    apply,
     on: (type, callback) => {
       let sub = subs.get(type);
       if (!sub) {
@@ -431,7 +433,7 @@ export const createEditor = <
       element.ariaMultiLine = "true";
 
       let disposed = false;
-      let inputTransaction: [Transaction, Selection] | null = null;
+      let inputTransaction: [Operation[], Selection] | null = null;
       let isComposing = false;
       let hasFocus = false;
       let isDragging = false;
@@ -585,18 +587,18 @@ export const createEditor = <
             }
           }
 
-          let tr: Transaction;
+          let tr: Operation[];
           if (!inputTransaction) {
-            inputTransaction = [new Transaction(), selection];
+            inputTransaction = [[], selection];
           }
           tr = inputTransaction[0];
           if (!isCollapsed(range)) {
             // replace or delete
-            tr.delete(...range);
+            tr.push({ type: "delete", start: range[0], end: range[1] });
           }
           if (data) {
             // replace or insert
-            tr.insertText(range[0], data);
+            tr.push({ type: "insert_text", at: range[0], text: data });
           }
         }
 
@@ -647,7 +649,8 @@ export const createEditor = <
         e.preventDefault();
         if (!readonly) {
           copy(e.clipboardData!);
-          apply(new Transaction().delete(...toRange(selection)));
+          const range = toRange(selection);
+          apply({ type: "delete", start: range[0], end: range[1] });
         }
       };
       const onPaste = (e: ClipboardEvent) => {
@@ -655,11 +658,11 @@ export const createEditor = <
         const pasted = paste(e.clipboardData!);
         if (pasted) {
           const [start, end] = toRange(selection);
-          const tr = new Transaction().delete(start, end);
+          const tr: Operation[] = [{ type: "delete", start, end }];
           if (isString(pasted)) {
-            tr.insertText(start, pasted);
+            tr.push({ type: "insert_text", at: start, text: pasted });
           } else {
-            tr.insertFragment(start, pasted);
+            tr.push({ type: "insert_node", at: start, fragment: pasted });
           }
           apply(tr);
         }
@@ -677,20 +680,21 @@ export const createEditor = <
         );
         if (dataTransfer && droppedPosition) {
           let afterSelection: Selection | undefined;
-          const tr = new Transaction();
+          const tr: Operation[] = [];
           if (isDragging) {
-            tr.delete(...toRange(selection));
+            const range = toRange(selection);
+            tr.push({ type: "delete", start: range[0], end: range[1] });
           }
           const pasted = paste(dataTransfer);
           if (pasted) {
             const offset = positionToOffset(doc, droppedPosition);
-            const pos = tr.transform(offset);
+            const pos = rebase(offset, tr);
             if (isString(pasted)) {
-              tr.insertText(pos, pasted);
+              tr.push({ type: "insert_text", at: pos, text: pasted });
             } else {
-              tr.insertFragment(pos, pasted);
+              tr.push({ type: "insert_node", at: pos, fragment: pasted });
             }
-            afterSelection = [pos, tr.transform(offset)];
+            afterSelection = [pos, rebase(offset, tr)];
           }
           apply(tr);
           if (afterSelection) {
