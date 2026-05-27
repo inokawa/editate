@@ -34,9 +34,9 @@ export const createPlainEditor = ({
   const editor = createEditor({
     ...opts,
     doc: { children: stringToFragment(text) },
-    onChange: (doc) => {
-      onChange(docToString(doc));
-    },
+  });
+  editor.on("change", () => {
+    onChange(docToString(editor.doc));
   });
   if (singleline) {
     editor.exec(singlelinePlugin);

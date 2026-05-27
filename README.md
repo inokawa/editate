@@ -131,15 +131,16 @@ export const App = () => {
     ],
   });
 
-  const editor = useMemo(
-    () =>
-      createEditor({
-        doc,
-        schema,
-        onChange: setDoc,
-      }),
-    [],
-  );
+  const editor = useMemo(() => {
+    const e = createEditor({
+      doc,
+      schema,
+    });
+    e.on("change", () => {
+      setDoc(e.doc);
+    });
+    return e;
+  }, []);
 
   useEffect(() => {
     return editor.input(ref.current);
