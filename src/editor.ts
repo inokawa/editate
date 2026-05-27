@@ -154,6 +154,8 @@ type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) => void) => void;
   mount: (element: HTMLElement) => void | (() => void);
   keyboard: KeyboardHook;
+  copy: CopyHook;
+  paste: PasteHook;
 };
 
 /**
@@ -455,7 +457,7 @@ export const createEditor = <
       const cleanupOnReadonly = editor.on("readonly", setEditableState);
 
       const paste = (dataTransfer: DataTransfer): string | Fragment | void => {
-        for (const ex of pasteHooks) {
+        for (const ex of getHook("paste")) {
           const pasted = ex(dataTransfer, parser);
           if (pasted) {
             return pasted;
@@ -623,7 +625,7 @@ export const createEditor = <
         syncSelection();
         if (!isCollapsed(selection)) {
           const fragment = sliceFragment(doc, ...toRange(selection));
-          for (const ex of copyHooks) {
+          for (const ex of getHook("copy")) {
             ex(dataTransfer, fragment, element);
           }
         }
@@ -758,6 +760,13 @@ export const createEditor = <
   };
 
   editor.exec(historyPlugin);
+
+  copyHooks.forEach((h) => {
+    editor.hook("copy", h);
+  });
+  pasteHooks.forEach((h) => {
+    editor.hook("paste", h);
+  });
 
   return editor;
 };
