@@ -1,9 +1,4 @@
-/**
- * Functions to handle keyboard events.
- *
- * Return `true` if you want to stop propagation.
- */
-export type KeyboardHook = (keyboard: KeyboardEvent) => boolean | void;
+import type { KeyboardHook } from "./editor.js";
 
 type Modifier = "Ctrl" | "Meta" | "Alt" | "Shift" | "Mod";
 

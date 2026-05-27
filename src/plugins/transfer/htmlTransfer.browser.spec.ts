@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { htmlPaste } from "./html.js";
+import { htmlPaste } from "./htmlTransfer.js";
 import { createParser } from "../../dom/parser.js";
 import { defaultIsBlockNode, defaultIsVoidNode } from "../../dom/default.js";
 

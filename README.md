@@ -96,7 +96,12 @@ You can define document schema with [Standard Schema](https://github.com/standar
 
 ```tsx
 import { useState, useEffect, useRef, useMemo } from "react";
-import { createEditor, ToggleFormat, ToggleBlockAttr } from "editate";
+import {
+  createEditor,
+  plainTransferPlugin,
+  ToggleFormat,
+  ToggleBlockAttr,
+} from "editate";
 import * as z from "zod";
 
 const schema = z.strictObject({
@@ -135,7 +140,7 @@ export const App = () => {
     const e = createEditor({
       doc,
       schema,
-    });
+    }).exec(plainTransferPlugin);
     e.on("change", () => {
       setDoc(e.doc);
     });

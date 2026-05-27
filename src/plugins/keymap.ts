@@ -1,5 +1,5 @@
 import type { Editor } from "../editor.js";
-import { keymap, type KeyString } from "../hooks/keyboard.js";
+import { keymap, type KeyString } from "../keyboard.js";
 import { keys } from "../utils.js";
 
 export function keymapPlugin<K extends KeyString>(
