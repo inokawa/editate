@@ -724,9 +724,8 @@ export const createEditor = <
       element.addEventListener("dragstart", onDragStart);
       element.addEventListener("dragend", onDragEnd);
 
-      const mountHooks = getHook("mount");
       const unmountHooks: (() => void)[] = [];
-      mountHooks.forEach((mount) => {
+      getHook("mount").forEach((mount) => {
         const cb = mount(element);
         if (cb) {
           unmountHooks.push(cb);
