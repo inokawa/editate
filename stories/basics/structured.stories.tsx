@@ -17,9 +17,9 @@ import {
   internalCopy,
   internalPaste,
   filePaste,
-  hotkey,
   InsertNode,
   ToggleBlockAttr,
+  hotkeyPlugin,
 } from "../../src";
 import * as v from "valibot";
 
@@ -169,14 +169,13 @@ export const RichText: StoryObj = {
       const e = createEditor({
         doc: doc,
         schema: richSchema,
-        keyboard: [
-          hotkey("b", toggleBold, { mod: true }),
-          hotkey("i", toggleItalic, { mod: true }),
-          hotkey("u", toggleUnderline, { mod: true }),
-          hotkey("s", toggleStrike, { mod: true }),
-        ],
         copy: [internalCopy(), plainCopy()],
         paste: [internalPaste(), plainPaste()],
+      }).exec(hotkeyPlugin, {
+        b: [toggleBold, { mod: true }],
+        i: [toggleItalic, { mod: true }],
+        u: [toggleUnderline, { mod: true }],
+        s: [toggleStrike, { mod: true }],
       });
       e.on("change", () => {
         setDoc(e.doc);
