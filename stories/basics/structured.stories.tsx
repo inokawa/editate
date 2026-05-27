@@ -52,9 +52,8 @@ export const Basic: StoryObj = {
       ],
     });
 
-    useEffect(() => {
-      if (!ref.current) return;
-      return createEditor({
+    const editor = useMemo(() => {
+      const e = createEditor({
         doc: doc,
         schema: basicSchema,
         copy: [internalCopy(), htmlCopy(), plainCopy()],
@@ -63,8 +62,16 @@ export const Basic: StoryObj = {
           htmlPaste<Doc>((text) => ({ text })),
           plainPaste(),
         ],
-        onChange: setDoc,
-      }).input(ref.current);
+      });
+      e.on("change", () => {
+        setDoc(e.doc);
+      });
+      return e;
+    }, []);
+
+    useEffect(() => {
+      if (!ref.current) return;
+      return editor.input(ref.current);
     }, []);
 
     return (
@@ -158,23 +165,24 @@ export const RichText: StoryObj = {
       editor.exec(ToggleBlockAttr, "align", "right", undefined);
     };
 
-    const editor = useMemo(
-      () =>
-        createEditor({
-          doc: doc,
-          schema: richSchema,
-          keyboard: [
-            hotkey("b", toggleBold, { mod: true }),
-            hotkey("i", toggleItalic, { mod: true }),
-            hotkey("u", toggleUnderline, { mod: true }),
-            hotkey("s", toggleStrike, { mod: true }),
-          ],
-          copy: [internalCopy(), plainCopy()],
-          paste: [internalPaste(), plainPaste()],
-          onChange: setDoc,
-        }),
-      [],
-    );
+    const editor = useMemo(() => {
+      const e = createEditor({
+        doc: doc,
+        schema: richSchema,
+        keyboard: [
+          hotkey("b", toggleBold, { mod: true }),
+          hotkey("i", toggleItalic, { mod: true }),
+          hotkey("u", toggleUnderline, { mod: true }),
+          hotkey("s", toggleStrike, { mod: true }),
+        ],
+        copy: [internalCopy(), plainCopy()],
+        paste: [internalPaste(), plainPaste()],
+      });
+      e.on("change", () => {
+        setDoc(e.doc);
+      });
+      return e;
+    }, []);
 
     useEffect(() => {
       if (!ref.current) return;
@@ -248,20 +256,21 @@ export const Tag: StoryObj = {
       ],
     });
 
-    const editor = useMemo(
-      () =>
-        createEditor({
-          doc: doc,
-          schema: tagSchema,
-          copy: [
-            internalCopy(),
-            plainCopy<Doc>((node) => ("text" in node ? node.text : node.label)),
-          ],
-          paste: [internalPaste(), plainPaste()],
-          onChange: setDoc,
-        }).exec(singlelinePlugin),
-      [],
-    );
+    const editor = useMemo(() => {
+      const e = createEditor({
+        doc: doc,
+        schema: tagSchema,
+        copy: [
+          internalCopy(),
+          plainCopy<Doc>((node) => ("text" in node ? node.text : node.label)),
+        ],
+        paste: [internalPaste(), plainPaste()],
+      }).exec(singlelinePlugin);
+      e.on("change", () => {
+        setDoc(editor.doc);
+      });
+      return e;
+    }, []);
 
     useEffect(() => {
       if (!ref.current) return;
@@ -372,9 +381,8 @@ export const Image: StoryObj = {
       ],
     });
 
-    useEffect(() => {
-      if (!ref.current) return;
-      return createEditor({
+    const editor = useMemo(() => {
+      const e = createEditor({
         doc: doc,
         schema: imageSchema,
         copy: [internalCopy(), htmlCopy(), plainCopy()],
@@ -401,8 +409,16 @@ export const Image: StoryObj = {
           ),
           plainPaste(),
         ],
-        onChange: setDoc,
-      }).input(ref.current);
+      });
+      e.on("change", () => {
+        setDoc(e.doc);
+      });
+      return e;
+    }, []);
+
+    useEffect(() => {
+      if (!ref.current) return;
+      return editor.input(ref.current);
     }, []);
 
     return (
@@ -471,9 +487,8 @@ export const Video: StoryObj = {
       ],
     });
 
-    useEffect(() => {
-      if (!ref.current) return;
-      return createEditor({
+    const editor = useMemo(() => {
+      const e = createEditor({
         doc: doc,
         schema: videoSchema,
         copy: [internalCopy(), htmlCopy(), plainCopy()],
@@ -494,8 +509,16 @@ export const Video: StoryObj = {
           ),
           plainPaste(),
         ],
-        onChange: setDoc,
-      }).input(ref.current);
+      });
+      e.on("change", () => {
+        setDoc(e.doc);
+      });
+      return e;
+    }, []);
+
+    useEffect(() => {
+      if (!ref.current) return;
+      return editor.input(ref.current);
     }, []);
 
     return (
@@ -587,9 +610,8 @@ export const Iframe: StoryObj = {
       ],
     });
 
-    useEffect(() => {
-      if (!ref.current) return;
-      return createEditor({
+    const editor = useMemo(() => {
+      const e = createEditor({
         doc: doc,
         schema: youtubeSchema,
         copy: [internalCopy(), htmlCopy(), plainCopy()],
@@ -610,8 +632,16 @@ export const Iframe: StoryObj = {
           ),
           plainPaste(),
         ],
-        onChange: setDoc,
-      }).input(ref.current);
+      });
+      e.on("change", () => {
+        setDoc(e.doc);
+      });
+      return e;
+    }, []);
+
+    useEffect(() => {
+      if (!ref.current) return;
+      return editor.input(ref.current);
     }, []);
 
     return (

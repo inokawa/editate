@@ -143,10 +143,6 @@ export interface EditorOptions<
    */
   isBlock?: (node: HTMLElement) => boolean;
   /**
-   * Callback invoked when document changes.
-   */
-  onChange: (doc: T) => void;
-  /**
    * Callback invoked when errors happen.
    *
    * @default console.error
@@ -226,7 +222,6 @@ export const createEditor = <
   copy: copyHooks = [plainCopy()],
   paste: pasteHooks = [plainPaste()],
   isBlock = defaultIsBlockNode,
-  onChange,
   onError = console.error,
 }: EditorOptions<T, S>): Editor<T> => {
   let selection: Selection = [0, 0];
@@ -770,10 +765,6 @@ export const createEditor = <
   };
 
   editor.exec(historyPlugin);
-
-  editor.on("change", () => {
-    onChange(doc);
-  });
 
   if (keyboard) {
     keyboard.forEach((h) => {
