@@ -24,14 +24,8 @@ import {
 } from "./doc/edit.js";
 import { createParser } from "./dom/index.js";
 import { isCollapsed, toRange } from "./doc/position.js";
-import {
-  type CopyHook,
-  type PasteHook,
-  plainCopy,
-  plainPaste,
-  type KeyboardHook,
-} from "./hooks/index.js";
 import { historyPlugin } from "./plugins/history.js";
+import type { Parser } from "./dom/parser.js";
 
 const empty: unknown[] = [];
 
@@ -123,16 +117,6 @@ export interface EditorOptions<
    */
   readonly?: boolean;
   /**
-   * Functions to handle copy events
-   * @default [plainCopy()]
-   */
-  copy?: [CopyHook, ...rest: CopyHook[]];
-  /**
-   * Functions to handle paste / drop events
-   * @default [plainPaste()]
-   */
-  paste?: [PasteHook, ...rest: PasteHook[]];
-  /**
    * TODO
    */
   isBlock?: (node: HTMLElement) => boolean;
@@ -150,10 +134,36 @@ type EditorEventMap = {
   readonly: () => void;
 };
 
+/**
+ * Functions to handle keyboard events.
+ *
+ * Return `true` if you want to stop propagation.
+ */
+export type KeyboardHook = (keyboard: KeyboardEvent) => boolean | void;
+
+/**
+ * Functions to handle copy events
+ */
+export type CopyHook = (
+  dataTransfer: DataTransfer,
+  doc: Fragment,
+  element: Element,
+) => void;
+
+/**
+ * Functions to handle paste / drop events
+ */
+export type PasteHook = (
+  dataTransfer: DataTransfer,
+  parser: Parser,
+) => string | Fragment | null;
+
 type EditorHookMap = {
   apply: (op: Operation, next: (op?: Operation) => void) => void;
   mount: (element: HTMLElement) => void | (() => void);
   keyboard: KeyboardHook;
+  copy: CopyHook;
+  paste: PasteHook;
 };
 
 /**
@@ -212,8 +222,6 @@ export const createEditor = <
   doc,
   readonly = false,
   schema,
-  copy: copyHooks = [plainCopy()],
-  paste: pasteHooks = [plainPaste()],
   isBlock = defaultIsBlockNode,
   onError = console.error,
 }: EditorOptions<T, S>): Editor<T> => {
@@ -455,7 +463,7 @@ export const createEditor = <
       const cleanupOnReadonly = editor.on("readonly", setEditableState);
 
       const paste = (dataTransfer: DataTransfer): string | Fragment | void => {
-        for (const ex of pasteHooks) {
+        for (const ex of getHook("paste")) {
           const pasted = ex(dataTransfer, parser);
           if (pasted) {
             return pasted;
@@ -623,7 +631,7 @@ export const createEditor = <
         syncSelection();
         if (!isCollapsed(selection)) {
           const fragment = sliceFragment(doc, ...toRange(selection));
-          for (const ex of copyHooks) {
+          for (const ex of getHook("copy")) {
             ex(dataTransfer, fragment, element);
           }
         }

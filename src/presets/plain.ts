@@ -1,6 +1,6 @@
 import { docToString, stringToFragment } from "../doc/utils.js";
 import { createEditor, type Editor, type EditorOptions } from "../editor.js";
-import { singlelinePlugin } from "../plugins/index.js";
+import { plainTransferPlugin, singlelinePlugin } from "../plugins/index.js";
 
 type PlainDoc = { children: { children: { text: string }[] }[] };
 
@@ -34,7 +34,7 @@ export const createPlainEditor = ({
   const editor = createEditor({
     ...opts,
     doc: { children: stringToFragment(text) },
-  });
+  }).exec(plainTransferPlugin);
   editor.on("change", () => {
     onChange(docToString(editor.doc));
   });

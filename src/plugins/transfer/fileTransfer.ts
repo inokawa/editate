@@ -1,13 +1,14 @@
 import type { InlineNode } from "../../doc/types.js";
-import type { PasteHook } from "./types.js";
+import type { Editor } from "../../editor.js";
 
 /**
- * An extension to handle pasting / dropping from File.
+ * A plugin to handle pasting / dropping from File.
  */
-export const filePaste = (
+export const fileTransferPlugin = (
+  editor: Editor,
   handlerByMime: Record<string, (file: File) => InlineNode>,
-): PasteHook => {
-  return (dataTransfer) => {
+) => {
+  editor.hook("paste", (dataTransfer) => {
     for (const item of dataTransfer.items) {
       if (item.kind === "file") {
         const mapper = handlerByMime[item.type];
@@ -20,5 +21,5 @@ export const filePaste = (
       }
     }
     return null;
-  };
+  });
 };

@@ -8,18 +8,15 @@ import React, {
 import type { StoryObj } from "@storybook/react-vite";
 import {
   createEditor,
-  htmlPaste,
-  htmlCopy,
-  plainCopy,
-  plainPaste,
   ToggleFormat,
   singlelinePlugin,
-  internalCopy,
-  internalPaste,
-  filePaste,
   InsertNode,
   ToggleBlockAttr,
   keymapPlugin,
+  internalTranferPlugin,
+  htmlTransferPlugin,
+  plainTransferPlugin,
+  fileTransferPlugin,
 } from "../../src";
 import * as v from "valibot";
 
@@ -56,13 +53,10 @@ export const Basic: StoryObj = {
       const e = createEditor({
         doc: doc,
         schema: basicSchema,
-        copy: [internalCopy(), htmlCopy(), plainCopy()],
-        paste: [
-          internalPaste(),
-          htmlPaste<Doc>((text) => ({ text })),
-          plainPaste(),
-        ],
-      });
+      })
+        .exec(internalTranferPlugin)
+        .exec(htmlTransferPlugin, { serializeText: (text) => ({ text }) })
+        .exec(plainTransferPlugin);
       e.on("change", () => {
         setDoc(e.doc);
       });
@@ -169,14 +163,15 @@ export const RichText: StoryObj = {
       const e = createEditor({
         doc: doc,
         schema: richSchema,
-        copy: [internalCopy(), plainCopy()],
-        paste: [internalPaste(), plainPaste()],
-      }).exec(keymapPlugin, {
-        "Mod+B": toggleBold,
-        "Mod+I": toggleItalic,
-        "Mod+U": toggleUnderline,
-        "Mod+S": toggleStrike,
-      });
+      })
+        .exec(keymapPlugin, {
+          "Mod+B": toggleBold,
+          "Mod+I": toggleItalic,
+          "Mod+U": toggleUnderline,
+          "Mod+S": toggleStrike,
+        })
+        .exec(internalTranferPlugin)
+        .exec(plainTransferPlugin);
       e.on("change", () => {
         setDoc(e.doc);
       });
@@ -259,12 +254,12 @@ export const Tag: StoryObj = {
       const e = createEditor({
         doc: doc,
         schema: tagSchema,
-        copy: [
-          internalCopy(),
-          plainCopy<Doc>((node) => ("text" in node ? node.text : node.label)),
-        ],
-        paste: [internalPaste(), plainPaste()],
-      }).exec(singlelinePlugin);
+      })
+        .exec(internalTranferPlugin)
+        .exec(plainTransferPlugin, {
+          serializer: (node) => ("text" in node ? node.text : node.label),
+        })
+        .exec(singlelinePlugin);
       e.on("change", () => {
         setDoc(editor.doc);
       });
@@ -384,31 +379,28 @@ export const Image: StoryObj = {
       const e = createEditor({
         doc: doc,
         schema: imageSchema,
-        copy: [internalCopy(), htmlCopy(), plainCopy()],
-        paste: [
-          internalPaste(),
-          filePaste({
-            "image/png": (file) => ({
-              type: "image",
-              src: URL.createObjectURL(file),
-            }),
+      })
+        .exec(internalTranferPlugin)
+        .exec(fileTransferPlugin, {
+          "image/png": (file) => ({
+            type: "image",
+            src: URL.createObjectURL(file),
           }),
-          htmlPaste<Doc>(
-            (text) => ({ text }),
-            [
-              (e) => {
-                if (e.tagName === "IMG") {
-                  return {
-                    type: "image",
-                    src: (e as HTMLImageElement).src,
-                  };
-                }
-              },
-            ],
-          ),
-          plainPaste(),
-        ],
-      });
+        })
+        .exec(htmlTransferPlugin, {
+          serializeText: (text) => ({ text }),
+          serializers: [
+            (e) => {
+              if (e.tagName === "IMG") {
+                return {
+                  type: "image",
+                  src: (e as HTMLImageElement).src,
+                };
+              }
+            },
+          ],
+        })
+        .exec(plainTransferPlugin);
       e.on("change", () => {
         setDoc(e.doc);
       });
@@ -490,25 +482,22 @@ export const Video: StoryObj = {
       const e = createEditor({
         doc: doc,
         schema: videoSchema,
-        copy: [internalCopy(), htmlCopy(), plainCopy()],
-        paste: [
-          internalPaste(),
-          htmlPaste<Doc>(
-            (text) => ({ text }),
-            [
-              (e) => {
-                if (e.tagName === "VIDEO") {
-                  return {
-                    type: "video",
-                    src: (e.childNodes[0] as HTMLSourceElement).src,
-                  };
-                }
-              },
-            ],
-          ),
-          plainPaste(),
-        ],
-      });
+      })
+        .exec(internalTranferPlugin)
+        .exec(htmlTransferPlugin, {
+          serializeText: (text) => ({ text }),
+          serializers: [
+            (e) => {
+              if (e.tagName === "VIDEO") {
+                return {
+                  type: "video",
+                  src: (e.childNodes[0] as HTMLSourceElement).src,
+                };
+              }
+            },
+          ],
+        })
+        .exec(plainTransferPlugin);
       e.on("change", () => {
         setDoc(e.doc);
       });
@@ -613,25 +602,22 @@ export const Iframe: StoryObj = {
       const e = createEditor({
         doc: doc,
         schema: youtubeSchema,
-        copy: [internalCopy(), htmlCopy(), plainCopy()],
-        paste: [
-          internalPaste(),
-          htmlPaste<Doc>(
-            (text) => ({ text }),
-            [
-              (e) => {
-                if (!!e.dataset.youtubeNode) {
-                  return {
-                    type: "youtube",
-                    id: e.dataset.youtubeId!,
-                  };
-                }
-              },
-            ],
-          ),
-          plainPaste(),
-        ],
-      });
+      })
+        .exec(internalTranferPlugin)
+        .exec(htmlTransferPlugin, {
+          serializeText: (text) => ({ text }),
+          serializers: [
+            (e) => {
+              if (!!e.dataset.youtubeNode) {
+                return {
+                  type: "youtube",
+                  id: e.dataset.youtubeId!,
+                };
+              }
+            },
+          ],
+        })
+        .exec(plainTransferPlugin);
       e.on("change", () => {
         setDoc(e.doc);
       });

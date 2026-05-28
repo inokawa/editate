@@ -1,10 +1,16 @@
-import type { DocNode, InferInlineNode, TextNode } from "../../doc/types.js";
-import { domToFragment } from "../../dom/index.js";
+import type { Editor } from "../../editor.js";
+
+import {
+  getDOMSelection,
+  getSelectionRangeInEditor,
+  domToFragment,
+} from "../../dom/index.js";
 import { isCommentNode } from "../../dom/parser.js";
-import type { PasteHook } from "./types.js";
+import type { DocNode, InferInlineNode, TextNode } from "../../doc/types.js";
+import type { PasteHook } from "../../editor.js";
 
 /**
- * An extension to handle pasting / dropping from HTML.
+ * @internal
  */
 export const htmlPaste = <T extends DocNode>(
   serializeText: (t: string) => Extract<InferInlineNode<T>, TextNode>,
@@ -45,3 +51,29 @@ export const htmlPaste = <T extends DocNode>(
     return null;
   };
 };
+
+/**
+ * A plugin to handle copying / pasting HTML
+ */
+export function htmlTransferPlugin<T extends DocNode>(
+  editor: Editor<T>,
+  options: {
+    serializeText: (t: string) => Extract<InferInlineNode<T>, TextNode>;
+    serializers?: ((
+      node: HTMLElement,
+    ) => Exclude<InferInlineNode<T>, TextNode> | void)[];
+  },
+) {
+  editor.hook("copy", (dataTransfer, _, element) => {
+    const wrapper = document.createElement("div");
+    wrapper.appendChild(
+      // DOM range must exist here
+      getSelectionRangeInEditor(
+        getDOMSelection(element),
+        element,
+      )!.cloneContents(),
+    );
+    dataTransfer.setData("text/html", wrapper.innerHTML);
+  });
+  editor.hook("paste", htmlPaste(options.serializeText, options.serializers));
+}

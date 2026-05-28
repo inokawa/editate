@@ -2,7 +2,7 @@ import { ReplaceDoc } from "../commands.js";
 import { rebase, type Operation } from "../doc/edit.js";
 import type { DocNode, Selection } from "../doc/types.js";
 import type { Editor } from "../editor.js";
-import { keymap } from "../hooks/keyboard.js";
+import { keymap } from "../keyboard.js";
 import { is } from "../utils.js";
 
 const MAX_HISTORY_LENGTH = 500;
