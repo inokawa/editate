@@ -19,7 +19,7 @@ import {
   filePaste,
   InsertNode,
   ToggleBlockAttr,
-  hotkeyPlugin,
+  keymapPlugin,
 } from "../../src";
 import * as v from "valibot";
 
@@ -171,7 +171,7 @@ export const RichText: StoryObj = {
         schema: richSchema,
         copy: [internalCopy(), plainCopy()],
         paste: [internalPaste(), plainPaste()],
-      }).exec(hotkeyPlugin, {
+      }).exec(keymapPlugin, {
         "Mod+B": toggleBold,
         "Mod+I": toggleItalic,
         "Mod+U": toggleUnderline,

@@ -62,7 +62,7 @@ type BaseKey =
   | "PageUp"
   | "PageDown";
 
-export type HotkeyString =
+export type KeyString =
   | BaseKey
   | `${Modifier}+${BaseKey}`
   | `${Modifier}+${Modifier}+${BaseKey}`
@@ -72,11 +72,8 @@ const isMac =
   typeof navigator !== "undefined" &&
   /Mac|iP(hone|od|ad)/.test(navigator.platform);
 
-/**
- * TODO
- */
-export const hotkey = (
-  key: HotkeyString,
+export const keymap = (
+  key: KeyString,
   cb: (e: KeyboardEvent) => void,
 ): KeyboardHook => {
   const isPlusKey = key.endsWith("+");

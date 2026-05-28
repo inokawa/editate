@@ -2,7 +2,7 @@ import { ReplaceDoc } from "../commands.js";
 import { rebase, type Operation } from "../doc/edit.js";
 import type { DocNode, Selection } from "../doc/types.js";
 import type { Editor } from "../editor.js";
-import { hotkey } from "../hooks/keyboard.js";
+import { keymap } from "../hooks/keyboard.js";
 import { is } from "../utils.js";
 
 const MAX_HISTORY_LENGTH = 500;
@@ -85,6 +85,6 @@ export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
     }
   });
 
-  editor.hook("keyboard", hotkey("Mod+Z", undo));
-  editor.hook("keyboard", hotkey("Shift+Mod+Z", redo));
+  editor.hook("keyboard", keymap("Mod+Z", undo));
+  editor.hook("keyboard", keymap("Shift+Mod+Z", redo));
 }
