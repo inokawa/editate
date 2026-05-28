@@ -1,3 +1,3 @@
 export { debugPlugin } from "./debug.js";
-export { hotkeyPlugin } from "./hotkey.js";
+export { keymapPlugin } from "./keymap.js";
 export { singlelinePlugin } from "./singleline.js";
