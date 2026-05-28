@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { createPlainEditor, hotkey, ReplaceDoc } from "../../src";
+import { createPlainEditor, hotkeyPlugin, ReplaceDoc } from "../../src";
 
 export default {
   component: createPlainEditor,
@@ -523,14 +523,13 @@ export const Combobox: StoryObj = {
         createPlainEditor({
           text: text,
           singleline: true,
-          keyboard: [
-            hotkey("ArrowUp", onPrev),
-            hotkey("ArrowDown", onNext),
-            hotkey("Enter", onComplete),
-            hotkey(" ", onComplete),
-            hotkey("Escape", onCancel),
-          ],
           onChange: setText,
+        }).exec(hotkeyPlugin, {
+          ArrowUp: onPrev,
+          ArrowDown: onNext,
+          Enter: onComplete,
+          Space: onComplete,
+          Escape: onCancel,
         }),
       [],
     );

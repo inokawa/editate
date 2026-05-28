@@ -123,12 +123,6 @@ export interface EditorOptions<
    */
   readonly?: boolean;
   /**
-   * Functions to handle keyboard events.
-   *
-   * Return `true` if you want to stop propagation.
-   */
-  keyboard?: KeyboardHook[];
-  /**
    * Functions to handle copy events
    * @default [plainCopy()]
    */
@@ -218,7 +212,6 @@ export const createEditor = <
   doc,
   readonly = false,
   schema,
-  keyboard,
   copy: copyHooks = [plainCopy()],
   paste: pasteHooks = [plainPaste()],
   isBlock = defaultIsBlockNode,
@@ -765,12 +758,6 @@ export const createEditor = <
   };
 
   editor.exec(historyPlugin);
-
-  if (keyboard) {
-    keyboard.forEach((h) => {
-      editor.hook("keyboard", h);
-    });
-  }
 
   return editor;
 };
