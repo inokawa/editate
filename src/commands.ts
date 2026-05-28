@@ -5,6 +5,7 @@ import {
   isTextNode,
   offsetToPosition,
   sliceFragment,
+  isBlockNode,
 } from "./doc/edit.js";
 import type { Editor } from "./editor.js";
 import type {
@@ -103,9 +104,9 @@ export function ToggleFormat<T extends DocNode>(
   key: Extract<ToggleableKey<Omit<InferInlineNode<T>, "text">>, string>,
   range: Range = toRange(editor.selection),
 ) {
-  const texts = sliceFragment(editor.doc, ...range).flatMap((n) =>
-    n.children.filter(isTextNode),
-  );
+  const texts = sliceFragment(editor.doc, ...range)
+    .flatMap((n) => (isBlockNode(n) ? n.children : n))
+    .filter(isTextNode);
   if (texts.length) {
     editor.apply({
       type: "set_attr",
