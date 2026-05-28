@@ -5,39 +5,128 @@
  */
 export type KeyboardHook = (keyboard: KeyboardEvent) => boolean | void;
 
+type Modifier = "Ctrl" | "Meta" | "Alt" | "Shift" | "Mod";
+
+// TODO support more keys
+type BaseKey =
+  | "A"
+  | "B"
+  | "C"
+  | "D"
+  | "E"
+  | "F"
+  | "G"
+  | "H"
+  | "I"
+  | "J"
+  | "K"
+  | "L"
+  | "M"
+  | "N"
+  | "O"
+  | "P"
+  | "Q"
+  | "R"
+  | "S"
+  | "T"
+  | "U"
+  | "V"
+  | "W"
+  | "X"
+  | "Y"
+  | "Z"
+  | "0"
+  | "1"
+  | "2"
+  | "3"
+  | "4"
+  | "5"
+  | "6"
+  | "7"
+  | "8"
+  | "9"
+  | ","
+  | "."
+  | "Enter"
+  | "Escape"
+  | "Space"
+  | "Backspace"
+  | "Tab"
+  | "ArrowUp"
+  | "ArrowDown"
+  | "ArrowLeft"
+  | "ArrowRight"
+  | "Delete"
+  | "Home"
+  | "End"
+  | "PageUp"
+  | "PageDown";
+
+export type HotkeyString =
+  | BaseKey
+  | `${Modifier}+${BaseKey}`
+  | `${Modifier}+${Modifier}+${BaseKey}`
+  | `${Modifier}+${Modifier}+${Modifier}+${BaseKey}`;
+
+const isMac =
+  typeof navigator !== "undefined" &&
+  /Mac|iP(hone|od|ad)/.test(navigator.platform);
+
 /**
  * TODO
  */
 export const hotkey = (
-  key: string,
+  key: HotkeyString,
   cb: (e: KeyboardEvent) => void,
-  {
-    mod,
-    shift = false,
-    alt = false,
-  }: {
-    mod?: boolean;
-    // ctrl?: boolean;
-    // meta?: boolean;
-    shift?: boolean;
-    alt?: boolean;
-    // phase?: 'down' | 'up';
-  } = {},
 ): KeyboardHook => {
-  key = key.toLowerCase();
+  const isPlusKey = key.endsWith("+");
+  const splitted = (isPlusKey ? key.slice(0, -2) : key).split("+");
+  const rawTargetKey = isPlusKey ? "+" : splitted.pop()!;
+  const targetKey = rawTargetKey === "Space" ? " " : rawTargetKey.toLowerCase();
+  let shift = false;
+  let ctrl = false;
+  let meta = false;
+  let alt = false;
+  splitted.forEach((k) => {
+    switch (k as Modifier) {
+      case "Ctrl": {
+        ctrl = true;
+        break;
+      }
+      case "Meta": {
+        meta = true;
+        break;
+      }
+      case "Mod": {
+        if (isMac) {
+          meta = true;
+        } else {
+          ctrl = true;
+        }
+        break;
+      }
+      case "Alt": {
+        alt = true;
+        break;
+      }
+      case "Shift": {
+        shift = true;
+        break;
+      }
+    }
+  });
 
   return (e): boolean | void => {
     // TODO should we handle it e.code?
-    if (e.key.toLowerCase() === key) {
-      if (
-        // TODO detect OS
-        (!mod || e.ctrlKey || e.metaKey) &&
-        shift === e.shiftKey &&
-        alt === e.altKey
-      ) {
-        cb(e);
-        return true;
-      }
+    if (
+      e.key.toLowerCase() === targetKey &&
+      ctrl === e.ctrlKey &&
+      meta === e.metaKey &&
+      shift === e.shiftKey &&
+      alt === e.altKey
+    ) {
+      cb(e);
+      return true;
     }
   };
 };

@@ -525,11 +525,11 @@ export const Combobox: StoryObj = {
           singleline: true,
           onChange: setText,
         }).exec(hotkeyPlugin, {
-          ArrowUp: [onPrev],
-          ArrowDown: [onNext],
-          Enter: [onComplete],
-          " ": [onComplete],
-          Escape: [onCancel],
+          ArrowUp: onPrev,
+          ArrowDown: onNext,
+          Enter: onComplete,
+          Space: onComplete,
+          Escape: onCancel,
         }),
       [],
     );

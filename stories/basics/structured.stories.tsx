@@ -172,10 +172,10 @@ export const RichText: StoryObj = {
         copy: [internalCopy(), plainCopy()],
         paste: [internalPaste(), plainPaste()],
       }).exec(hotkeyPlugin, {
-        b: [toggleBold, { mod: true }],
-        i: [toggleItalic, { mod: true }],
-        u: [toggleUnderline, { mod: true }],
-        s: [toggleStrike, { mod: true }],
+        "Mod+B": toggleBold,
+        "Mod+I": toggleItalic,
+        "Mod+U": toggleUnderline,
+        "Mod+S": toggleStrike,
       });
       e.on("change", () => {
         setDoc(e.doc);

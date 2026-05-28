@@ -1,12 +1,19 @@
 import type { Editor } from "../editor.js";
-import { hotkey, type KeyboardHook } from "../hooks/keyboard.js";
+import {
+  hotkey,
+  type HotkeyString,
+  type KeyboardHook,
+} from "../hooks/keyboard.js";
 import { keys } from "../utils.js";
 
-export function hotkeyPlugin(
+export function hotkeyPlugin<K extends HotkeyString>(
   editor: Editor,
-  keymap: Record<string, [KeyboardHook, Parameters<typeof hotkey>[2]?]>,
+  keymap: Record<K, KeyboardHook>,
 ) {
   keys(keymap).forEach((k) => {
-    editor.hook("keyboard", hotkey(k, ...keymap[k]!));
+    editor.hook(
+      "keyboard",
+      hotkey(k as HotkeyString, keymap[k as keyof typeof keymap]!),
+    );
   });
 }

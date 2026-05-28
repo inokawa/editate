@@ -85,6 +85,6 @@ export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
     }
   });
 
-  editor.hook("keyboard", hotkey("z", undo, { mod: true }));
-  editor.hook("keyboard", hotkey("z", redo, { mod: true, shift: true }));
+  editor.hook("keyboard", hotkey("Mod+Z", undo));
+  editor.hook("keyboard", hotkey("Shift+Mod+Z", redo));
 }
