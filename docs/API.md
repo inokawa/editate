@@ -19,6 +19,10 @@
 - [createPlainEditor](functions/createPlainEditor.md)
 - [debugPlugin](functions/debugPlugin.md)
 - [keymapPlugin](functions/keymapPlugin.md)
+- [Undo](functions/Undo.md)
+- [Redo](functions/Redo.md)
+- [Undoable](functions/Undoable.md)
+- [Redoable](functions/Redoable.md)
 - [singlelinePlugin](functions/singlelinePlugin.md)
 - [fileTransferPlugin](functions/fileTransferPlugin.md)
 - [plainTransferPlugin](functions/plainTransferPlugin.md)
@@ -34,3 +38,4 @@
 ## Type Aliases
 
 - [Operation](type-aliases/Operation.md)
+- [EditorContext](type-aliases/EditorContext.md)

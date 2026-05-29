@@ -6,7 +6,7 @@
 
 > **ReplaceDoc**\<`T`\>(`editor`, `fragment`): `void`
 
-Defined in: [commands.ts:68](https://github.com/inokawa/editate/blob/8c5e3f110383ab480e353efdaee805b9eda93e1c/src/commands.ts#L68)
+Defined in: [commands.ts:68](https://github.com/inokawa/editate/blob/5cda532dc434747839fdedefcca192367ddd3088/src/commands.ts#L68)
 
 Replace document in the editor.
 

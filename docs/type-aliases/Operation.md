@@ -6,4 +6,4 @@
 
 > **Operation** = `DeleteOperation` \| `InsertTextOperation` \| `InsertNodeOperation` \| `SetAttrOperation` \| `SetNodeAttrOperation`
 
-Defined in: [doc/edit.ts:53](https://github.com/inokawa/editate/blob/8c5e3f110383ab480e353efdaee805b9eda93e1c/src/doc/edit.ts#L53)
+Defined in: [doc/edit.ts:53](https://github.com/inokawa/editate/blob/5cda532dc434747839fdedefcca192367ddd3088/src/doc/edit.ts#L53)
