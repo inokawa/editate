@@ -64,7 +64,15 @@ export function htmlTransferPlugin<T extends DocNode>(
     ) => Exclude<InferInlineNode<T>, TextNode> | void)[];
   },
 ) {
-  editor.hook("copy", (dataTransfer, _, element) => {
+  let element: HTMLElement | null = null;
+  editor.hook("mount", (e) => {
+    element = e;
+    return () => {
+      element = null;
+    };
+  });
+  editor.hook("copy", (dataTransfer) => {
+    if (!element) return;
     const wrapper = document.createElement("div");
     wrapper.appendChild(
       // DOM range must exist here

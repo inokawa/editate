@@ -13,7 +13,6 @@ import type { DocNode, Fragment, Selection } from "./doc/types.js";
 import { is, isFunction, isString, microtask } from "./utils.js";
 import {
   applyOperation,
-  sliceFragment,
   type Operation,
   isUnsafeOperation,
   isValidSelection,
@@ -138,6 +137,8 @@ export interface EditorOptions<
   onError?: (message: string) => never;
 }
 
+export type EditorContext<_> = {};
+
 type EditorEventMap = {
   change: () => void;
   selectionchange: () => void;
@@ -151,16 +152,10 @@ type EditorEventMap = {
  */
 export type KeyboardHook = (keyboard: KeyboardEvent) => boolean | void;
 
-export type EditorContext<_> = {};
-
 /**
  * Functions to handle copy events
  */
-export type CopyHook = (
-  dataTransfer: DataTransfer,
-  doc: Fragment,
-  element: Element,
-) => void;
+export type CopyHook = (dataTransfer: DataTransfer) => void;
 
 /**
  * Functions to handle paste / drop events
@@ -657,9 +652,8 @@ export const createEditor = <
       const copy = (dataTransfer: DataTransfer) => {
         syncSelection();
         if (!isCollapsed(selection)) {
-          const fragment = sliceFragment(doc, ...toRange(selection));
           for (const ex of getHook("copy")) {
-            ex(dataTransfer, fragment, element);
+            ex(dataTransfer);
           }
         }
       };
