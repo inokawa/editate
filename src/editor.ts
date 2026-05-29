@@ -31,6 +31,10 @@ const empty: unknown[] = [];
 
 const noop = () => {};
 
+const defaultOnError = (message: string): never => {
+  throw new Error(message);
+};
+
 /**
  * https://www.w3.org/TR/input-events-1/#interface-InputEvent-Attributes
  */
@@ -123,9 +127,15 @@ export interface EditorOptions<
   /**
    * Callback invoked when errors happen.
    *
-   * @default console.error
+   * @default console.warn
    */
-  onError?: (message: string) => void;
+  onWarn?: (message: string) => void;
+  /**
+   * Callback invoked when errors happen.
+   *
+   * @default `throw new Error(message)`
+   */
+  onError?: (message: string) => never;
 }
 
 type EditorEventMap = {
@@ -233,36 +243,31 @@ export const createEditor = <
   readonly = false,
   schema,
   isBlock = defaultIsBlockNode,
-  onError = console.error,
+  onWarn = console.warn,
+  onError = defaultOnError,
 }: EditorOptions<T, S>): Editor<T> => {
   let selection: Selection = [0, 0];
 
-  const validate = (value: T, onError: (m: string) => void): boolean => {
+  const validate = (value: T): boolean => {
     if (!schema) {
-      onError(
+      onWarn(
         "An unsafe operation was detected. We recommend using schema option.",
       );
       return true;
     }
     const result = schema["~standard"].validate(value);
     if (result instanceof Promise) {
-      throw new Error("async validate is not supported");
+      onError("async validate is not supported");
     } else if (result.issues) {
-      onError(result.issues.map((i) => i.message).join("\n"));
+      onWarn(result.issues.map((i) => i.message).join("\n"));
     } else {
       return true;
     }
     return false;
   };
 
-  let initialError: string | undefined;
-  if (
-    !validate(doc, (m) => {
-      initialError = m;
-    }) &&
-    initialError
-  ) {
-    throw new Error(initialError);
+  if (schema && !validate(doc)) {
+    onError("Invalid document");
   }
 
   const hooks = new Map<
@@ -328,13 +333,13 @@ export const createEditor = <
 
         try {
           const [nextDoc, nextSelection] = applyOperation(doc, selection, op);
-          if (!isUnsafeOperation(op) || validate(nextDoc, onError)) {
+          if (!isUnsafeOperation(op) || validate(nextDoc)) {
             doc = nextDoc;
             selection = nextSelection;
           }
         } catch (e) {
           // rollback
-          onError("rollback operation: " + e);
+          onWarn("rollback operation: " + e);
         }
       }
     };
@@ -418,7 +423,7 @@ export const createEditor = <
     },
     get: (key) => {
       if (!contexts.has(key)) {
-        throw new Error("No value found for key");
+        onError("No value found for key");
       }
       return contexts.get(key) as any;
     },
@@ -430,7 +435,7 @@ export const createEditor = <
       if (
         !(window.InputEvent && isFunction(InputEvent.prototype.getTargetRanges))
       ) {
-        onError("beforeinput event is not supported.");
+        onWarn("beforeinput event is not supported.");
         return noop;
       }
 
@@ -491,7 +496,7 @@ export const createEditor = <
             return pasted;
           }
         }
-        onError("failed to serialize pasted data");
+        onWarn("failed to serialize pasted data");
       };
 
       const observer = createMutationObserver(element, () => {
