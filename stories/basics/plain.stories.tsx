@@ -1,6 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { StoryObj } from "@storybook/react-vite";
-import { Delete, createPlainEditor, InsertText } from "../../src";
+import {
+  Delete,
+  createPlainEditor,
+  InsertText,
+  Undo,
+  Undoable,
+  Redoable,
+  Redo,
+} from "../../src";
 
 export default {
   component: createPlainEditor,
@@ -274,6 +282,24 @@ export const Command: StoryObj = {
               }}
             >
               delete selection
+            </button>
+          </div>
+          <div>
+            <button
+              disabled={!editor.exec(Undoable)}
+              onClick={() => {
+                editor.exec(Undo);
+              }}
+            >
+              undo
+            </button>
+            <button
+              disabled={!editor.exec(Redoable)}
+              onClick={() => {
+                editor.exec(Redo);
+              }}
+            >
+              redo
             </button>
           </div>
           <div>

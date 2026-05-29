@@ -141,6 +141,8 @@ type EditorEventMap = {
  */
 export type KeyboardHook = (keyboard: KeyboardEvent) => boolean | void;
 
+export type EditorContext<_> = {};
+
 /**
  * Functions to handle copy events
  */
@@ -206,6 +208,14 @@ export interface Editor<T extends DocNode = DocNode> {
     callback: EditorHookMap[K],
   ): () => void;
   /**
+   * Get a value from the context.
+   */
+  get<V>(key: EditorContext<V>): V;
+  /**
+   * Set a value for the context.
+   */
+  set<V>(key: EditorContext<V>, value: V): this;
+  /**
    * A function to make DOM editable.
    * @returns A function to stop subscribing DOM changes and restores previous DOM state.
    */
@@ -259,6 +269,8 @@ export const createEditor = <
     keyof EditorHookMap,
     EditorHookMap[keyof EditorHookMap][]
   >();
+
+  const contexts = new WeakMap<EditorContext<unknown>, unknown>();
 
   const getHook = <T extends keyof EditorHookMap>(
     key: T,
@@ -403,6 +415,16 @@ export const createEditor = <
         return editor;
       }
       return result;
+    },
+    get: (key) => {
+      if (!contexts.has(key)) {
+        throw new Error("No value found for key");
+      }
+      return contexts.get(key) as any;
+    },
+    set: (key, value) => {
+      contexts.set(key, value);
+      return editor;
     },
     input: (element) => {
       if (
