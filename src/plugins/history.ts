@@ -8,6 +8,13 @@ import { is } from "../utils.js";
 const MAX_HISTORY_LENGTH = 500;
 const BATCH_HISTORY_TIME = 500;
 
+interface HistoryContext {
+  undo: () => void;
+  redo: () => void;
+  undoable: () => boolean;
+  redoable: () => boolean;
+}
+
 /**
  * @internal
  */
@@ -87,4 +94,39 @@ export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
 
   editor.hook("keyboard", keymap("Mod+Z", undo));
   editor.hook("keyboard", keymap("Shift+Mod+Z", redo));
+
+  editor.set<HistoryContext>(historyPlugin, {
+    undo,
+    redo,
+    undoable: isUndoable,
+    redoable: isRedoable,
+  });
+}
+
+/**
+ * Undos the last edit.
+ */
+export function Undo(editor: Editor) {
+  editor.get<HistoryContext>(historyPlugin).undo();
+}
+
+/**
+ * Redos the last undone edit.
+ */
+export function Redo(editor: Editor) {
+  editor.get<HistoryContext>(historyPlugin).redo();
+}
+
+/**
+ * Check if the history can be undone.
+ */
+export function Undoable(editor: Editor): boolean {
+  return editor.get<HistoryContext>(historyPlugin).undoable();
+}
+
+/**
+ * Check if the history can be redone.
+ */
+export function Redoable(editor: Editor): boolean {
+  return editor.get<HistoryContext>(historyPlugin).redoable();
 }
