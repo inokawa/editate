@@ -143,9 +143,6 @@ export const offsetToPosition = (
   const path: number[] = [];
   while (node) {
     const found = getChildAt(node, offset);
-    if (!found) {
-      break;
-    }
     const index = found._index;
     const nextNode = found._node;
     if (!isBlockNode(nextNode)) {
@@ -256,8 +253,9 @@ export const joinBlocks = <T extends BlockNode>(...blocks: T[]): T => {
 const getChildAt = <T extends BlockNode>(
   { children }: T,
   offset: number,
-): { _node: T["children"][number]; _index: number; _offset: number } | null => {
-  for (let i = 0; i < children.length; i++) {
+): { _node: T["children"][number]; _index: number; _offset: number } => {
+  const length = children.length;
+  for (let i = 0; i < length; i++) {
     const node = children[i]!;
     let size = getNodeSize(node);
     if (isBlockNode(node)) {
@@ -268,7 +266,8 @@ const getChildAt = <T extends BlockNode>(
     }
     offset -= size;
   }
-  return null;
+  const last = children[length - 1]!;
+  return { _node: last, _index: length - 1, _offset: getNodeSize(last) };
 };
 
 const splitBlock = <T extends DocNode | BlockNode>(
@@ -277,47 +276,44 @@ const splitBlock = <T extends DocNode | BlockNode>(
 ): [T, T] => {
   const children = block.children;
   const target = getChildAt(block, pos);
-  if (target) {
-    const { _node: node, _offset: offsetAtNode, _index: i } = target;
-    if (isBlockNode(node)) {
-      const [childBefore, childAfter] = splitBlock(node, offsetAtNode);
-      const before = children.slice(0, i);
-      const after = children.slice(i + 1);
-      before.push(childBefore);
-      after.unshift(childAfter);
-      return [
-        { ...block, children: before },
-        { ...block, children: after },
-      ];
-    } else {
-      const before = children.slice(0, i);
-      const after = children.slice(i + 1);
-      if (isTextNode(node)) {
-        const beforeText = node.text.slice(0, offsetAtNode);
-        const afterText = node.text.slice(offsetAtNode);
-        if (beforeText || !before.length) {
-          before.push({ ...node, text: beforeText });
-        }
-        if (afterText || !after.length) {
-          after.unshift({ ...node, text: afterText });
-        }
-      } else {
-        // node size must be 1
-        after.unshift(node);
+  const { _node: node, _offset: offsetAtNode, _index: i } = target;
+  if (isBlockNode(node)) {
+    const [childBefore, childAfter] = splitBlock(node, offsetAtNode);
+    const before = children.slice(0, i);
+    const after = children.slice(i + 1);
+    before.push(childBefore);
+    after.unshift(childAfter);
+    return [
+      { ...block, children: before },
+      { ...block, children: after },
+    ];
+  } else {
+    const before = children.slice(0, i);
+    const after = children.slice(i + 1);
+    if (isTextNode(node)) {
+      const beforeText = node.text.slice(0, offsetAtNode);
+      const afterText = node.text.slice(offsetAtNode);
+      if (beforeText || !before.length) {
+        before.push({ ...node, text: beforeText });
       }
-      return [
-        { ...block, children: before },
-        { ...block, children: after },
-      ];
+      if (afterText || !after.length) {
+        after.unshift({ ...node, text: afterText });
+      }
+    } else {
+      // node size must be 1
+      after.unshift(node);
     }
+    return [
+      { ...block, children: before },
+      { ...block, children: after },
+    ];
   }
-  return [block, { ...block, children: [] }];
 };
 
 /**
  * @internal
  */
-export const getNodeAt = (
+export const getNodeAtPath = (
   node: DocNode | BlockNode,
   path: Path,
 ): BlockNode | DocNode => {
@@ -478,14 +474,12 @@ export const applyOperation = <T extends DocNode>(
       if (isValidPosition(doc, at) && text) {
         // inherit style from previous block/text node
         const [path, offset] = offsetToPosition(doc, at);
-        const block = getNodeAt(doc, path);
+        const block = getNodeAtPath(doc, path);
         const res = getChildAt(block, offset - 1);
         let anchorNode: TextNode | undefined;
-        if (res) {
-          const node = res._node;
-          if (isTextNode(node)) {
-            anchorNode = node;
-          }
+        const node = res._node;
+        if (isTextNode(node)) {
+          anchorNode = node;
         }
 
         doc = replaceRange(
@@ -533,7 +527,7 @@ export const applyOperation = <T extends DocNode>(
     }
     case OP_SET_NODE_ATTR: {
       const { path, key, value } = op;
-      const node = getNodeAt(doc, path);
+      const node = getNodeAtPath(doc, path);
       if (node) {
         doc = replaceNodeAt(doc, path, { ...node, [key]: value });
       }

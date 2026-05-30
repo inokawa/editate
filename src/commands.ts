@@ -1,6 +1,6 @@
 import { toRange } from "./doc/position.js";
 import {
-  getNodeAt,
+  getNodeAtPath,
   getNodeSize,
   isTextNode,
   offsetToPosition,
@@ -146,7 +146,7 @@ export function ToggleBlockAttr<
   offValue: N[K],
   path: Path = offsetToPosition(editor.doc, editor.selection[0])[0],
 ) {
-  const block = getNodeAt(editor.doc, path) as N;
+  const block = getNodeAtPath(editor.doc, path) as N;
   editor.apply({
     type: "set_node_attr",
     path,
