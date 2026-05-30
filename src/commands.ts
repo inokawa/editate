@@ -1,6 +1,7 @@
-import { toRange } from "./doc/position.js";
+import { isCollapsed, toRange } from "./doc/position.js";
 import {
   getBlockAt,
+  getInlineAt,
   getNodeSize,
   isTextNode,
   sliceFragment,
@@ -10,6 +11,7 @@ import type {
   DocNode,
   InferBlockNode,
   InferInlineNode,
+  InlineNode,
   Range,
   TextNode,
 } from "./doc/types.js";
@@ -101,9 +103,21 @@ export function ToggleFormat<T extends DocNode>(
   key: Extract<ToggleableKey<Omit<InferInlineNode<T>, "text">>, string>,
   range: Range = toRange(editor.selection),
 ) {
-  const texts = sliceFragment(editor.doc, ...range).flatMap((n) =>
-    n.children.filter(isTextNode),
-  );
+  // TODO improve
+  let inlines: InlineNode[];
+  if (isCollapsed(range)) {
+    const inline = getInlineAt(editor.doc, range[0]);
+    if (inline) {
+      inlines = [inline._node];
+    } else {
+      return;
+    }
+  } else {
+    inlines = sliceFragment(editor.doc, ...range).flatMap((n) => n.children);
+  }
+
+  const texts = inlines.filter(isTextNode);
+
   if (texts.length) {
     editor.apply({
       type: "set_attr",

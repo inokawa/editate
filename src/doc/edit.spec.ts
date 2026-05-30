@@ -2845,6 +2845,91 @@ describe("format", () => {
     });
     expect(res[1]).toEqual(sel);
   });
+
+  it("update text with collapsed range", () => {
+    const docText = "abcde";
+    const docText2 = "fghij";
+    const doc: Doc = {
+      children: [
+        { attr: 0, children: [{ attr: 0, text: docText }] },
+        { attr: 1, children: [{ attr: 0, text: docText2 }] },
+      ],
+    };
+    const sel: Selection = [3, 3];
+    const res = applyOperation(doc, sel, {
+      type: "set_attr",
+      range: [1, 1],
+      key: "foo",
+      value: "bar",
+    });
+
+    expect(res[0]).toEqual({
+      children: [
+        {
+          attr: 0,
+          children: [{ attr: 0, text: docText }],
+        },
+        { attr: 1, children: [{ attr: 0, text: docText2 }] },
+      ],
+    });
+    expect(res[1]).toEqual(sel);
+  });
+
+  it("update empty text with collapsed range", () => {
+    const docText = "abcde";
+    const docText2 = "fghij";
+    const doc: Doc = {
+      children: [
+        { attr: 0, children: [{ attr: 0, text: docText }] },
+        { attr: 1, children: [{ attr: 0, text: "" }] },
+        { attr: 2, children: [{ attr: 0, text: docText2 }] },
+      ],
+    };
+    const sel: Selection = [3, 3];
+    const res = applyOperation(doc, sel, {
+      type: "set_attr",
+      range: [docText.length + 1, docText.length + 1],
+      key: "foo",
+      value: "bar",
+    });
+
+    expect(res[0]).toEqual({
+      children: [
+        { attr: 0, children: [{ attr: 0, text: docText }] },
+        { attr: 1, children: [{ attr: 0, text: "", foo: "bar" }] },
+        { attr: 2, children: [{ attr: 0, text: docText2 }] },
+      ],
+    });
+    expect(res[1]).toEqual(sel);
+  });
+
+  it("update empty text with expanded range", () => {
+    const docText = "abcde";
+    const docText2 = "fghij";
+    const doc: Doc = {
+      children: [
+        { attr: 0, children: [{ attr: 0, text: docText }] },
+        { attr: 1, children: [{ attr: 0, text: "" }] },
+        { attr: 2, children: [{ attr: 0, text: docText2 }] },
+      ],
+    };
+    const sel: Selection = [3, 3];
+    const res = applyOperation(doc, sel, {
+      type: "set_attr",
+      range: [docText.length + 1, docText.length + 2],
+      key: "foo",
+      value: "bar",
+    });
+
+    expect(res[0]).toEqual({
+      children: [
+        { attr: 0, children: [{ attr: 0, text: docText }] },
+        { attr: 1, children: [{ attr: 0, text: "", foo: "bar" }] },
+        { attr: 2, children: [{ attr: 0, text: docText2 }] },
+      ],
+    });
+    expect(res[1]).toEqual(sel);
+  });
 });
 
 describe("set attr", () => {

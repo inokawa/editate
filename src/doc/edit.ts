@@ -243,13 +243,14 @@ const getChildAt = <T extends BlockNode>(
   { children }: T,
   offset: number,
 ): { _node: T["children"][number]; _index: number; _offset: number } | null => {
-  for (let i = 0; i < children.length; i++) {
+  const length = children.length;
+  for (let i = 0; i < length; i++) {
     const node = children[i]!;
     let size = getNodeSize(node);
     if (isBlockNode(node)) {
       size++;
     }
-    if (size > offset) {
+    if (size > offset || (size === offset && isTextNode(node) && !node.text)) {
       return { _node: node, _index: i, _offset: offset };
     }
     offset -= size;
@@ -279,6 +280,17 @@ export const getBlockAt = (
     path.push(found._index);
   }
   return { _node: node, _path: path, _offset: offset };
+};
+
+/**
+ * @internal
+ */
+export const getInlineAt = (
+  node: DocNode | BlockNode,
+  offset: number,
+): { _node: InlineNode; _index: number; _offset: number } | null => {
+  const block = getBlockAt(node, offset);
+  return getChildAt(block._node, block._offset);
 };
 
 const splitBlock = <T extends DocNode | BlockNode>(
@@ -321,7 +333,11 @@ const splitBlock = <T extends DocNode | BlockNode>(
       ];
     }
   }
-  return [block, { ...block, children: [] }];
+  const last = children[children.length - 1]!;
+  return [
+    block,
+    { ...block, children: isTextNode(last) ? [{ ...last, text: "" }] : [] },
+  ];
 };
 
 const getNodeAtPath = (
@@ -521,19 +537,36 @@ export const applyOperation = <T extends DocNode>(
       if (
         isValidPosition(doc, start) &&
         isValidPosition(doc, end) &&
-        start < end
+        start <= end
       ) {
-        doc = replaceRange(
-          doc,
-          start,
-          end,
-          sliceFragment(doc, start, end).map((block) => ({
-            ...block,
-            children: block.children.map((node) =>
-              isTextNode(node) ? { ...node, [key]: value } : node,
-            ),
-          })),
-        );
+        if (start === end) {
+          const {
+            _node: { children },
+            _path: path,
+          } = getBlockAt(doc, start);
+          if (children.length === 1) {
+            const maybeText = children[0]!;
+            if (isTextNode(maybeText) && !maybeText.text) {
+              doc = replaceNodeAt(
+                doc,
+                [...path, 0], // TODO imporve
+                { ...maybeText, [key]: value },
+              );
+            }
+          }
+        } else {
+          doc = replaceRange(
+            doc,
+            start,
+            end,
+            sliceFragment(doc, start, end).map((block) => ({
+              ...block,
+              children: block.children.map((node) =>
+                isTextNode(node) ? { ...node, [key]: value } : node,
+              ),
+            })),
+          );
+        }
       }
       break;
     }
