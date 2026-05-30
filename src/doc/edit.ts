@@ -271,6 +271,25 @@ const getChildAt = <T extends BlockNode>(
   return null;
 };
 
+const getBlockAt = (
+  node: DocNode | BlockNode,
+  offset: number,
+): { _node: BlockNode; _offset: number } => {
+  while (node) {
+    const found = getChildAt(node, offset);
+    if (!found) {
+      break;
+    }
+    const nextNode = found._node;
+    if (!isBlockNode(nextNode)) {
+      break;
+    }
+    offset = found._offset;
+    node = nextNode;
+  }
+  return { _node: node, _offset: offset };
+};
+
 const splitBlock = <T extends DocNode | BlockNode>(
   block: T,
   pos: number,
@@ -317,7 +336,7 @@ const splitBlock = <T extends DocNode | BlockNode>(
 /**
  * @internal
  */
-export const getNodeAt = (
+export const getNodeAtPath = (
   node: DocNode | BlockNode,
   path: Path,
 ): BlockNode | DocNode => {
@@ -477,8 +496,7 @@ export const applyOperation = <T extends DocNode>(
       const { at, text } = op;
       if (isValidPosition(doc, at) && text) {
         // inherit style from previous block/text node
-        const [path, offset] = offsetToPosition(doc, at);
-        const block = getNodeAt(doc, path);
+        const { _node: block, _offset: offset } = getBlockAt(doc, at);
         const res = getChildAt(block, offset - 1);
         let anchorNode: TextNode | undefined;
         if (res) {
@@ -533,7 +551,7 @@ export const applyOperation = <T extends DocNode>(
     }
     case OP_SET_NODE_ATTR: {
       const { path, key, value } = op;
-      const node = getNodeAt(doc, path);
+      const node = getNodeAtPath(doc, path);
       if (node) {
         doc = replaceNodeAt(doc, path, { ...node, [key]: value });
       }
