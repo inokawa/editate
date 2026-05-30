@@ -140,22 +140,8 @@ export const offsetToPosition = (
   node: DocNode | BlockNode,
   offset: number,
 ): DomPosition => {
-  const path: number[] = [];
-  while (node) {
-    const found = getChildAt(node, offset);
-    if (!found) {
-      break;
-    }
-    const index = found._index;
-    const nextNode = found._node;
-    if (!isBlockNode(nextNode)) {
-      break;
-    }
-    offset = found._offset;
-    path.push(index);
-    node = nextNode;
-  }
-  return [path, offset];
+  const res = getBlockAt(node, offset);
+  return [res._path, res._offset];
 };
 
 /**
@@ -271,10 +257,14 @@ const getChildAt = <T extends BlockNode>(
   return null;
 };
 
-const getBlockAt = (
+/**
+ * @internal
+ */
+export const getBlockAt = (
   node: DocNode | BlockNode,
   offset: number,
-): { _node: BlockNode; _offset: number } => {
+): { _node: BlockNode; _path: Path; _offset: number } => {
+  const path: number[] = [];
   while (node) {
     const found = getChildAt(node, offset);
     if (!found) {
@@ -286,8 +276,9 @@ const getBlockAt = (
     }
     offset = found._offset;
     node = nextNode;
+    path.push(found._index);
   }
-  return { _node: node, _offset: offset };
+  return { _node: node, _path: path, _offset: offset };
 };
 
 const splitBlock = <T extends DocNode | BlockNode>(
@@ -333,10 +324,7 @@ const splitBlock = <T extends DocNode | BlockNode>(
   return [block, { ...block, children: [] }];
 };
 
-/**
- * @internal
- */
-export const getNodeAtPath = (
+const getNodeAtPath = (
   node: DocNode | BlockNode,
   path: Path,
 ): BlockNode | DocNode => {

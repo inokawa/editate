@@ -1,9 +1,8 @@
 import { toRange } from "./doc/position.js";
 import {
-  getNodeAtPath,
+  getBlockAt,
   getNodeSize,
   isTextNode,
-  offsetToPosition,
   sliceFragment,
 } from "./doc/edit.js";
 import type { Editor } from "./editor.js";
@@ -11,7 +10,6 @@ import type {
   DocNode,
   InferBlockNode,
   InferInlineNode,
-  Path,
   Range,
   TextNode,
 } from "./doc/types.js";
@@ -127,8 +125,9 @@ export function SetBlockAttr<
   editor: Editor<T>,
   key: K,
   value: N[K],
-  path: Path = offsetToPosition(editor.doc, editor.selection[0])[0],
+  offset: number = editor.selection[0],
 ) {
+  const { _path: path } = getBlockAt(editor.doc, offset);
   editor.apply({ type: "set_node_attr", path, key, value });
 }
 
@@ -144,13 +143,13 @@ export function ToggleBlockAttr<
   key: K,
   onValue: N[K],
   offValue: N[K],
-  path: Path = offsetToPosition(editor.doc, editor.selection[0])[0],
+  offset: number = editor.selection[0],
 ) {
-  const block = getNodeAtPath(editor.doc, path) as N;
+  const { _node: block, _path: path } = getBlockAt(editor.doc, offset);
   editor.apply({
     type: "set_node_attr",
     path,
     key,
-    value: block[key] === onValue ? offValue : onValue,
+    value: (block as N)[key] === onValue ? offValue : onValue,
   });
 }
