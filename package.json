@@ -1,6 +1,6 @@
 {
   "name": "editate",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "An experimental, type-safe, framework agnostic and small (5kB+) contenteditable state manager.",
   "main": "lib/index.cjs",
   "module": "lib/index.js",
