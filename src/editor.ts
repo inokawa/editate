@@ -141,7 +141,7 @@ export type EditorContext<_> = {};
 
 type EditorEventMap = {
   change: () => void;
-  selectionchange: () => void;
+  select: () => void;
   readonly: () => void;
 };
 
@@ -360,7 +360,7 @@ export const createEditor = <
       (selection[0] !== s[0] || selection[1] !== s[1])
     ) {
       selection = s;
-      publish("selectionchange");
+      publish("select");
     }
   };
 

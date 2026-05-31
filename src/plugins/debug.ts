@@ -7,7 +7,7 @@ export function debugPlugin(editor: Editor) {
   editor.on("change", () => {
     console.log("change", editor.doc);
   });
-  editor.on("selectionchange", () => {
-    console.log("selectionchange", editor.selection);
+  editor.on("select", () => {
+    console.log("select", editor.selection);
   });
 }
