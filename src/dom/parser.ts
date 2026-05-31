@@ -116,7 +116,7 @@ export const readToken = (): TokenType => {
           : // Returning <div><br/></div> is necessary to anchor selection
             TOKEN_ANCHORABLE);
       } else if (isHiddenNode(node)) {
-        return TOKEN_HIDDEN;
+        return (_token = TOKEN_HIDDEN);
       } else if (config!._isVoid(node)) {
         return (_token = TOKEN_VOID);
       } else if (config!._isBlock(node)) {
