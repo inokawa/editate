@@ -128,7 +128,14 @@ export const readToken = (): TokenType => {
 };
 
 const nextNode = (): Node | null => {
+  const prevToken = readToken();
   _token = null;
+  if (prevToken === TOKEN_HIDDEN) {
+    node = walker!.nextSibling();
+    if (node) {
+      return node;
+    }
+  }
   return (node = walker!.nextNode());
 };
 
@@ -154,11 +161,18 @@ export const parentBlock = () => {
   }
 };
 
+const HIDDEN_ELEMENT_NAMES = new Set([
+  "TEMPLATE",
+  "STYLE",
+  "SCRIPT",
+  "COLGROUP",
+]);
+
 /**
  * @internal
  */
 export const isHiddenNode = (node: Element): boolean => {
-  return node.tagName === "TEMPLATE";
+  return HIDDEN_ELEMENT_NAMES.has(node.tagName);
 };
 
 const isValidSoftBreak = (): boolean => {
@@ -183,6 +197,9 @@ const isValidSoftBreak = (): boolean => {
   // <div>[a]<br/></div>          type on empty line in Firefox
   const parent = node!.parentNode!;
   return parse!(() => {
+    // To avoid "RangeError: Maximum call stack size exceeded"
+    _token = TOKEN_NULL;
+
     while (nextNode()) {
       if (readToken()) {
         return true;
