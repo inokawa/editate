@@ -228,13 +228,7 @@ export const readNext = (): Exclude<
   TokenType,
   typeof TOKEN_NULL | typeof TOKEN_HIDDEN
 > | void => {
-  while (true) {
-    nextNode();
-
-    if (!node) {
-      break;
-    }
-
+  while (nextNode()) {
     const t = readToken();
     if (t && t !== TOKEN_HIDDEN) {
       return t;
