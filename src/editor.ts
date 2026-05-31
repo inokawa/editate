@@ -90,7 +90,7 @@ type InputType =
   | "deleteByComposition"
   | "insertFromComposition";
 
-type EditorCommand<A extends unknown[], T extends DocNode = DocNode> = (
+type EditorCommandOrPlugin<A extends unknown[], T extends DocNode = DocNode> = (
   editor: Editor<T>,
   ...args: A
 ) => void | undefined;
@@ -191,10 +191,10 @@ export interface Editor<T extends DocNode = DocNode> {
   apply(op: Operation | Operation[]): this;
   /**
    * Executes a function with editor bound as context.
-   * @param fn {@link EditorCommand} or {@link EditorQuery}
+   * @param fn {@link EditorCommandOrPlugin} or {@link EditorQuery}
    * @param args arguments of the function
    */
-  exec<A extends unknown[]>(fn: EditorCommand<A, T>, ...args: A): this;
+  exec<A extends unknown[]>(fn: EditorCommandOrPlugin<A, T>, ...args: A): this;
   exec<A extends unknown[], V>(fn: EditorQuery<A, V, T>, ...args: A): V;
   /**
    * A function to subscribe editor events.
@@ -407,7 +407,7 @@ export const createEditor = <
       };
     },
     exec: (
-      fn: EditorCommand<any, T> | EditorQuery<any, unknown, T>,
+      fn: EditorCommandOrPlugin<any, T> | EditorQuery<any, unknown, T>,
       ...args: unknown[]
     ): any => {
       const result = fn(editor, ...args);
