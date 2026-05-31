@@ -654,3 +654,104 @@ export const Iframe: StoryObj = {
     );
   },
 };
+
+const rubySchema = v.strictObject({
+  children: v.array(
+    v.strictObject({
+      children: v.array(
+        v.union([
+          v.strictObject({
+            text: v.string(),
+          }),
+          v.strictObject({
+            type: v.literal("ruby"),
+            ruby: v.string(),
+            value: v.string(),
+          }),
+        ]),
+      ),
+    }),
+  ),
+});
+
+export const Ruby: StoryObj = {
+  render: () => {
+    const ref = useRef<HTMLDivElement>(null);
+
+    type Doc = v.InferOutput<typeof rubySchema>;
+    const [doc, setDoc] = useState<Doc>({
+      children: [
+        {
+          children: [
+            {
+              text: "また",
+            },
+            {
+              type: "ruby",
+              ruby: "あした",
+              value: "明日",
+            },
+            {
+              text: "お",
+            },
+            {
+              type: "ruby",
+              ruby: "あ",
+              value: "会",
+            },
+            {
+              text: "いしましょう。",
+            },
+          ],
+        },
+      ],
+    });
+
+    const editor = useMemo(() => {
+      const e = createEditor({
+        doc: doc,
+        schema: rubySchema,
+      }).exec(plainTransferPlugin, {
+        serializer: (n) => ("text" in n ? n.text : n.value),
+      });
+      e.on("change", () => {
+        setDoc(e.doc);
+      });
+      return e;
+    }, []);
+
+    useEffect(() => {
+      if (!ref.current) return;
+      return editor.input(ref.current);
+    }, []);
+
+    return (
+      <div>
+        <div
+          ref={ref}
+          style={{
+            backgroundColor: "white",
+            padding: 8,
+          }}
+        >
+          {doc.children.map((b, i) => (
+            <div key={i}>
+              {b.children.map((t, j) =>
+                "text" in t ? (
+                  <span key={j}>{t.text || <br />}</span>
+                ) : (
+                  <ruby key={j} contentEditable={false}>
+                    {t.value}
+                    <rp>(</rp>
+                    <rt>{t.ruby}</rt>
+                    <rp>)</rp>
+                  </ruby>
+                ),
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  },
+};
