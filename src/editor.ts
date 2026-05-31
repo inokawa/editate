@@ -280,19 +280,23 @@ export const createEditor = <
 
   const subs = new Map<
     keyof EditorEventMap,
-    [cbs: Set<EditorEventMap[keyof EditorEventMap]>, queued: boolean]
+    Set<EditorEventMap[keyof EditorEventMap]>
   >();
+
+  const publishing: (() => void)[] = [];
 
   const publish = <K extends keyof EditorEventMap>(key: K) => {
     const sub = subs.get(key);
-    if (sub && !sub[1]) {
-      sub[1] = true;
-      microtask(() => {
-        sub[1] = false;
-        sub[0].forEach((cb) => {
-          cb();
+    if (sub) {
+      if (!publishing.length) {
+        microtask(() => {
+          publishing.forEach((cb) => {
+            cb();
+          });
+          publishing.splice(0);
         });
-      });
+      }
+      publishing.push(...sub);
     }
   };
 
@@ -385,12 +389,11 @@ export const createEditor = <
     on: (type, callback) => {
       let sub = subs.get(type);
       if (!sub) {
-        subs.set(type, (sub = [new Set(), false]));
+        subs.set(type, (sub = new Set()));
       }
-      const cbs = sub[0];
-      cbs.add(callback);
+      sub.add(callback);
       return () => {
-        cbs.delete(callback);
+        sub.delete(callback);
       };
     },
     hook: (type, callback) => {
