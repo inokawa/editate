@@ -22,8 +22,7 @@ export const TOKEN_VOID = 2;
 export const TOKEN_SOFT_BREAK = 3;
 /** @internal */
 export const TOKEN_BLOCK = 4;
-const TOKEN_EMPTY_BLOCK_ANCHOR = 5;
-const TOKEN_INVALID_SOFT_BREAK = 6;
+const TOKEN_ANCHORABLE = 5;
 
 /**
  * @internal
@@ -34,8 +33,7 @@ export type TokenType =
   | typeof TOKEN_VOID
   | typeof TOKEN_SOFT_BREAK
   | typeof TOKEN_BLOCK
-  | typeof TOKEN_EMPTY_BLOCK_ANCHOR
-  | typeof TOKEN_INVALID_SOFT_BREAK;
+  | typeof TOKEN_ANCHORABLE;
 
 const ELEMENT_NODE = 1;
 const TEXT_NODE = 3;
@@ -105,7 +103,7 @@ export const readToken = (): TokenType => {
           text === "\n"
             ? isValidSoftBreak()
               ? TOKEN_SOFT_BREAK
-              : TOKEN_INVALID_SOFT_BREAK
+              : TOKEN_ANCHORABLE
             : TOKEN_TEXT);
       }
     } else if (isElementNode(node)) {
@@ -114,7 +112,7 @@ export const readToken = (): TokenType => {
           ? // Especially Shift+Enter in Firefox
             TOKEN_SOFT_BREAK
           : // Returning <div><br/></div> is necessary to anchor selection
-            TOKEN_EMPTY_BLOCK_ANCHOR);
+            TOKEN_ANCHORABLE);
       } else if (config!._isVoid(node)) {
         return (_token = TOKEN_VOID);
       } else if (config!._isBlock(node)) {
