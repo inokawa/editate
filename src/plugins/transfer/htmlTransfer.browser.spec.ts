@@ -133,6 +133,16 @@ it("table root", () => {
   ]);
 });
 
+it("template tag", () => {
+  const handler = htmlPaste((text) => ({ text }));
+  const html = `<div><template x-for="v in text.split('\n')"><div><template x-if="v"><span x-text="v"></span></template><template x-if="!v"><br></template></div></template><div><template x-if="v"><span x-text="v"></span></template><span x-text="v">Htest</span><template x-if="!v"><br></template></div><div><template x-if="v"><span x-text="v"></span></template><span x-text="v">ello World.</span><template x-if="!v"><br></template></div><div><template x-if="v"><span x-text="v"></span></template><span x-text="v">こんにちは。</span><template x-if="!v"><br></template></div></div>`;
+  expect(handler(createDataTransfer(html), parser)).toEqual([
+    { children: [{ text: "Htest" }] },
+    { children: [{ text: "ello World." }] },
+    { children: [{ text: "こんにちは。" }] },
+  ]);
+});
+
 it("copy in windows", () => {
   const handler = htmlPaste((text) => ({ text }));
   const html = `<html>
