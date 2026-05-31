@@ -198,7 +198,10 @@ const isValidSoftBreak = (): boolean => {
 /**
  * @internal
  */
-export const readNext = (): Exclude<TokenType, typeof TOKEN_NULL> | void => {
+export const readNext = (): Exclude<
+  TokenType,
+  typeof TOKEN_NULL | typeof TOKEN_HIDDEN
+> | void => {
   while (true) {
     if (readToken() === TOKEN_VOID) {
       const current = node!;
