@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + Alpine + TS</title>
+  </head>
+  <body>
+    <div
+      x-data="{ text: 'Hello World.\nこんにちは。\n👍❤️🧑‍🧑‍🧒' }"
+      x-editable="text"
+      style="background-color: white; border: solid 1px darkgray; padding: 8px"
+    ><template x-for="v in text.split('\n')"><div><template x-if="v"><span x-text="v"></span></template><template x-if="!v"><br /></template></div></template></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

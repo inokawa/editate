@@ -31,6 +31,7 @@ jobs:
       - run: (cd examples/solid && npm ci && npm run build -- --base ./ --outDir ../../dist/solid)
       - run: (cd examples/angular && npm ci && npm run build -- --base-href ./ --deploy-url ./ && mv ./dist ../../dist/angular)
       - run: (cd examples/preact && npm ci && npm run build -- --base ./ --outDir ../../dist/preact)
+      - run: (cd examples/alpine && npm ci && npm run build -- --base ./ --outDir ../../dist/alpine)
       - run: (cd examples/vanilla && npm ci && npm run build -- --base ./ --outDir ../../dist/vanilla)
 
       - name: Deploy

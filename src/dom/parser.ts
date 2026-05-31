@@ -23,6 +23,7 @@ export const TOKEN_SOFT_BREAK = 3;
 /** @internal */
 export const TOKEN_BLOCK = 4;
 const TOKEN_ANCHORABLE = 5;
+const TOKEN_HIDDEN = 6;
 
 /**
  * @internal
@@ -33,7 +34,8 @@ export type TokenType =
   | typeof TOKEN_VOID
   | typeof TOKEN_SOFT_BREAK
   | typeof TOKEN_BLOCK
-  | typeof TOKEN_ANCHORABLE;
+  | typeof TOKEN_ANCHORABLE
+  | typeof TOKEN_HIDDEN;
 
 const ELEMENT_NODE = 1;
 const TEXT_NODE = 3;
@@ -113,6 +115,8 @@ export const readToken = (): TokenType => {
             TOKEN_SOFT_BREAK
           : // Returning <div><br/></div> is necessary to anchor selection
             TOKEN_ANCHORABLE);
+      } else if (isHiddenNode(node)) {
+        return TOKEN_HIDDEN;
       } else if (config!._isVoid(node)) {
         return (_token = TOKEN_VOID);
       } else if (config!._isBlock(node)) {
@@ -148,6 +152,13 @@ export const parentBlock = () => {
       return;
     }
   }
+};
+
+/**
+ * @internal
+ */
+export const isHiddenNode = (node: Element): boolean => {
+  return node.tagName === "TEMPLATE";
 };
 
 const isValidSoftBreak = (): boolean => {
@@ -206,7 +217,7 @@ export const readNext = (): Exclude<TokenType, typeof TOKEN_NULL> | void => {
     }
 
     const t = readToken();
-    if (t) {
+    if (t && t !== TOKEN_HIDDEN) {
       return t;
     }
   }
