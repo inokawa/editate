@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@types/alpinejs": "^3.13.11",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.0",
     "vite": "^8.0.0"
   }
 }
