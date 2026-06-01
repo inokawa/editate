@@ -4,7 +4,7 @@
 
 # Interface: PlainEditorOptions
 
-Defined in: [presets/plain.ts:7](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/presets/plain.ts#L7)
+Defined in: [presets/plain.ts:7](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/presets/plain.ts#L7)
 
 ## Extends
 
@@ -16,7 +16,7 @@ Defined in: [presets/plain.ts:7](https://github.com/inokawa/editate/blob/6f1ab11
 
 > **text**: `string`
 
-Defined in: [presets/plain.ts:14](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/presets/plain.ts#L14)
+Defined in: [presets/plain.ts:14](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/presets/plain.ts#L14)
 
 Initial document text.
 
@@ -26,7 +26,7 @@ Initial document text.
 
 > `optional` **singleline?**: `boolean`
 
-Defined in: [presets/plain.ts:18](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/presets/plain.ts#L18)
+Defined in: [presets/plain.ts:18](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/presets/plain.ts#L18)
 
 TODO
 
@@ -36,7 +36,7 @@ TODO
 
 > **onChange**: (`text`) => `void`
 
-Defined in: [presets/plain.ts:22](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/presets/plain.ts#L22)
+Defined in: [presets/plain.ts:22](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/presets/plain.ts#L22)
 
 Callback invoked when document changes.
 
@@ -56,7 +56,7 @@ Callback invoked when document changes.
 
 > `optional` **readonly?**: `boolean`
 
-Defined in: [editor.ts:121](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/editor.ts#L121)
+Defined in: [editor.ts:121](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/editor.ts#L121)
 
 The state editable or not.
 
@@ -70,7 +70,7 @@ The state editable or not.
 
 > `optional` **isBlock?**: (`node`) => `boolean`
 
-Defined in: [editor.ts:125](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/editor.ts#L125)
+Defined in: [editor.ts:125](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/editor.ts#L125)
 
 TODO
 
@@ -94,7 +94,7 @@ TODO
 
 > `optional` **onWarn?**: (`message`) => `void`
 
-Defined in: [editor.ts:131](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/editor.ts#L131)
+Defined in: [editor.ts:131](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/editor.ts#L131)
 
 Callback invoked when errors happen.
 
@@ -124,7 +124,7 @@ console.warn
 
 > `optional` **onError?**: (`message`) => `never`
 
-Defined in: [editor.ts:137](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/editor.ts#L137)
+Defined in: [editor.ts:137](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/editor.ts#L137)
 
 Callback invoked when errors happen.
 

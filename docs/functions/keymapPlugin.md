@@ -6,7 +6,7 @@
 
 > **keymapPlugin**\<`K`\>(`editor`, `bindings`): `void`
 
-Defined in: [plugins/keymap.ts:5](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/plugins/keymap.ts#L5)
+Defined in: [plugins/keymap.ts:5](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/plugins/keymap.ts#L5)
 
 ## Type Parameters
 

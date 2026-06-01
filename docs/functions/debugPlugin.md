@@ -6,7 +6,7 @@
 
 > **debugPlugin**(`editor`): `void`
 
-Defined in: [plugins/debug.ts:3](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/plugins/debug.ts#L3)
+Defined in: [plugins/debug.ts:3](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/plugins/debug.ts#L3)
 
 ## Parameters
 

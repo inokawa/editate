@@ -4,7 +4,7 @@
 
 # Interface: EditorOptions\<T, S\>
 
-Defined in: [editor.ts:106](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/editor.ts#L106)
+Defined in: [editor.ts:106](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/editor.ts#L106)
 
 Options of [createEditor](../functions/createEditor.md).
 
@@ -24,7 +24,7 @@ Options of [createEditor](../functions/createEditor.md).
 
 > `optional` **schema?**: `S`
 
-Defined in: [editor.ts:113](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/editor.ts#L113)
+Defined in: [editor.ts:113](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/editor.ts#L113)
 
 Optional [Standard Schema](https://github.com/standard-schema/standard-schema) to validate unsafe edits.
 
@@ -34,7 +34,7 @@ Optional [Standard Schema](https://github.com/standard-schema/standard-schema) t
 
 > **doc**: `T`
 
-Defined in: [editor.ts:117](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/editor.ts#L117)
+Defined in: [editor.ts:117](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/editor.ts#L117)
 
 Initial document.
 
@@ -44,7 +44,7 @@ Initial document.
 
 > `optional` **readonly?**: `boolean`
 
-Defined in: [editor.ts:121](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/editor.ts#L121)
+Defined in: [editor.ts:121](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/editor.ts#L121)
 
 The state editable or not.
 
@@ -54,7 +54,7 @@ The state editable or not.
 
 > `optional` **isBlock?**: (`node`) => `boolean`
 
-Defined in: [editor.ts:125](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/editor.ts#L125)
+Defined in: [editor.ts:125](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/editor.ts#L125)
 
 TODO
 
@@ -74,7 +74,7 @@ TODO
 
 > `optional` **onWarn?**: (`message`) => `void`
 
-Defined in: [editor.ts:131](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/editor.ts#L131)
+Defined in: [editor.ts:131](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/editor.ts#L131)
 
 Callback invoked when errors happen.
 
@@ -100,7 +100,7 @@ console.warn
 
 > `optional` **onError?**: (`message`) => `never`
 
-Defined in: [editor.ts:137](https://github.com/inokawa/editate/blob/6f1ab1108948a1847a30d96f16eb6a6cb4dc084b/src/editor.ts#L137)
+Defined in: [editor.ts:137](https://github.com/inokawa/editate/blob/ce6b010f119c8164ca856f84509db1367eebcdde/src/editor.ts#L137)
 
 Callback invoked when errors happen.
 
