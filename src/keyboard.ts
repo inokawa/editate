@@ -88,7 +88,7 @@ const isMac =
 
 export const keymap = (
   key: KeyString,
-  cb: (e: KeyboardEvent) => void,
+  cb: (e: KeyboardEvent) => void | false,
 ): KeyboardHook => {
   const isPlusKey = key.endsWith("+");
   const splitted = (isPlusKey ? key.slice(0, -2) : key).split("+");
@@ -136,8 +136,7 @@ export const keymap = (
       shift === e.shiftKey &&
       alt === e.altKey
     ) {
-      cb(e);
-      return true;
+      return cb(e) === false ? false : true;
     }
   };
 };
