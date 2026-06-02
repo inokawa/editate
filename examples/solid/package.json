@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "editate": "0.6.4",
-    "solid-js": "^1.9.10"
+    "solid-js": "^1.9.13"
   },
   "devDependencies": {
     "typescript": "^6.0.0",
