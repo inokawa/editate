@@ -2,7 +2,6 @@ import { isCollapsed, toRange } from "./doc/position.js";
 import {
   getBlockAt,
   getInlineAt,
-  getNodeSize,
   isTextNode,
   sliceFragment,
 } from "./doc/edit.js";
@@ -70,9 +69,12 @@ export function ReplaceDoc<T extends DocNode>(
   fragment: T["children"],
 ) {
   // TODO revisit
-  editor
-    .apply({ type: "delete", range: [0, getNodeSize(editor.doc)] })
-    .apply({ type: "insert_node", at: 0, fragment });
+  editor.apply({
+    type: "set_node_attr",
+    path: [],
+    key: "children",
+    value: fragment,
+  });
 }
 
 type ToggleableKey<T> = {
