@@ -35,11 +35,11 @@ export const createPlainEditor = ({
     ...opts,
     doc: { children: stringToFragment(text) },
   }).exec(plainTransferPlugin);
-  editor.on("change", () => {
-    onChange(docToString(editor.doc));
-  });
   if (singleline) {
     editor.exec(singlelinePlugin);
   }
+  editor.on("change", () => {
+    onChange(docToString(editor.doc));
+  });
   return editor;
 };
