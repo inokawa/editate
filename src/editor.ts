@@ -283,20 +283,22 @@ export const createEditor = <
     Set<EditorEventMap[keyof EditorEventMap]>
   >();
 
-  const publishing: (() => void)[] = [];
+  const publishing = new Set<() => void>();
 
   const publish = <K extends keyof EditorEventMap>(key: K) => {
     const sub = subs.get(key);
     if (sub) {
-      if (!publishing.length) {
+      if (!publishing.size) {
         microtask(() => {
           publishing.forEach((cb) => {
             cb();
           });
-          publishing.splice(0);
+          publishing.clear();
         });
       }
-      publishing.push(...sub);
+      sub.forEach((s) => {
+        publishing.add(s);
+      });
     }
   };
 
