@@ -34,9 +34,9 @@ type InsertNodeOperation = Readonly<{
   fragment: Fragment;
 }>;
 
-const OP_SET_ATTR = "set_attr";
-type SetAttrOperation = Readonly<{
-  type: typeof OP_SET_ATTR;
+const OP_FORMAT = "format";
+type FormatOperation = Readonly<{
+  type: typeof OP_FORMAT;
   range: Range;
   key: string;
   value: unknown;
@@ -54,14 +54,14 @@ export type Operation =
   | DeleteOperation
   | InsertTextOperation
   | InsertNodeOperation
-  | SetAttrOperation
+  | FormatOperation
   | SetNodeAttrOperation;
 
 /**
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =>
-  type === OP_INSERT_NODE || type === OP_SET_ATTR || type === OP_SET_NODE_ATTR;
+  type === OP_INSERT_NODE || type === OP_FORMAT || type === OP_SET_NODE_ATTR;
 
 /**
  * @internal
@@ -528,7 +528,7 @@ export const applyOperation = <T extends DocNode>(
       }
       break;
     }
-    case OP_SET_ATTR: {
+    case OP_FORMAT: {
       const {
         range: [start, end],
         key,

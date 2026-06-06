@@ -94,7 +94,7 @@ export function Format<
   value: N[K],
   range: Range = toRange(editor.selection),
 ) {
-  editor.apply({ type: "set_attr", range, key, value });
+  editor.apply({ type: "format", range, key, value });
 }
 
 /**
@@ -122,7 +122,7 @@ export function ToggleFormat<T extends DocNode>(
 
   if (texts.length) {
     editor.apply({
-      type: "set_attr",
+      type: "format",
       range,
       key,
       value: texts.some((n) => !n[key as keyof typeof n]) ? true : false,

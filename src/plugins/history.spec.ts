@@ -226,7 +226,7 @@ it("undo format text", () => {
   expect(editor.selection).toEqual(selection);
 
   editor.apply({
-    type: "set_attr",
+    type: "format",
     range: selection,
     key: "foo",
     value: "bar",
@@ -263,7 +263,7 @@ it("undo format lines", () => {
   expect(editor.selection).toEqual(selection);
 
   editor.apply({
-    type: "set_attr",
+    type: "format",
     range: selection,
     key: "foo",
     value: "bar",
@@ -286,7 +286,7 @@ it("undo format lines", () => {
   expect(editor.selection).toEqual(selection);
 });
 
-it("undo set node attr", () => {
+it("undo set attr", () => {
   const doc: DocNode = {
     children: [
       { children: [{ text: "abcde" }] },

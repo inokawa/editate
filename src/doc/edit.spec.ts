@@ -2486,7 +2486,7 @@ describe("format", () => {
       };
       const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
-        type: "set_attr",
+        type: "format",
         range: [-1, 1],
         key: "foo",
         value: "bar",
@@ -2503,7 +2503,7 @@ describe("format", () => {
       };
       const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
-        type: "set_attr",
+        type: "format",
         range: [0, 100],
         key: "foo",
         value: "bar",
@@ -2520,7 +2520,7 @@ describe("format", () => {
       };
       const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
-        type: "set_attr",
+        type: "format",
         range: [1, 1],
         key: "foo",
         value: "bar",
@@ -2537,7 +2537,7 @@ describe("format", () => {
       };
       const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
-        type: "set_attr",
+        type: "format",
         range: [2, 1],
         key: "foo",
         value: "bar",
@@ -2559,7 +2559,7 @@ describe("format", () => {
     };
     const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const res = applyOperation(doc, sel, {
-      type: "set_attr",
+      type: "format",
       range: [1, 2],
       key: "foo",
       value: "bar",
@@ -2593,7 +2593,7 @@ describe("format", () => {
     const sel: Selection = [docText.length + 1 + 3, docText.length + 1 + 3];
 
     const res = applyOperation(doc, sel, {
-      type: "set_attr",
+      type: "format",
       range: [2, docText.length + 1 + 1],
       key: "foo",
       value: "bar",
@@ -2627,7 +2627,7 @@ describe("format", () => {
     };
     const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
-      type: "set_attr",
+      type: "format",
       range: [1, 2],
       key: "foo",
       value: "bar",
@@ -2655,7 +2655,7 @@ describe("format", () => {
     };
     const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
-      type: "set_attr",
+      type: "format",
       range: [2, 3],
       key: "foo",
       value: "bar",
@@ -2687,7 +2687,7 @@ describe("format", () => {
     };
     const sel: Selection = [2, docText.length + 1 + 2];
     const res = applyOperation(doc, sel, {
-      type: "set_attr",
+      type: "format",
       range: [3, docText.length + 1 + 1],
       key: "foo",
       value: "bar",
@@ -2721,7 +2721,7 @@ describe("format", () => {
     };
     const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
-      type: "set_attr",
+      type: "format",
       range: [3, 4],
       key: "foo",
       value: "bar",
@@ -2749,7 +2749,7 @@ describe("format", () => {
     };
     const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
-      type: "set_attr",
+      type: "format",
       range: [4, 5],
       key: "foo",
       value: "bar",
@@ -2780,7 +2780,7 @@ describe("format", () => {
     };
     const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
-      type: "set_attr",
+      type: "format",
       range: [docText.length + 1 + 1, docText.length + 1 + 2],
       key: "foo",
       value: "bar",
@@ -2815,7 +2815,7 @@ describe("format", () => {
     };
     const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
-      type: "set_attr",
+      type: "format",
       range: [
         docText.length + 1 + 1,
         docText.length + 1 + docText2.length + 1 + 1,
@@ -2857,7 +2857,7 @@ describe("format", () => {
     };
     const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
-      type: "set_attr",
+      type: "format",
       range: [1, 1],
       key: "foo",
       value: "bar",
@@ -2887,7 +2887,7 @@ describe("format", () => {
     };
     const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
-      type: "set_attr",
+      type: "format",
       range: [docText.length + 1, docText.length + 1],
       key: "foo",
       value: "bar",
@@ -2915,7 +2915,7 @@ describe("format", () => {
     };
     const sel: Selection = [3, 3];
     const res = applyOperation(doc, sel, {
-      type: "set_attr",
+      type: "format",
       range: [docText.length + 1, docText.length + 2],
       key: "foo",
       value: "bar",
