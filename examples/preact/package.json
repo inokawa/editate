@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "editate": "0.6.4",
+    "editate": "0.6.6",
     "preact": "^10.28.1"
   },
   "devDependencies": {

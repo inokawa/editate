@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "alpinejs": "^3.15.12",
-    "editate": "0.6.4"
+    "editate": "0.6.6"
   },
   "devDependencies": {
     "@types/alpinejs": "^3.13.11",
