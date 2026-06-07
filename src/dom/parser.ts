@@ -1,3 +1,9 @@
+import {
+  ELEMENT_TO_TYPE_MAP,
+  EMBEDDED_ELEMENT,
+  HIDDEN_ELEMENT,
+} from "./element.js";
+
 let walker: TreeWalker | null = null;
 let node: Node | null = null;
 let _token: TokenType | null = null;
@@ -7,7 +13,6 @@ let parse: Parser | null = null;
 interface ParserConfig {
   readonly _document: Document;
   readonly _isBlock: (node: Element) => boolean;
-  readonly _isVoid: (node: Element) => boolean;
 }
 
 const SHOW_ELEMENT = 0x1;
@@ -115,12 +120,17 @@ export const readToken = (): TokenType => {
             TOKEN_SOFT_BREAK
           : // Returning <div><br/></div> is necessary to anchor selection
             TOKEN_ANCHORABLE);
-      } else if (isHiddenNode(node)) {
-        return (_token = TOKEN_HIDDEN);
-      } else if (config!._isVoid(node)) {
+      } else if ((node as HTMLElement).contentEditable === "false") {
         return (_token = TOKEN_VOID);
-      } else if (config!._isBlock(node)) {
-        return (_token = TOKEN_BLOCK);
+      } else {
+        const elementType = ELEMENT_TO_TYPE_MAP.get(node.tagName);
+        if (elementType != null) {
+          return (_token =
+            elementType === EMBEDDED_ELEMENT ? TOKEN_VOID : TOKEN_HIDDEN);
+        }
+        if (config!._isBlock(node)) {
+          return (_token = TOKEN_BLOCK);
+        }
       }
     }
   }
@@ -170,18 +180,11 @@ export const parentBlock = () => {
   }
 };
 
-const HIDDEN_ELEMENT_NAMES = new Set([
-  "TEMPLATE",
-  "STYLE",
-  "SCRIPT",
-  "COLGROUP",
-]);
-
 /**
  * @internal
  */
 export const isHiddenNode = (node: Element): boolean => {
-  return HIDDEN_ELEMENT_NAMES.has(node.tagName);
+  return ELEMENT_TO_TYPE_MAP.get(node.tagName) === HIDDEN_ELEMENT;
 };
 
 const isValidSoftBreak = (): boolean => {

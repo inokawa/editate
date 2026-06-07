@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { htmlPaste } from "./htmlTransfer.js";
 import { createParser } from "../../dom/parser.js";
-import { defaultIsBlockNode, defaultIsVoidNode } from "../../dom/default.js";
+import { defaultIsBlockNode } from "../../dom/default.js";
 
 const createDataTransfer = (str: string): DataTransfer => {
   const transfer = new DataTransfer();
@@ -12,7 +12,6 @@ const createDataTransfer = (str: string): DataTransfer => {
 const parser = createParser({
   _document: document,
   _isBlock: defaultIsBlockNode,
-  _isVoid: defaultIsVoidNode,
 });
 
 it("single paragraph root", () => {

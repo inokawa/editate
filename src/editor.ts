@@ -5,7 +5,6 @@ import {
   setSelectionToDOM,
   getPointedCaretPosition,
   defaultIsBlockNode,
-  defaultIsVoidNode,
   serializeRange,
 } from "./dom/index.js";
 import { createMutationObserver } from "./dom/mutation.js";
@@ -466,7 +465,6 @@ export const createEditor = <
       const parser = createParser({
         _document: document,
         _isBlock: isBlock as (node: Element) => boolean,
-        _isVoid: defaultIsVoidNode,
       });
 
       const setEditableState = () => {

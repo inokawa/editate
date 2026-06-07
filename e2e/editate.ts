@@ -43,7 +43,6 @@ export const getText = async (
             _isBlock: blockTag
               ? (n) => n.tagName === blockTag.toUpperCase()
               : window.editate.defaultIsBlockNode,
-            _isVoid: window.editate.defaultIsVoidNode,
           }),
           (text) => ({ text }),
           () => ({}),
@@ -75,7 +74,6 @@ export const getSeletedText = (
             _isBlock: blockTag
               ? (n) => n.tagName === blockTag.toUpperCase()
               : window.editate.defaultIsBlockNode,
-            _isVoid: window.editate.defaultIsVoidNode,
           }),
           (text) => ({ text }),
           () => ({}),
@@ -153,7 +151,6 @@ export const getSelection = (
         _isBlock: blockTag
           ? (n) => n.tagName === blockTag.toUpperCase()
           : window.editate.defaultIsBlockNode,
-        _isVoid: window.editate.defaultIsVoidNode,
       }),
     );
   }, config);

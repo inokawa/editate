@@ -26,7 +26,7 @@ import type {
 import { min } from "../utils.js";
 
 export { createParser } from "./parser.js";
-export { defaultIsBlockNode, defaultIsVoidNode } from "./default.js";
+export { defaultIsBlockNode } from "./default.js";
 
 // const DOCUMENT_POSITION_DISCONNECTED = 0x01;
 const DOCUMENT_POSITION_PRECEDING = 0x02;

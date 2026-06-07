@@ -25,28 +25,3 @@ const SINGLE_LINE_CONTAINER_NAMES = new Set([
 export const defaultIsBlockNode = (node: Element): boolean => {
   return SINGLE_LINE_CONTAINER_NAMES.has(node.tagName);
 };
-
-// https://developer.mozilla.org/en-US/docs/Web/HTML/Content_categories
-// https://html.spec.whatwg.org/multipage/dom.html#embedded-content-category
-const EMBEDDED_CONTENT_TAG_NAMES = new Set([
-  "EMBED",
-  "IMG",
-  "PICTURE",
-  "AUDIO",
-  "VIDEO",
-  "SVG",
-  "CANVAS",
-  "MATH",
-  "IFRAME",
-  "OBJECT",
-]);
-
-/**
- * @internal
- */
-export const defaultIsVoidNode = (node: Element): boolean => {
-  return (
-    (node as HTMLElement).contentEditable === "false" ||
-    EMBEDDED_CONTENT_TAG_NAMES.has(node.tagName)
-  );
-};
