@@ -63,7 +63,7 @@ export const createMutationObserver = (
     },
     _flush: flush,
     _dispose: () => {
-      queue.splice(0);
+      queue.length = 0;
       mo.disconnect();
     },
   };
