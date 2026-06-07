@@ -1,7 +1,7 @@
 import {
   LINE_BREAK_ELEMENT,
   ELEMENT_TO_TYPE_MAP,
-  EMBEDDED_ELEMENT,
+  VOID_ELEMENT,
   HIDDEN_ELEMENT,
 } from "./element.js";
 
@@ -127,7 +127,7 @@ export const readToken = (): TokenType => {
                   TOKEN_SOFT_BREAK
                 : // Returning <div><br/></div> is necessary to anchor selection
                   TOKEN_ANCHORABLE
-              : elementType === EMBEDDED_ELEMENT
+              : elementType === VOID_ELEMENT
                 ? TOKEN_VOID
                 : TOKEN_HIDDEN);
         } else if (config!._isBlock(node)) {
