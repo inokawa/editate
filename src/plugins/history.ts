@@ -84,7 +84,9 @@ export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
       prevTime = time;
       histories[index]![0] = newDoc;
       histories[index]![2].push(op);
-      histories.splice(index + 1);
+      if (histories.length > index + 1) {
+        histories.length = index + 1;
+      }
       if (index > MAX_HISTORY_LENGTH) {
         index--;
         histories.shift();
