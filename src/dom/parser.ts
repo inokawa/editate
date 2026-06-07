@@ -1,3 +1,14 @@
+let walker: TreeWalker | null = null;
+let node: Node | null = null;
+let _token: TokenType | null = null;
+let config: ParserConfig | null = null;
+let parse: Parser | null = null;
+
+interface ParserConfig {
+  readonly _document: Document;
+  readonly _isBlock: (node: Element) => boolean;
+}
+
 const LINE_BREAK_ELEMENT = 1;
 const HIDDEN_ELEMENT = 2;
 const VOID_ELEMENT = 3;
@@ -56,17 +67,6 @@ const ELEMENT_TO_TYPE_MAP = new Map<string, ElementType>([
   ["SELECT", VOID_ELEMENT],
   ["TEXTAREA", VOID_ELEMENT],
 ] satisfies [TagName, ElementType][]);
-
-let walker: TreeWalker | null = null;
-let node: Node | null = null;
-let _token: TokenType | null = null;
-let config: ParserConfig | null = null;
-let parse: Parser | null = null;
-
-interface ParserConfig {
-  readonly _document: Document;
-  readonly _isBlock: (node: Element) => boolean;
-}
 
 const SHOW_ELEMENT = 0x1;
 const SHOW_TEXT = 0x4;
