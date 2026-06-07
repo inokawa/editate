@@ -186,6 +186,9 @@ export const readToken = (): TokenType => {
           return (_token = TOKEN_BLOCK);
         }
       }
+    } else {
+      // e.g. Comment
+      return (_token = TOKEN_HIDDEN);
     }
   }
   return (_token = TOKEN_NULL);
