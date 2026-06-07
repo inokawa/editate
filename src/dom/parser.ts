@@ -1,4 +1,5 @@
 import {
+  LINE_BREAK_ELEMENT,
   ELEMENT_TO_TYPE_MAP,
   EMBEDDED_ELEMENT,
   HIDDEN_ELEMENT,
@@ -114,21 +115,22 @@ export const readToken = (): TokenType => {
             : TOKEN_TEXT);
       }
     } else if (isElementNode(node)) {
-      if (node.tagName === "BR") {
-        return (_token = isValidSoftBreak()
-          ? // Especially Shift+Enter in Firefox
-            TOKEN_SOFT_BREAK
-          : // Returning <div><br/></div> is necessary to anchor selection
-            TOKEN_ANCHORABLE);
-      } else if ((node as HTMLElement).contentEditable === "false") {
+      if ((node as HTMLElement).contentEditable === "false") {
         return (_token = TOKEN_VOID);
       } else {
         const elementType = ELEMENT_TO_TYPE_MAP.get(node.tagName);
         if (elementType != null) {
           return (_token =
-            elementType === EMBEDDED_ELEMENT ? TOKEN_VOID : TOKEN_HIDDEN);
-        }
-        if (config!._isBlock(node)) {
+            elementType === LINE_BREAK_ELEMENT
+              ? isValidSoftBreak()
+                ? // Especially Shift+Enter in Firefox
+                  TOKEN_SOFT_BREAK
+                : // Returning <div><br/></div> is necessary to anchor selection
+                  TOKEN_ANCHORABLE
+              : elementType === EMBEDDED_ELEMENT
+                ? TOKEN_VOID
+                : TOKEN_HIDDEN);
+        } else if (config!._isBlock(node)) {
           return (_token = TOKEN_BLOCK);
         }
       }

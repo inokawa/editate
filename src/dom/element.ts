@@ -1,8 +1,13 @@
 /** @internal */
-export const HIDDEN_ELEMENT = 1;
+export const LINE_BREAK_ELEMENT = 1;
 /** @internal */
-export const EMBEDDED_ELEMENT = 2;
-type ElementType = typeof HIDDEN_ELEMENT | typeof EMBEDDED_ELEMENT;
+export const HIDDEN_ELEMENT = 2;
+/** @internal */
+export const EMBEDDED_ELEMENT = 3;
+type ElementType =
+  | typeof LINE_BREAK_ELEMENT
+  | typeof HIDDEN_ELEMENT
+  | typeof EMBEDDED_ELEMENT;
 
 type TagName = Uppercase<
   | keyof HTMLElementTagNameMap
@@ -14,6 +19,7 @@ type TagName = Uppercase<
  * @internal
  */
 export const ELEMENT_TO_TYPE_MAP = new Map<string, ElementType>([
+  ["BR", LINE_BREAK_ELEMENT],
   ["TEMPLATE", HIDDEN_ELEMENT],
   ["STYLE", HIDDEN_ELEMENT],
   ["SCRIPT", HIDDEN_ELEMENT],
