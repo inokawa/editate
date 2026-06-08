@@ -51,8 +51,7 @@ describe("div", () => {
     const doc = h("div", [h("br")]);
 
     it("0", () => {
-      const node = nodeAtPath(doc, [0]);
-      const domPos: DomPosition = [node, 0];
+      const domPos: DomPosition = [nodeAtPath(doc, [0]), 0];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 0]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
@@ -63,16 +62,14 @@ describe("div", () => {
     const doc = h("div", ["Hello"]);
 
     it("0 start", () => {
-      const node = nodeAtPath(doc, [0]);
-      const domPos: DomPosition = [node, 0];
+      const domPos: DomPosition = [nodeAtPath(doc, [0]), 0];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 0]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
     it("0 end", () => {
-      const node = nodeAtPath(doc, [0]);
-      const domPos: DomPosition = [node, 5];
+      const domPos: DomPosition = [nodeAtPath(doc, [0]), 5];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 5]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
@@ -83,16 +80,14 @@ describe("div", () => {
     const doc = h("div", ["Hello", h("br")]);
 
     it("0 start", () => {
-      const node = nodeAtPath(doc, [0]);
-      const domPos: DomPosition = [node, 0];
+      const domPos: DomPosition = [nodeAtPath(doc, [0]), 0];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 0]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
     it("0 end", () => {
-      const node = nodeAtPath(doc, [0]);
-      const domPos: DomPosition = [node, 5];
+      const domPos: DomPosition = [nodeAtPath(doc, [0]), 5];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 5]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
@@ -103,16 +98,14 @@ describe("div", () => {
     const doc = h("div", [h("img")]);
 
     it("0 start", () => {
-      const node = nodeAtPath(doc, [0]);
-      const domPos: DomPosition = [node, 0];
+      const domPos: DomPosition = [nodeAtPath(doc, [0]), 0];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 0]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
     it("0 end", () => {
-      const node = nodeAtPath(doc, [0]);
-      const domPos: DomPosition = [node, 1];
+      const domPos: DomPosition = [nodeAtPath(doc, [0]), 1];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 1]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
@@ -123,24 +116,21 @@ describe("div", () => {
     const doc = h("div", [h("img"), "Hello"]);
 
     it("0 start", () => {
-      const node = nodeAtPath(doc, [0]);
-      const domPos: DomPosition = [node, 0];
+      const domPos: DomPosition = [nodeAtPath(doc, [0]), 0];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 0]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
     it("0 end", () => {
-      const node = nodeAtPath(doc, [0]);
-      const domPos: DomPosition = [node, 1];
+      const domPos: DomPosition = [nodeAtPath(doc, [0]), 1];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 1]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
     it("1 start", () => {
-      const node = nodeAtPath(doc, [1]);
-      const domPos: DomPosition = [node, 0];
+      const domPos: DomPosition = [nodeAtPath(doc, [1]), 0];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 1]);
       // TODO affinity
@@ -148,8 +138,7 @@ describe("div", () => {
     });
 
     it("1 end", () => {
-      const node = nodeAtPath(doc, [1]);
-      const domPos: DomPosition = [node, 5];
+      const domPos: DomPosition = [nodeAtPath(doc, [1]), 5];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 6]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
@@ -160,24 +149,21 @@ describe("div", () => {
     const doc = h("div", ["Hello", h("img")]);
 
     it("0 start", () => {
-      const node = nodeAtPath(doc, [0]);
-      const domPos: DomPosition = [node, 0];
+      const domPos: DomPosition = [nodeAtPath(doc, [0]), 0];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 0]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
     it("0 end", () => {
-      const node = nodeAtPath(doc, [0]);
-      const domPos: DomPosition = [node, 5];
+      const domPos: DomPosition = [nodeAtPath(doc, [0]), 5];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 5]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
     it("1 start", () => {
-      const node = nodeAtPath(doc, [1]);
-      const domPos: DomPosition = [node, 0];
+      const domPos: DomPosition = [nodeAtPath(doc, [1]), 0];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 5]);
       // TODO affinity
@@ -185,8 +171,7 @@ describe("div", () => {
     });
 
     it("1 end", () => {
-      const node = nodeAtPath(doc, [1]);
-      const domPos: DomPosition = [node, 1];
+      const domPos: DomPosition = [nodeAtPath(doc, [1]), 1];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 6]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
@@ -197,24 +182,21 @@ describe("div", () => {
     const doc = h("div", ["Hello", h("img"), "world"]);
 
     it("0 start", () => {
-      const node = nodeAtPath(doc, [0]);
-      const domPos: DomPosition = [node, 0];
+      const domPos: DomPosition = [nodeAtPath(doc, [0]), 0];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 0]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
     it("0 end", () => {
-      const node = nodeAtPath(doc, [0]);
-      const domPos: DomPosition = [node, 5];
+      const domPos: DomPosition = [nodeAtPath(doc, [0]), 5];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 5]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
     it("1 start", () => {
-      const node = nodeAtPath(doc, [1]);
-      const domPos: DomPosition = [node, 0];
+      const domPos: DomPosition = [nodeAtPath(doc, [1]), 0];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 5]);
       // TODO affinity
@@ -222,16 +204,14 @@ describe("div", () => {
     });
 
     it("1 end", () => {
-      const node = nodeAtPath(doc, [1]);
-      const domPos: DomPosition = [node, 1];
+      const domPos: DomPosition = [nodeAtPath(doc, [1]), 1];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 6]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
     it("2 start", () => {
-      const node = nodeAtPath(doc, [2]);
-      const domPos: DomPosition = [node, 0];
+      const domPos: DomPosition = [nodeAtPath(doc, [2]), 0];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 6]);
       // TODO affinity
@@ -239,8 +219,7 @@ describe("div", () => {
     });
 
     it("2 end", () => {
-      const node = nodeAtPath(doc, [2]);
-      const domPos: DomPosition = [node, 5];
+      const domPos: DomPosition = [nodeAtPath(doc, [2]), 5];
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 11]);
       expect(findPosition(doc, pos, parser)).toEqual(domPos);
@@ -252,8 +231,7 @@ describe("div", () => {
       const doc = h("div", [h("div", [h("br")])]);
 
       it("0", () => {
-        const node = nodeAtPath(doc, [0, 0]);
-        const domPos: DomPosition = [node, 0];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 0]), 0];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 0]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
@@ -264,16 +242,14 @@ describe("div", () => {
       const doc = h("div", [h("div", ["Hello"])]);
 
       it("0 start", () => {
-        const node = nodeAtPath(doc, [0, 0]);
-        const domPos: DomPosition = [node, 0];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 0]), 0];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 0]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
       });
 
       it("0 end", () => {
-        const node = nodeAtPath(doc, [0, 0]);
-        const domPos: DomPosition = [node, 5];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 0]), 5];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 5]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
@@ -284,16 +260,14 @@ describe("div", () => {
       const doc = h("div", [h("div", ["Hello", h("br")])]);
 
       it("0 start", () => {
-        const node = nodeAtPath(doc, [0, 0]);
-        const domPos: DomPosition = [node, 0];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 0]), 0];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 0]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
       });
 
       it("0 end", () => {
-        const node = nodeAtPath(doc, [0, 0]);
-        const domPos: DomPosition = [node, 5];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 0]), 5];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 5]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
@@ -304,16 +278,14 @@ describe("div", () => {
       const doc = h("div", [h("div", [h("img")])]);
 
       it("0 start", () => {
-        const node = nodeAtPath(doc, [0, 0]);
-        const domPos: DomPosition = [node, 0];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 0]), 0];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 0]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
       });
 
       it("0 end", () => {
-        const node = nodeAtPath(doc, [0, 0]);
-        const domPos: DomPosition = [node, 1];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 0]), 1];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 1]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
@@ -324,24 +296,21 @@ describe("div", () => {
       const doc = h("div", [h("div", [h("img"), "Hello"])]);
 
       it("0 start", () => {
-        const node = nodeAtPath(doc, [0, 0]);
-        const domPos: DomPosition = [node, 0];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 0]), 0];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 0]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
       });
 
       it("0 end", () => {
-        const node = nodeAtPath(doc, [0, 0]);
-        const domPos: DomPosition = [node, 1];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 0]), 1];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 1]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
       });
 
       it("1 start", () => {
-        const node = doc.childNodes[0]!.childNodes[1]!;
-        const domPos: DomPosition = [node, 0];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 1]), 0];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 1]);
         // TODO affinity
@@ -349,8 +318,7 @@ describe("div", () => {
       });
 
       it("1 end", () => {
-        const node = doc.childNodes[0]!.childNodes[1]!;
-        const domPos: DomPosition = [node, 5];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 1]), 5];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 6]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
@@ -361,24 +329,21 @@ describe("div", () => {
       const doc = h("div", [h("div", ["Hello", h("img")])]);
 
       it("0 start", () => {
-        const node = nodeAtPath(doc, [0, 0]);
-        const domPos: DomPosition = [node, 0];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 0]), 0];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 0]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
       });
 
       it("0 end", () => {
-        const node = nodeAtPath(doc, [0, 0]);
-        const domPos: DomPosition = [node, 5];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 0]), 5];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 5]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
       });
 
       it("1 start", () => {
-        const node = nodeAtPath(doc, [0, 1]);
-        const domPos: DomPosition = [node, 0];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 1]), 0];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 5]);
         // TODO affinity
@@ -386,8 +351,7 @@ describe("div", () => {
       });
 
       it("1 end", () => {
-        const node = nodeAtPath(doc, [0, 1]);
-        const domPos: DomPosition = [node, 1];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 1]), 1];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 6]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
@@ -398,24 +362,21 @@ describe("div", () => {
       const doc = h("div", [h("div", ["Hello", h("img"), "world"])]);
 
       it("0 start", () => {
-        const node = nodeAtPath(doc, [0, 0]);
-        const domPos: DomPosition = [node, 0];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 0]), 0];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 0]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
       });
 
       it("0 end", () => {
-        const node = nodeAtPath(doc, [0, 0]);
-        const domPos: DomPosition = [node, 5];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 0]), 5];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 5]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
       });
 
       it("1 start", () => {
-        const node = nodeAtPath(doc, [0, 1]);
-        const domPos: DomPosition = [node, 0];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 1]), 0];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 5]);
         // TODO affinity
@@ -423,16 +384,14 @@ describe("div", () => {
       });
 
       it("1 end", () => {
-        const node = nodeAtPath(doc, [0, 1]);
-        const domPos: DomPosition = [node, 1];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 1]), 1];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 6]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
       });
 
       it("2 start", () => {
-        const node = nodeAtPath(doc, [0, 2]);
-        const domPos: DomPosition = [node, 0];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 2]), 0];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 6]);
         // TODO affinity
@@ -440,8 +399,7 @@ describe("div", () => {
       });
 
       it("2 end", () => {
-        const node = nodeAtPath(doc, [0, 2]);
-        const domPos: DomPosition = [node, 5];
+        const domPos: DomPosition = [nodeAtPath(doc, [0, 2]), 5];
         const pos = serializePosition(doc, ...domPos, parser);
         expect(pos).toEqual([[0], 11]);
         expect(findPosition(doc, pos, parser)).toEqual(domPos);
