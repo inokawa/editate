@@ -21,8 +21,7 @@
   "scripts": {
     "build": "rollup -c",
     "tsc": "tsc -p . --noEmit",
-    "test": "vitest --run --project=unit",
-    "test:browser": "vitest --run --project=browser",
+    "test": "vitest --run",
     "format": "prettier '**/*.{js,ts,jsx,tsx}' --write --cache",
     "format:ci": "prettier '**/*.{js,ts,jsx,tsx}' -l",
     "storybook": "storybook dev -p 6006",
@@ -48,7 +47,6 @@
     "@types/jsdom": "^28.0.3",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
-    "@vitest/browser-playwright": "^4.1.6",
     "diff": "^9.0.0",
     "esbuild": "^0.28.0",
     "jsdom": "^29.1.1",
