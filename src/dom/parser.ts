@@ -63,7 +63,7 @@ const ELEMENT_TO_TYPE_MAP = new Map<string, ElementType>([
   ["PROGRESS", VOID_ELEMENT],
   ["SELECT", VOID_ELEMENT],
   ["TEXTAREA", VOID_ELEMENT],
-] satisfies [TagName, ElementType][]);
+] satisfies [TagName, ElementType][]) as ReadonlyMap<string, ElementType>;
 
 const SHOW_ELEMENT = 0x1;
 const SHOW_TEXT = 0x4;

@@ -155,7 +155,10 @@ export const setSelectionToDOM = (
 
 type DOMPosition = [node: Text | Element, offsetAtNode: number];
 
-const findPosition = (
+/**
+ * @internal
+ */
+export const findPosition = (
   root: Element,
   [path, offset]: DomPosition,
   parse: Parser,
@@ -186,7 +189,10 @@ const findPosition = (
   }, root);
 };
 
-const serializePosition = (
+/**
+ * @internal
+ */
+export const serializePosition = (
   root: Element,
   node: Node,
   offsetAtNode: number,
