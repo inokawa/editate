@@ -72,12 +72,12 @@ const stubPosAt = (
   return [node, i];
 };
 
-describe("div", () => {
+describe("depth 0", () => {
   describe("placeholder", () => {
     const doc = h("div", []);
 
     it("0", () => {
-      const domPos = textPosAt(doc, [], 0);
+      const domPos = stubPosAt(doc, []);
       const pos = serializePosition(doc, ...domPos, parser);
       expect(pos).toEqual([[0], 0]);
       // TODO affinity
@@ -418,350 +418,429 @@ describe("div", () => {
     });
   });
 
-  describe("div", () => {
-    describe("placeholder", () => {
-      const doc = h("div", [h("div", [])]);
+  describe("template + text + template", () => {
+    const doc = h("div", [h("template"), "Hello", h("template")]);
 
-      it("0", () => {
-        const domPos = textPosAt(doc, [0], 0);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 0]);
-        // TODO affinity
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
+    it("0 start", () => {
+      const domPos = textPosAt(doc, [1], 0);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 0]);
+      // TODO affinity
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
-    describe("br", () => {
-      const doc = h("div", [h("div", [h("br")])]);
+    it("0 end", () => {
+      const domPos = textPosAt(doc, [1], 5);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 5]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+  });
+});
 
-      it("0", () => {
-        const domPos = textPosAt(doc, [0, 0], 0);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 0]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
+describe("depth 1", () => {
+  describe("placeholder", () => {
+    const doc = h("div", [h("div", [])]);
+
+    it("0", () => {
+      const domPos = stubPosAt(doc, [0]);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 0]);
+      // TODO affinity
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
+  });
+
+  describe("br", () => {
+    const doc = h("div", [h("div", [h("br")])]);
+
+    it("0", () => {
+      const domPos = textPosAt(doc, [0, 0], 0);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 0]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+  });
+
+  describe("text", () => {
+    const doc = h("div", [h("div", ["Hello"])]);
+
+    it("0 start", () => {
+      const domPos = textPosAt(doc, [0, 0], 0);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 0]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
-    describe("text", () => {
-      const doc = h("div", [h("div", ["Hello"])]);
+    it("0 end", () => {
+      const domPos = textPosAt(doc, [0, 0], 5);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 5]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+  });
 
-      it("0 start", () => {
-        const domPos = textPosAt(doc, [0, 0], 0);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 0]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
+  describe("text + br", () => {
+    const doc = h("div", [h("div", ["Hello", h("br")])]);
 
-      it("0 end", () => {
-        const domPos = textPosAt(doc, [0, 0], 5);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 5]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
+    it("0 start", () => {
+      const domPos = textPosAt(doc, [0, 0], 0);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 0]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
-    describe("text + br", () => {
-      const doc = h("div", [h("div", ["Hello", h("br")])]);
+    it("0 end", () => {
+      const domPos = textPosAt(doc, [0, 0], 5);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 5]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+  });
 
-      it("0 start", () => {
-        const domPos = textPosAt(doc, [0, 0], 0);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 0]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
+  describe("img", () => {
+    const doc = h("div", [h("div", [h("img")])]);
 
-      it("0 end", () => {
-        const domPos = textPosAt(doc, [0, 0], 5);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 5]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
+    it("0 start", () => {
+      const domPos = stubPosAt(doc, [0, 0]);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 0]);
+      // TODO contain
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
     });
 
-    describe("img", () => {
-      const doc = h("div", [h("div", [h("img")])]);
+    it("0 end", () => {
+      const domPos = stubPosAt(doc, [0, 0], true);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 1]);
+      // TODO contain
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
+  });
 
-      it("0 start", () => {
-        const domPos = stubPosAt(doc, [0, 0]);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 0]);
-        // TODO contain
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
+  describe("img + text", () => {
+    const doc = h("div", [h("div", [h("img"), "Hello"])]);
 
-      it("0 end", () => {
-        const domPos = stubPosAt(doc, [0, 0], true);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 1]);
-        // TODO contain
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
+    it("0 start", () => {
+      const domPos = stubPosAt(doc, [0, 0]);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 0]);
+      // TODO contain
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
     });
 
-    describe("img + text", () => {
-      const doc = h("div", [h("div", [h("img"), "Hello"])]);
-
-      it("0 start", () => {
-        const domPos = stubPosAt(doc, [0, 0]);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 0]);
-        // TODO contain
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
-
-      it("0 end", () => {
-        const domPos = stubPosAt(doc, [0, 0], true);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 1]);
-        // TODO contain
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
-
-      it("1 start", () => {
-        const domPos = textPosAt(doc, [0, 1], 0);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 1]);
-        // TODO affinity
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
-
-      it("1 end", () => {
-        const domPos = textPosAt(doc, [0, 1], 5);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 6]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
+    it("0 end", () => {
+      const domPos = stubPosAt(doc, [0, 0], true);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 1]);
+      // TODO contain
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
     });
 
-    describe("text + img", () => {
-      const doc = h("div", [h("div", ["Hello", h("img")])]);
-
-      it("0 start", () => {
-        const domPos = textPosAt(doc, [0, 0], 0);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 0]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
-
-      it("0 end", () => {
-        const domPos = textPosAt(doc, [0, 0], 5);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 5]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
-
-      it("1 start", () => {
-        const domPos = stubPosAt(doc, [0, 1]);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 5]);
-        // TODO affinity
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
-
-      it("1 end", () => {
-        const domPos = stubPosAt(doc, [0, 1], true);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 6]);
-        // TODO contain
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
+    it("1 start", () => {
+      const domPos = textPosAt(doc, [0, 1], 0);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 1]);
+      // TODO affinity
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
     });
 
-    describe("text + img + text", () => {
-      const doc = h("div", [h("div", ["Hello", h("img"), "world"])]);
+    it("1 end", () => {
+      const domPos = textPosAt(doc, [0, 1], 5);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 6]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+  });
 
-      it("0 start", () => {
-        const domPos = textPosAt(doc, [0, 0], 0);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 0]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
+  describe("text + img", () => {
+    const doc = h("div", [h("div", ["Hello", h("img")])]);
 
-      it("0 end", () => {
-        const domPos = textPosAt(doc, [0, 0], 5);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 5]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
-
-      it("1 start", () => {
-        const domPos = stubPosAt(doc, [0, 1]);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 5]);
-        // TODO affinity
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
-
-      it("1 end", () => {
-        const domPos = stubPosAt(doc, [0, 1], true);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 6]);
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
-
-      it("2 start", () => {
-        const domPos = textPosAt(doc, [0, 2], 0);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 6]);
-        // TODO affinity
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
-
-      it("2 end", () => {
-        const domPos = textPosAt(doc, [0, 2], 5);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 11]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
+    it("0 start", () => {
+      const domPos = textPosAt(doc, [0, 0], 0);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 0]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
-    describe("contenteditable:false", () => {
-      const doc = h("div", [
-        h("div", [h("span", ["void"], { contentEditable: "false" })]),
-      ]);
-
-      it("0 start", () => {
-        const domPos = stubPosAt(doc, [0, 0]);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 0]);
-        // TODO contain
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
-
-      it("0 end", () => {
-        const domPos = stubPosAt(doc, [0, 0], true);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 1]);
-        // TODO contain
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
+    it("0 end", () => {
+      const domPos = textPosAt(doc, [0, 0], 5);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 5]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
-    describe("contenteditable:false + text", () => {
-      const doc = h("div", [
-        h("div", [h("span", ["void"], { contentEditable: "false" }), "Hello"]),
-      ]);
-
-      it("0 start", () => {
-        const domPos = stubPosAt(doc, [0, 0]);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 0]);
-        // TODO contain
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
-
-      it("0 end", () => {
-        const domPos = stubPosAt(doc, [0, 0], true);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 1]);
-        // TODO contain
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
-
-      it("1 start", () => {
-        const domPos = textPosAt(doc, [0, 1], 0);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 1]);
-        // TODO affinity
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
-
-      it("1 end", () => {
-        const domPos = textPosAt(doc, [0, 1], 5);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 6]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
+    it("1 start", () => {
+      const domPos = stubPosAt(doc, [0, 1]);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 5]);
+      // TODO affinity
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
     });
 
-    describe("text + contenteditable:false", () => {
-      const doc = h("div", [
-        h("div", ["Hello", h("span", ["void"], { contentEditable: "false" })]),
-      ]);
+    it("1 end", () => {
+      const domPos = stubPosAt(doc, [0, 1], true);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 6]);
+      // TODO contain
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
+  });
 
-      it("0 start", () => {
-        const domPos = textPosAt(doc, [0, 0], 0);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 0]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
+  describe("text + img + text", () => {
+    const doc = h("div", [h("div", ["Hello", h("img"), "world"])]);
 
-      it("0 end", () => {
-        const domPos = textPosAt(doc, [0, 0], 5);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 5]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
-
-      it("1 start", () => {
-        const domPos = stubPosAt(doc, [0, 1]);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 5]);
-        // TODO affinity
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
-
-      it("1 end", () => {
-        const domPos = stubPosAt(doc, [0, 1], true);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 6]);
-        // TODO contain
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
+    it("0 start", () => {
+      const domPos = textPosAt(doc, [0, 0], 0);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 0]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
 
-    describe("text + contenteditable:false + text", () => {
-      const doc = h("div", [
-        h("div", [
-          "Hello",
-          h("span", ["void"], { contentEditable: "false" }),
-          "world",
-        ]),
-      ]);
+    it("0 end", () => {
+      const domPos = textPosAt(doc, [0, 0], 5);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 5]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
 
-      it("0 start", () => {
-        const domPos = textPosAt(doc, [0, 0], 0);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 0]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
+    it("1 start", () => {
+      const domPos = stubPosAt(doc, [0, 1]);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 5]);
+      // TODO affinity
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
 
-      it("0 end", () => {
-        const domPos = textPosAt(doc, [0, 0], 5);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 5]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
+    it("1 end", () => {
+      const domPos = stubPosAt(doc, [0, 1], true);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 6]);
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
 
-      it("1 start", () => {
-        const domPos = stubPosAt(doc, [0, 1]);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 5]);
-        // TODO affinity
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
+    it("2 start", () => {
+      const domPos = textPosAt(doc, [0, 2], 0);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 6]);
+      // TODO affinity
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
 
-      it("1 end", () => {
-        const domPos = stubPosAt(doc, [0, 1], true);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 6]);
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
+    it("2 end", () => {
+      const domPos = textPosAt(doc, [0, 2], 5);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 11]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+  });
 
-      it("2 start", () => {
-        const domPos = textPosAt(doc, [0, 2], 0);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 6]);
-        // TODO affinity
-        expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
-      });
+  describe("contenteditable:false", () => {
+    const doc = h("div", [
+      h("div", [h("span", ["void"], { contentEditable: "false" })]),
+    ]);
 
-      it("2 end", () => {
-        const domPos = textPosAt(doc, [0, 2], 5);
-        const pos = serializePosition(doc, ...domPos, parser);
-        expect(pos).toEqual([[0], 11]);
-        expect(findPosition(doc, pos, parser)).toEqual(domPos);
-      });
+    it("0 start", () => {
+      const domPos = stubPosAt(doc, [0, 0]);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 0]);
+      // TODO contain
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
+
+    it("0 end", () => {
+      const domPos = stubPosAt(doc, [0, 0], true);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 1]);
+      // TODO contain
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
+  });
+
+  describe("contenteditable:false + text", () => {
+    const doc = h("div", [
+      h("div", [h("span", ["void"], { contentEditable: "false" }), "Hello"]),
+    ]);
+
+    it("0 start", () => {
+      const domPos = stubPosAt(doc, [0, 0]);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 0]);
+      // TODO contain
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
+
+    it("0 end", () => {
+      const domPos = stubPosAt(doc, [0, 0], true);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 1]);
+      // TODO contain
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
+
+    it("1 start", () => {
+      const domPos = textPosAt(doc, [0, 1], 0);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 1]);
+      // TODO affinity
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
+
+    it("1 end", () => {
+      const domPos = textPosAt(doc, [0, 1], 5);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 6]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+  });
+
+  describe("text + contenteditable:false", () => {
+    const doc = h("div", [
+      h("div", ["Hello", h("span", ["void"], { contentEditable: "false" })]),
+    ]);
+
+    it("0 start", () => {
+      const domPos = textPosAt(doc, [0, 0], 0);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 0]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+
+    it("0 end", () => {
+      const domPos = textPosAt(doc, [0, 0], 5);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 5]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+
+    it("1 start", () => {
+      const domPos = stubPosAt(doc, [0, 1]);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 5]);
+      // TODO affinity
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
+
+    it("1 end", () => {
+      const domPos = stubPosAt(doc, [0, 1], true);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 6]);
+      // TODO contain
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
+  });
+
+  describe("text + contenteditable:false + text", () => {
+    const doc = h("div", [
+      h("div", [
+        "Hello",
+        h("span", ["void"], { contentEditable: "false" }),
+        "world",
+      ]),
+    ]);
+
+    it("0 start", () => {
+      const domPos = textPosAt(doc, [0, 0], 0);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 0]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+
+    it("0 end", () => {
+      const domPos = textPosAt(doc, [0, 0], 5);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 5]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+
+    it("1 start", () => {
+      const domPos = stubPosAt(doc, [0, 1]);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 5]);
+      // TODO affinity
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
+
+    it("1 end", () => {
+      const domPos = stubPosAt(doc, [0, 1], true);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 6]);
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
+
+    it("2 start", () => {
+      const domPos = textPosAt(doc, [0, 2], 0);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 6]);
+      // TODO affinity
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
+
+    it("2 end", () => {
+      const domPos = textPosAt(doc, [0, 2], 5);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 11]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+  });
+
+  describe("template + block + template", () => {
+    const doc = h("div", [h("template"), h("div", ["Hello"]), h("template")]);
+
+    it("0 start", () => {
+      const domPos = textPosAt(doc, [1, 0], 0);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 0]);
+      // TODO affinity
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+
+    it("0 end", () => {
+      const domPos = textPosAt(doc, [1, 0], 5);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 5]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+  });
+
+  describe("blocks", () => {
+    const doc = h("div", [h("div", ["Hello"]), h("br"), h("div", ["world"])]);
+
+    it("0 start", () => {
+      const domPos = textPosAt(doc, [0, 0], 0);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 0]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+
+    it("0 end", () => {
+      const domPos = textPosAt(doc, [0, 0], 5);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[0], 5]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+
+    it("1", () => {
+      const domPos = stubPosAt(doc, [1, 0]);
+      const pos = serializePosition(doc, ...domPos, parser);
+      // TODO revisit
+      expect(pos).toEqual([[0], 5]);
+      // TODO affinity
+      expect(findPosition(doc, pos, parser)).not.toEqual(domPos);
+    });
+
+    it("2 start", () => {
+      const domPos = textPosAt(doc, [2, 0], 0);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[2], 0]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
+    });
+
+    it("2 end", () => {
+      const domPos = textPosAt(doc, [2, 0], 5);
+      const pos = serializePosition(doc, ...domPos, parser);
+      expect(pos).toEqual([[2], 5]);
+      expect(findPosition(doc, pos, parser)).toEqual(domPos);
     });
   });
 });
