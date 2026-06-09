@@ -96,11 +96,11 @@ describe("depth 0", () => {
 
     it("0", () => {
       const domPos = stubPosAt(doc, []);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       // TODO revisit
       // const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      // expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      // expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -109,10 +109,10 @@ describe("depth 0", () => {
 
     it("0", () => {
       const domPos = textPosAt(doc, [0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -121,18 +121,18 @@ describe("depth 0", () => {
 
     it("0 start", () => {
       const domPos = textPosAt(doc, [0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = textPosAt(doc, [0], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -141,18 +141,18 @@ describe("depth 0", () => {
 
     it("0 start", () => {
       const domPos = textPosAt(doc, [0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = textPosAt(doc, [0], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -161,18 +161,18 @@ describe("depth 0", () => {
 
     it("0 start", () => {
       const domPos = stubPosAt(doc, [0]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = stubPosAt(doc, [0], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 1]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -181,34 +181,34 @@ describe("depth 0", () => {
 
     it("0 start", () => {
       const domPos = stubPosAt(doc, [0]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = stubPosAt(doc, [0], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 1]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 start", () => {
       const domPos = textPosAt(doc, [1], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 1]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 end", () => {
       const domPos = textPosAt(doc, [1], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -217,34 +217,34 @@ describe("depth 0", () => {
 
     it("0 start", () => {
       const domPos = textPosAt(doc, [0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = textPosAt(doc, [0], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 start", () => {
       const domPos = stubPosAt(doc, [1]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 end", () => {
       const domPos = stubPosAt(doc, [1], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -253,50 +253,50 @@ describe("depth 0", () => {
 
     it("0 start", () => {
       const domPos = textPosAt(doc, [0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = textPosAt(doc, [0], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 start", () => {
       const domPos = stubPosAt(doc, [1]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 end", () => {
       const domPos = stubPosAt(doc, [1], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("2 start", () => {
       const domPos = textPosAt(doc, [2], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("2 end", () => {
       const domPos = textPosAt(doc, [2], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 11]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -305,18 +305,18 @@ describe("depth 0", () => {
 
     it("0 start", () => {
       const domPos = stubPosAt(doc, [0]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = stubPosAt(doc, [0], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 1]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -328,34 +328,34 @@ describe("depth 0", () => {
 
     it("0 start", () => {
       const domPos = stubPosAt(doc, [0]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = stubPosAt(doc, [0], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 1]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 start", () => {
       const domPos = textPosAt(doc, [1], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 1]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 end", () => {
       const domPos = textPosAt(doc, [1], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -367,34 +367,34 @@ describe("depth 0", () => {
 
     it("0 start", () => {
       const domPos = textPosAt(doc, [0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = textPosAt(doc, [0], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 start", () => {
       const domPos = stubPosAt(doc, [1]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 end", () => {
       const domPos = stubPosAt(doc, [1], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -407,50 +407,50 @@ describe("depth 0", () => {
 
     it("0 start", () => {
       const domPos = textPosAt(doc, [0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = textPosAt(doc, [0], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 start", () => {
       const domPos = stubPosAt(doc, [1]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 end", () => {
       const domPos = stubPosAt(doc, [1], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("2 start", () => {
       const domPos = textPosAt(doc, [2], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("2 end", () => {
       const domPos = textPosAt(doc, [2], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 11]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -459,18 +459,18 @@ describe("depth 0", () => {
 
     it("0 start", () => {
       const domPos = textPosAt(doc, [1], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = textPosAt(doc, [1], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 });
@@ -481,11 +481,11 @@ describe("depth 1", () => {
 
     it("0", () => {
       const domPos = stubPosAt(doc, [0]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       // TODO revisit
       // const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      // expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      // expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -494,10 +494,10 @@ describe("depth 1", () => {
 
     it("0", () => {
       const domPos = textPosAt(doc, [0, 0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -506,18 +506,18 @@ describe("depth 1", () => {
 
     it("0 start", () => {
       const domPos = textPosAt(doc, [0, 0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = textPosAt(doc, [0, 0], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -526,18 +526,18 @@ describe("depth 1", () => {
 
     it("0 start", () => {
       const domPos = textPosAt(doc, [0, 0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = textPosAt(doc, [0, 0], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -546,18 +546,18 @@ describe("depth 1", () => {
 
     it("0 start", () => {
       const domPos = stubPosAt(doc, [0, 0]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = stubPosAt(doc, [0, 0], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 1]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -566,34 +566,34 @@ describe("depth 1", () => {
 
     it("0 start", () => {
       const domPos = stubPosAt(doc, [0, 0]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = stubPosAt(doc, [0, 0], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 1]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 start", () => {
       const domPos = textPosAt(doc, [0, 1], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 1]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 end", () => {
       const domPos = textPosAt(doc, [0, 1], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -602,34 +602,34 @@ describe("depth 1", () => {
 
     it("0 start", () => {
       const domPos = textPosAt(doc, [0, 0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = textPosAt(doc, [0, 0], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 start", () => {
       const domPos = stubPosAt(doc, [0, 1]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 end", () => {
       const domPos = stubPosAt(doc, [0, 1], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -638,50 +638,50 @@ describe("depth 1", () => {
 
     it("0 start", () => {
       const domPos = textPosAt(doc, [0, 0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = textPosAt(doc, [0, 0], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 start", () => {
       const domPos = stubPosAt(doc, [0, 1]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 end", () => {
       const domPos = stubPosAt(doc, [0, 1], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("2 start", () => {
       const domPos = textPosAt(doc, [0, 2], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("2 end", () => {
       const domPos = textPosAt(doc, [0, 2], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 11]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -692,18 +692,18 @@ describe("depth 1", () => {
 
     it("0 start", () => {
       const domPos = stubPosAt(doc, [0, 0]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = stubPosAt(doc, [0, 0], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 1]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -714,34 +714,34 @@ describe("depth 1", () => {
 
     it("0 start", () => {
       const domPos = stubPosAt(doc, [0, 0]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = stubPosAt(doc, [0, 0], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 1]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 start", () => {
       const domPos = textPosAt(doc, [0, 1], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 1]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 end", () => {
       const domPos = textPosAt(doc, [0, 1], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -752,34 +752,34 @@ describe("depth 1", () => {
 
     it("0 start", () => {
       const domPos = textPosAt(doc, [0, 0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = textPosAt(doc, [0, 0], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 start", () => {
       const domPos = stubPosAt(doc, [0, 1]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 end", () => {
       const domPos = stubPosAt(doc, [0, 1], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -794,50 +794,50 @@ describe("depth 1", () => {
 
     it("0 start", () => {
       const domPos = textPosAt(doc, [0, 0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = textPosAt(doc, [0, 0], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 start", () => {
       const domPos = stubPosAt(doc, [0, 1]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1 end", () => {
       const domPos = stubPosAt(doc, [0, 1], true);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("2 start", () => {
       const domPos = textPosAt(doc, [0, 2], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 6]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("2 end", () => {
       const domPos = textPosAt(doc, [0, 2], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 11]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -846,18 +846,18 @@ describe("depth 1", () => {
 
     it("0 start", () => {
       const domPos = textPosAt(doc, [1, 0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = textPosAt(doc, [1, 0], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 
@@ -866,43 +866,43 @@ describe("depth 1", () => {
 
     it("0 start", () => {
       const domPos = textPosAt(doc, [0, 0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("0 end", () => {
       const domPos = textPosAt(doc, [0, 0], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("1", () => {
       const domPos = stubPosAt(doc, [1, 0]);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       // TODO revisit
       expect(pos).toEqual([[0], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("2 start", () => {
       const domPos = textPosAt(doc, [2, 0], 0);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[2], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
 
     it("2 end", () => {
       const domPos = textPosAt(doc, [2, 0], 5);
-      const pos = serializePosition(doc, parser, domPos);
+      const pos = serializePosition(doc, parser, ...domPos);
       expect(pos).toEqual([[2], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
-      expect(serializePosition(doc, parser, domPos2)).toEqual(pos);
+      expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
   });
 });

@@ -198,7 +198,8 @@ export const findPosition = (
 export const serializePosition = (
   root: Element,
   parse: Parser,
-  [node, offsetAtNode]: DomPoint,
+  node: DomPoint[0],
+  offsetAtNode: DomPoint[1],
 ): DomPosition => {
   let excludeEnd = true;
   if (root === node && !node.hasChildNodes()) {
@@ -280,12 +281,12 @@ export const serializeRange = (
   parse: Parser,
   { startOffset, startContainer, endOffset, endContainer }: AbstractRange,
 ): [DomPosition, DomPosition] => {
-  const start = serializePosition(root, parse, [startContainer, startOffset]);
+  const start = serializePosition(root, parse, startContainer, startOffset);
   return [
     start,
     startContainer === endContainer && startOffset === endOffset
       ? start
-      : serializePosition(root, parse, [endContainer, endOffset]),
+      : serializePosition(root, parse, endContainer, endOffset),
   ];
 };
 
@@ -403,18 +404,22 @@ export const getPointedCaretPosition = (
   if (document.caretPositionFromPoint) {
     const position = document.caretPositionFromPoint(clientX, clientY);
     if (position) {
-      return serializePosition(root, parse, [
+      return serializePosition(
+        root,
+        parse,
         position.offsetNode,
         position.offset,
-      ]);
+      );
     }
   } else if (document.caretRangeFromPoint) {
     const range = document.caretRangeFromPoint(clientX, clientY);
     if (range) {
-      return serializePosition(root, parse, [
+      return serializePosition(
+        root,
+        parse,
         range.startContainer,
         range.startOffset,
-      ]);
+      );
     }
   }
 };
