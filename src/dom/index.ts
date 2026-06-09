@@ -153,7 +153,10 @@ export const setSelectionToDOM = (
   setRangeToSelection(root, range, force, backward);
 };
 
-type DOMPosition = [node: Text | Element, offsetAtNode: number];
+/**
+ * @internal
+ */
+export type DomPoint = [node: Node, offsetAtNode: number];
 
 /**
  * @internal
@@ -162,8 +165,8 @@ export const findPosition = (
   root: Element,
   parse: Parser,
   [path, offset]: DomPosition,
-): DOMPosition | undefined => {
-  return parse((): DOMPosition | undefined => {
+): DomPoint | undefined => {
+  return parse((): DomPoint | undefined => {
     let pathIndex = 0;
     let type: TokenType | void;
     while ((type = next())) {
@@ -195,8 +198,8 @@ export const findPosition = (
 export const serializePosition = (
   root: Element,
   parse: Parser,
-  node: Node,
-  offsetAtNode: number,
+  node: DomPoint[0],
+  offsetAtNode: DomPoint[1],
 ): DomPosition => {
   let excludeEnd = true;
   if (root === node && !node.hasChildNodes()) {
