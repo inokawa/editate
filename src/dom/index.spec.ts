@@ -1006,7 +1006,7 @@ describe("depth 1", () => {
       const domPos = posAt(doc, [0, 0, 1, 0], 0);
       const pos = serializePosition(doc, parser, ...domPos);
       // TODO fix
-      expect(pos).toEqual([[0], 5]);
+      expect(pos).toEqual([[1], 0]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
       expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });
@@ -1015,7 +1015,7 @@ describe("depth 1", () => {
       const domPos = posAt(doc, [0, 0, 1, 0], 5);
       const pos = serializePosition(doc, parser, ...domPos);
       // TODO fix
-      expect(pos).toEqual([[0], 10]);
+      expect(pos).toEqual([[1], 5]);
       const domPos2 = toRange(findPosition(doc, parser, pos)!);
       expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
     });

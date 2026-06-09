@@ -16,7 +16,8 @@ const SINGLE_LINE_CONTAINER_NAMES = new Set([
   "DD",
 
   // other elements for HTML paste
-  "TR",
+  "TH",
+  "TD",
 ]);
 
 /**
