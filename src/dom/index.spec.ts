@@ -190,12 +190,20 @@ const elToString = (element: Element): string => {
 
     it.for<[DomPosition, DomPosition]>([
       [
+        [[0], 0],
+        [[0], 0],
+      ],
+      [
         [[0], 5],
         [[0], 5],
       ],
       [
         [[2], 0],
         [[0], 5],
+      ],
+      [
+        [[2], 5],
+        [[0], 10],
       ],
     ])(`${elToString(doc)}: $0 $1`, ([p, expectedPos]) => {
       const domPos = posAt(doc, ...p);
@@ -548,12 +556,20 @@ const elToString = (element: Element): string => {
 
     it.for<[DomPosition, DomPosition]>([
       [
+        [[0, 0], 0],
+        [[0], 0],
+      ],
+      [
         [[0, 0], 5],
         [[0], 5],
       ],
       [
         [[0, 2], 0],
         [[0], 5],
+      ],
+      [
+        [[0, 2], 5],
+        [[0], 10],
       ],
     ])(`${elToString(doc)}: $0 $1`, ([p, expectedPos]) => {
       const domPos = posAt(doc, ...p);
