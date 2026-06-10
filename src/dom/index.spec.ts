@@ -11,6 +11,7 @@ import {
 } from "./index.js";
 import type { DomPosition, Path } from "../doc/types.js";
 import { isElementNode, isTextNode } from "./utils.js";
+import { isHiddenNode } from "./parser.js";
 
 const document = window.document;
 const parser = createParser({
@@ -52,6 +53,9 @@ const h = <
 const posAt = (node: Node, path: Path, offset: number): DomPoint => {
   for (const p of path) {
     node = node.childNodes[p]!;
+  }
+  if (isElementNode(node) && isHiddenNode(node)) {
+    throw new Error(`${elToString(node)} is hidden`);
   }
   if (!path.length) {
     return [node, offset];
