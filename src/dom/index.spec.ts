@@ -99,11 +99,7 @@ const elToString = (element: Element): string => {
     if (isElementNode(node)) {
       results.push(elToString(node));
     } else if (isTextNode(node)) {
-      const text = node.data.trim();
-      if (text) {
-        const escapedText = text.replace(/"/g, '\\"').replace(/\n/g, " ");
-        results.push(`"${escapedText}"`);
-      }
+      results.push(`"${node.data.replace(/"/g, '\\"').replace(/\n/g, "\\n")}"`);
     }
   }
   if (results.length === 0) {
