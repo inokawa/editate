@@ -1,0 +1,42 @@
+import { Editor } from './editor.js';
+import { DocNode, InferBlockNode, InferInlineNode, Range, TextNode } from './doc/types.js';
+/**
+ * Delete content in the selection or specified range.
+ */
+export declare function Delete(editor: Editor, range?: Range): void;
+/**
+ * Insert text at the caret or specified position.
+ */
+export declare function InsertText(editor: Editor, text: string, position?: number): void;
+/**
+ * Insert node at the caret or specified position.
+ */
+export declare function InsertNode<T extends DocNode>(editor: Editor<T>, node: Exclude<InferInlineNode<T>, TextNode>, position?: number): void;
+/**
+ * Replace text in the selection or specified range.
+ */
+export declare function ReplaceText(editor: Editor, text: string): void;
+/**
+ * Replace document in the editor.
+ */
+export declare function ReplaceDoc<T extends DocNode>(editor: Editor<T>, fragment: T["children"]): void;
+type ToggleableKey<T> = {
+    [K in keyof T]-?: T[K] extends boolean | undefined ? K : never;
+}[keyof T];
+/**
+ * Format content in the selection or specified range.
+ */
+export declare function Format<T extends DocNode, N extends Omit<InferInlineNode<T>, "text">, K extends Extract<keyof N, string>>(editor: Editor<T>, key: K, value: N[K], range?: Range): void;
+/**
+ * Toggle formatting in the selection or specified range.
+ */
+export declare function ToggleFormat<T extends DocNode>(editor: Editor<T>, key: Extract<ToggleableKey<Omit<InferInlineNode<T>, "text">>, string>, range?: Range): void;
+/**
+ * Set attr to a block node at the caret or specified position.
+ */
+export declare function SetBlockAttr<T extends DocNode, N extends InferBlockNode<T>, K extends Extract<keyof N, string>>(editor: Editor<T>, key: K, value: N[K], offset?: number): void;
+/**
+ * Toggle attr of block node at the caret or specified position.
+ */
+export declare function ToggleBlockAttr<T extends DocNode, N extends InferBlockNode<T>, K extends Extract<keyof N, string>>(editor: Editor<T>, key: K, onValue: N[K], offValue: N[K], offset?: number): void;
+export {};
