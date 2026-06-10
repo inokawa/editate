@@ -18,6 +18,8 @@ const parser = createParser({
   _isBlock: defaultIsBlockNode,
 });
 
+const allowedAttrs = ["contentEditable"] as const;
+
 const h = <
   T extends
     | keyof HTMLElementTagNameMap
@@ -26,7 +28,7 @@ const h = <
 >(
   type: T,
   children: (HTMLElement | string)[] = [],
-  props?: Record<string, string>,
+  props?: Record<(typeof allowedAttrs)[number], string>,
 ): HTMLElement => {
   const node = document.createElement(type);
 
@@ -78,7 +80,6 @@ const toRange = (pos: DomPoint): DomPoint => {
   }
 };
 
-const allowedAttrs = ["contentEditable"];
 const elToString = (element: Element): string => {
   let tag = element.tagName.toLowerCase();
   const results: string[] = [];
@@ -90,7 +91,7 @@ const elToString = (element: Element): string => {
       attrs.push(`${key}=${value}`);
     }
   }
-  if (attrs.length > 0) {
+  if (attrs.length !== 0) {
     tag += `.${attrs.join("/")}`;
   }
 
