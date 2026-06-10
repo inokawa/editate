@@ -78,9 +78,22 @@ const toRange = (pos: DomPoint): DomPoint => {
   }
 };
 
+const allowedAttrs = ["contentEditable"];
 const elToString = (element: Element): string => {
-  const tag = element.tagName.toLowerCase();
+  let tag = element.tagName.toLowerCase();
   const results: string[] = [];
+
+  const attrs: string[] = [];
+  for (const key of allowedAttrs) {
+    const value = (element as any)[key];
+    if (value != null) {
+      attrs.push(`${key}=${value}`);
+    }
+  }
+  if (attrs.length > 0) {
+    tag += `.${attrs.join("/")}`;
+  }
+
   for (const node of element.childNodes) {
     if (isElementNode(node)) {
       results.push(elToString(node));
