@@ -203,7 +203,6 @@ export const serializePosition = (
   node: DomPoint[0],
   offsetAtNode: DomPoint[1],
 ): DomPosition => {
-  let excludeEnd = true;
   if (root === node && !node.hasChildNodes()) {
     // for placeholder
     return [[0], 0];
@@ -220,8 +219,7 @@ export const serializePosition = (
     // - Selection.setBaseAndExtent(element, 0, element, 0)
     const index = min(offsetAtNode, node.childNodes.length - 1);
     node = node.childNodes[index]!;
-    excludeEnd = index === offsetAtNode;
-    offsetAtNode = 0;
+    offsetAtNode = index === offsetAtNode ? 0 : 1 /* TODO calc size */;
   }
 
   return parse(
@@ -264,12 +262,8 @@ export const serializePosition = (
         const comp = compareDomPosition(node, domNode());
         if (
           comp === 0 || // same object
-          comp & DOCUMENT_POSITION_CONTAINED_BY
+          comp & (DOCUMENT_POSITION_CONTAINED_BY | DOCUMENT_POSITION_FOLLOWING)
         ) {
-          if (excludeEnd) {
-            break;
-          }
-        } else if (comp & DOCUMENT_POSITION_FOLLOWING) {
           break;
         }
         offset += nodeSize();
