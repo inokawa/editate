@@ -1,16 +1,10 @@
 import {
   type TokenType,
   type Parser,
-  getNodeSize,
-  getDomNode,
   TOKEN_TEXT,
   TOKEN_VOID,
   TOKEN_SOFT_BREAK,
   TOKEN_BLOCK,
-  nextBlock,
-  readNext as next,
-  parentBlock,
-  readToken,
   isHiddenNode,
 } from "./parser.js";
 import type {
@@ -166,30 +160,38 @@ export const findPosition = (
   parse: Parser,
   [path, offset]: DomPosition,
 ): DomPoint | undefined => {
-  return parse((): DomPoint | undefined => {
-    let pathIndex = 0;
-    let type: TokenType | void;
-    while ((type = next())) {
-      if (type === TOKEN_BLOCK) {
-        if (pathIndex < path.length) {
-          for (
-            let blockIndex = path[pathIndex++]!;
-            blockIndex > 0;
-            blockIndex--
-          ) {
-            nextBlock();
+  return parse(
+    ({
+      _next: next,
+      _nextBlock: nextBlock,
+      _domNode: domNode,
+      _nodeSize: nodeSize,
+    }): DomPoint | undefined => {
+      let pathIndex = 0;
+      let type: TokenType | void;
+      while ((type = next())) {
+        if (type === TOKEN_BLOCK) {
+          if (pathIndex < path.length) {
+            for (
+              let blockIndex = path[pathIndex++]!;
+              blockIndex > 0;
+              blockIndex--
+            ) {
+              nextBlock();
+            }
           }
+        } else {
+          const size = nodeSize();
+          if (offset <= size) {
+            return [domNode<typeof type>(), offset];
+          }
+          offset -= size;
         }
-      } else {
-        const size = getNodeSize();
-        if (offset <= size) {
-          return [getDomNode<typeof type>(), offset];
-        }
-        offset -= size;
       }
-    }
-    return;
-  }, root);
+      return;
+    },
+    root,
+  );
 };
 
 /**
@@ -223,7 +225,13 @@ export const serializePosition = (
   }
 
   return parse(
-    () => {
+    ({
+      _next: next,
+      _parentBlock: parentBlock,
+      _domNode: domNode,
+      _nodeSize: nodeSize,
+      _readToken: readToken,
+    }) => {
       if (readToken() !== TOKEN_BLOCK) {
         parentBlock();
       }
@@ -232,7 +240,7 @@ export const serializePosition = (
         const blocks: Element[] = [];
         // TODO improve type
         let block: Element | null;
-        while ((block = getDomNode<typeof TOKEN_BLOCK>()) && block !== root) {
+        while ((block = domNode<typeof TOKEN_BLOCK>()) && block !== root) {
           blocks.unshift(block);
           parentBlock();
         }
@@ -253,7 +261,7 @@ export const serializePosition = (
 
       let offset = 0;
       while (next()) {
-        const comp = compareDomPosition(node, getDomNode());
+        const comp = compareDomPosition(node, domNode());
         if (
           comp === 0 || // same object
           comp & DOCUMENT_POSITION_CONTAINED_BY
@@ -264,7 +272,7 @@ export const serializePosition = (
         } else if (comp & DOCUMENT_POSITION_FOLLOWING) {
           break;
         }
-        offset += getNodeSize();
+        offset += nodeSize();
       }
       return [path, offset + offsetAtNode];
     },
@@ -328,7 +336,7 @@ export const domToFragment = (
   serializeText: (text: string) => TextNode,
   serializeVoid: (node: Element) => InlineNode | void,
 ): Fragment => {
-  return parse(() => {
+  return parse(({ _next: next, _domNode: domNode }) => {
     let type: TokenType | void;
     let row: InlineNode[] | null = null;
     let text = "";
@@ -364,10 +372,10 @@ export const domToFragment = (
         hasContent = true;
 
         if (type === TOKEN_TEXT) {
-          text += getDomNode<typeof type>().data;
+          text += domNode<typeof type>().data;
         } else if (type === TOKEN_VOID) {
           completeText();
-          const docNode = serializeVoid(getDomNode<typeof type>());
+          const docNode = serializeVoid(domNode<typeof type>());
           if (docNode) {
             row!.push(docNode);
           }
