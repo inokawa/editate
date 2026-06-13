@@ -71,16 +71,17 @@ export const setSelectionToDOM = (
   posDiff: number, // TODO remove
   force?: boolean,
 ): void => {
-  const isCollapsed = posDiff === 0;
-  const backward = posDiff > 0;
-  const start = backward ? focus : anchor;
-  const end = backward ? anchor : focus;
-
-  const domStart = findPosition(root, parse, start);
-  const domEnd = isCollapsed ? domStart : findPosition(root, parse, end);
-
   const selection = getDOMSelection(root);
+
   if (force || getSelectionRangeInEditor(selection, root)) {
+    const isCollapsed = posDiff === 0;
+    const backward = posDiff > 0;
+    const start = backward ? focus : anchor;
+    const end = backward ? anchor : focus;
+
+    const domStart = findPosition(root, parse, start);
+    const domEnd = isCollapsed ? domStart : findPosition(root, parse, end);
+
     const range = document.createRange();
 
     const [startNode, startOffset] = domStart;
