@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, expect, it } from "vitest";
+import { expect, it } from "vitest";
 import {
   createParser,
   defaultIsBlockNode,
@@ -106,18 +106,22 @@ const elToString = (element: Element): string => {
   return `${tag}[${results.join(",")}]`;
 };
 
-describe("placeholder", () => {
+{
   const doc = h("div", []);
 
-  it("0", () => {
-    const domPos = posAt(doc, [], 0);
+  it.for<[DomPosition, DomPosition]>([
+    [
+      [[], 0],
+      [[], 0],
+    ],
+  ])(`${elToString(doc)}: $0 $1`, ([p, expectedPos]) => {
+    const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
-    expect(pos).toEqual([[0], 0]);
-    // TODO fix
-    // const domPos2 = toRange(findPosition(doc, parser, pos)!);
-    // expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
+    expect(pos).toEqual(expectedPos);
+    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
-});
+}
 
 {
   const doc = h("div", [h("br")]);
@@ -533,18 +537,22 @@ describe("placeholder", () => {
   });
 }
 
-describe("placeholder", () => {
+{
   const doc = h("div", [h("div", [])]);
 
-  it("0", () => {
-    const domPos = posAt(doc, [0], 0);
+  it.for<[DomPosition, DomPosition]>([
+    [
+      [[0], 0],
+      [[0], 0],
+    ],
+  ])(`${elToString(doc)}: $0 $1`, ([p, expectedPos]) => {
+    const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
-    expect(pos).toEqual([[0], 0]);
-    // TODO fix
-    // const domPos2 = toRange(findPosition(doc, parser, pos)!);
-    // expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
+    expect(pos).toEqual(expectedPos);
+    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
-});
+}
 
 {
   const doc = h("div", [h("div", [h("br")])]);
