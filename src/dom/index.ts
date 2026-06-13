@@ -122,16 +122,6 @@ export const setSelectionToDOM = (
   const start = backward ? focus : anchor;
   const end = backward ? anchor : focus;
 
-  // special path for empty content with empty selection, necessary for placeholder
-  if (
-    start[0].length === 0 &&
-    start[1] === 0 &&
-    isCollapsed &&
-    !root.hasChildNodes()
-  ) {
-    return setRangeToSelection(root, document, force, [root, 0], [root, 0]);
-  }
-
   const domStart = findPosition(root, parse, start);
   const domEnd = isCollapsed ? domStart : findPosition(root, parse, end);
 
@@ -179,6 +169,8 @@ export const findPosition = (
           offset -= size;
         }
       }
+
+      // special path for empty content with empty selection, necessary for placeholder
       return [root, 0];
     },
     root,
