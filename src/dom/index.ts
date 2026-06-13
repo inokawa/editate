@@ -116,7 +116,6 @@ export const setSelectionToDOM = (
     return;
   }
 
-  // https://w3c.github.io/contentEditable/#dfn-legal-caret-positions
   const range = document.createRange();
 
   const [startNode, startOffset] = domStart;
@@ -188,7 +187,7 @@ export const findPosition = (
           offset -= size;
         }
       }
-      return;
+      return [root, 0];
     },
     root,
   );

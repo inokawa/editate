@@ -13,6 +13,8 @@ import type { DomPosition, Path } from "../doc/types.js";
 import { isElementNode, isTextNode } from "./utils.js";
 import { isHiddenNode } from "./parser.js";
 
+// https://w3c.github.io/contentEditable/#dfn-legal-caret-positions
+
 const document = window.document;
 const parser = createParser(document, defaultIsBlockNode);
 
@@ -66,7 +68,7 @@ const indexOf = (node: Node): number => {
 };
 
 const toRange = (pos: DomPoint): DomPoint => {
-  if (isElementNode(pos[0])) {
+  if (isElementNode(pos[0]) && pos[0].parentNode) {
     const [node, offset] = pos;
     let index = indexOf(node);
     if (offset >= 1) {
@@ -112,7 +114,7 @@ const elToString = (element: Element): string => {
   it.for<[DomPosition, DomPosition]>([
     [
       [[], 0],
-      [[], 0],
+      [[0], 0],
     ],
   ])(`${elToString(doc)}: $0 $1`, ([p, expectedPos]) => {
     const domPos = posAt(doc, ...p);
@@ -542,7 +544,7 @@ const elToString = (element: Element): string => {
 
   it.for<[DomPosition, DomPosition]>([
     [
-      [[0], 0],
+      [[], 0],
       [[0], 0],
     ],
   ])(`${elToString(doc)}: $0 $1`, ([p, expectedPos]) => {
