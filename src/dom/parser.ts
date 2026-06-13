@@ -178,7 +178,7 @@ export const createParser = (
                 : elementType === STUB_ELEMENT
                   ? TOKEN_VOID
                   : TOKEN_HIDDEN);
-          } else if (isBlock!(node)) {
+          } else if (isBlock(node)) {
             return (_token = TOKEN_BLOCK);
           }
         }
@@ -208,22 +208,6 @@ export const createParser = (
       return node;
     } else {
       return (node = walker!.nextNode());
-    }
-  };
-
-  const nextBlock = () => {
-    while ((_token = null) || (node = walker!.nextSibling())) {
-      if (readToken() === TOKEN_BLOCK) {
-        return;
-      }
-    }
-  };
-
-  const parentBlock = () => {
-    while ((_token = null) || (node = walker!.parentNode())) {
-      if (readToken() === TOKEN_BLOCK) {
-        return;
-      }
     }
   };
 
@@ -287,8 +271,20 @@ export const createParser = (
           ? 1
           : 0;
     },
-    _nextBlock: nextBlock,
-    _parentBlock: parentBlock,
+    _nextBlock: () => {
+      while ((_token = null) || (node = walker!.nextSibling())) {
+        if (readToken() === TOKEN_BLOCK) {
+          return;
+        }
+      }
+    },
+    _parentBlock: () => {
+      while ((_token = null) || (node = walker!.parentNode())) {
+        if (readToken() === TOKEN_BLOCK) {
+          return;
+        }
+      }
+    },
   };
   const parser: Parser = (scopeFn, root, startNode) => {
     const prevWalker = walker;
@@ -299,7 +295,7 @@ export const createParser = (
         walker = document.createTreeWalker(root!, SHOW_TEXT | SHOW_ELEMENT);
       }
       if (startNode) {
-        walker!.currentNode = node = startNode;
+        walker.currentNode = node = startNode;
       }
       return scopeFn(context);
     } finally {
