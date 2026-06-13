@@ -92,6 +92,9 @@ export const setSelectionToDOM = (
   const backward = posDiff > 0;
   const start = backward ? focus : anchor;
   const end = backward ? anchor : focus;
+
+  const range = document.createRange();
+
   // special path for empty content with empty selection, necessary for placeholder
   if (
     start[0].length === 0 &&
@@ -99,7 +102,6 @@ export const setSelectionToDOM = (
     isCollapsed &&
     !root.hasChildNodes()
   ) {
-    const range = document.createRange();
     range.setStart(root, 0);
     range.setEnd(root, 0);
 
@@ -108,8 +110,6 @@ export const setSelectionToDOM = (
 
   const domStart = findPosition(root, parse, start);
   const domEnd = isCollapsed ? domStart : findPosition(root, parse, end);
-
-  const range = document.createRange();
 
   const [startNode, startOffset] = domStart;
   const [endNode, endOffset] = domEnd;
