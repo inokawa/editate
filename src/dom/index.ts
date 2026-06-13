@@ -62,12 +62,41 @@ export const getSelectionRangeInEditor = (
 
 const setRangeToSelection = (
   root: Element,
-  range: Range,
+  document: Document,
   force: boolean | undefined,
+  start: DomPoint,
+  end: DomPoint,
   backward?: boolean,
 ): void => {
   const selection = getDOMSelection(root);
   if (force || getSelectionRangeInEditor(selection, root)) {
+    const range = document.createRange();
+
+    const [startNode, startOffset] = start;
+    const [endNode, endOffset] = end;
+
+    // embed or br
+    if (isElementNode(startNode) && root !== startNode) {
+      if (startOffset < 1) {
+        range.setStartBefore(startNode);
+      } else {
+        range.setStartAfter(startNode);
+      }
+    } else {
+      range.setStart(startNode, startOffset);
+    }
+
+    // embed or br
+    if (isElementNode(endNode) && root !== endNode) {
+      if (endOffset < 1) {
+        range.setEndBefore(endNode);
+      } else {
+        range.setEndAfter(endNode);
+      }
+    } else {
+      range.setEnd(endNode, endOffset);
+    }
+
     selection.removeAllRanges();
     selection.addRange(range);
     if (backward) {
@@ -93,8 +122,6 @@ export const setSelectionToDOM = (
   const start = backward ? focus : anchor;
   const end = backward ? anchor : focus;
 
-  const range = document.createRange();
-
   // special path for empty content with empty selection, necessary for placeholder
   if (
     start[0].length === 0 &&
@@ -102,41 +129,13 @@ export const setSelectionToDOM = (
     isCollapsed &&
     !root.hasChildNodes()
   ) {
-    range.setStart(root, 0);
-    range.setEnd(root, 0);
-
-    return setRangeToSelection(root, range, force);
+    return setRangeToSelection(root, document, force, [root, 0], [root, 0]);
   }
 
   const domStart = findPosition(root, parse, start);
   const domEnd = isCollapsed ? domStart : findPosition(root, parse, end);
 
-  const [startNode, startOffset] = domStart;
-  const [endNode, endOffset] = domEnd;
-
-  // embed or br
-  if (isElementNode(startNode)) {
-    if (startOffset < 1) {
-      range.setStartBefore(startNode);
-    } else {
-      range.setStartAfter(startNode);
-    }
-  } else {
-    range.setStart(startNode, startOffset);
-  }
-
-  // embed or br
-  if (isElementNode(endNode)) {
-    if (endOffset < 1) {
-      range.setEndBefore(endNode);
-    } else {
-      range.setEndAfter(endNode);
-    }
-  } else {
-    range.setEnd(endNode, endOffset);
-  }
-
-  setRangeToSelection(root, range, force, backward);
+  setRangeToSelection(root, document, force, domStart, domEnd, backward);
 };
 
 /**
