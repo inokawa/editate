@@ -74,6 +74,15 @@ export const isTextNode = (node: Node): node is TextNode => "text" in node;
 export const isBlockNode = (node: Node): node is BlockNode =>
   "children" in node;
 
+/**
+ * @internal
+ */
+export const isStructureChildren = (
+  children: Fragment,
+): children is Extract<typeof children, readonly BlockNode[]> => {
+  return children.some(isBlockNode);
+};
+
 const isSameNode = (a: InlineNode, b: InlineNode): boolean => {
   const aKeys = keys(a);
   if (aKeys.length !== keys(b).length) {
@@ -212,16 +221,23 @@ const normalizeBlock = (
   }
 };
 
-const concat = <T extends Node>(
-  a: T[],
-  b: readonly T[],
-  normalize: (array: T[], start: number, end: number) => void,
-): void => {
+const concat = <T extends Node>(a: T[], b: readonly T[]): void => {
   if (b.length) {
     const prevLength = a.length;
     a.push(...b);
     if (prevLength) {
-      normalize(a, prevLength - 1, prevLength);
+      const aLastIndex = prevLength - 1;
+      const aLastNode = a[aLastIndex]!;
+      const bFirstNode = a[prevLength]!;
+      if (isBlockNode(aLastNode)) {
+        if (isBlockNode(bFirstNode)) {
+          normalizeBlock(a as BlockNode[], prevLength - 1, prevLength);
+        }
+      } else if (isTextNode(aLastNode)) {
+        if (isTextNode(bFirstNode)) {
+          normalizeInline(a as TextNode[], prevLength - 1, prevLength);
+        }
+      }
     }
   }
 };
@@ -233,7 +249,7 @@ export const joinBlocks = <T extends BlockNode>(...blocks: T[]): T => {
   return {
     ...blocks[0]!,
     children: blocks.reduce((acc, b) => {
-      concat(acc, b.children, normalizeInline);
+      concat(acc, b.children);
       return acc;
     }, []),
   };
@@ -390,9 +406,19 @@ const replaceRange = <T extends DocNode>(
   const [before, maybeAfter] = splitBlock(doc, start);
   const after = start < end ? splitBlock(doc, end)[1] : maybeAfter;
 
+  const isDocBlock = isStructureChildren(doc.children);
+  if (isStructureChildren(inserted)) {
+    if (!isDocBlock) {
+      inserted = joinBlocks(...inserted).children;
+    }
+  } else {
+    if (isDocBlock) {
+      inserted = [{ children: inserted }];
+    }
+  }
   const array = before.children.slice();
-  concat(array, inserted, normalizeBlock);
-  concat(array, after.children, normalizeBlock);
+  concat(array, inserted);
+  concat(array, after.children);
 
   return { ...doc, children: array };
 };
@@ -555,16 +581,23 @@ export const applyOperation = <T extends DocNode>(
             }
           }
         } else {
+          const mapNode = <T extends Node>(node: T): T => {
+            if (isBlockNode(node)) {
+              return {
+                ...node,
+                children: node.children.map(mapNode),
+              };
+            } else if (isTextNode(node)) {
+              return { ...node, [key]: value };
+            }
+            return node;
+          };
+
           doc = replaceRange(
             doc,
             start,
             end,
-            sliceFragment(doc, start, end).map((block) => ({
-              ...block,
-              children: block.children.map((node) =>
-                isTextNode(node) ? { ...node, [key]: value } : node,
-              ),
-            })),
+            sliceFragment(doc, start, end).map(mapNode),
           );
         }
       }

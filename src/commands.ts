@@ -4,6 +4,7 @@ import {
   getInlineAt,
   isTextNode,
   sliceFragment,
+  isBlockNode,
 } from "./doc/edit.js";
 import type { Editor } from "./editor.js";
 import type {
@@ -115,7 +116,9 @@ export function ToggleFormat<T extends DocNode>(
       return;
     }
   } else {
-    inlines = sliceFragment(editor.doc, ...range).flatMap((n) => n.children);
+    inlines = sliceFragment(editor.doc, ...range).flatMap((n) =>
+      isBlockNode(n) ? n.children : n,
+    );
   }
 
   const texts = inlines.filter(isTextNode);
