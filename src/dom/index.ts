@@ -107,14 +107,7 @@ export const setSelectionToDOM = (
   }
 
   const domStart = findPosition(root, parse, start);
-  if (!domStart) {
-    return;
-  }
-
   const domEnd = isCollapsed ? domStart : findPosition(root, parse, end);
-  if (!domEnd) {
-    return;
-  }
 
   const range = document.createRange();
 
@@ -158,14 +151,14 @@ export const findPosition = (
   root: Element,
   parse: Parser,
   [path, offset]: DomPosition,
-): DomPoint | undefined => {
+): DomPoint => {
   return parse(
     ({
       _next: next,
       _nextBlock: nextBlock,
       _domNode: domNode,
       _nodeSize: nodeSize,
-    }): DomPoint | undefined => {
+    }): DomPoint => {
       let pathIndex = 0;
       let type: TokenType | void;
       while ((type = next())) {

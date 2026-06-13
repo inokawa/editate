@@ -120,7 +120,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -137,7 +137,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -167,7 +167,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -188,7 +188,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -217,7 +217,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -242,7 +242,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -271,7 +271,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -292,7 +292,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -321,7 +321,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -350,7 +350,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -387,7 +387,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -408,7 +408,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -440,7 +440,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -472,7 +472,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -513,7 +513,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -534,7 +534,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -551,7 +551,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -568,7 +568,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -589,7 +589,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -610,7 +610,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -639,7 +639,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -668,7 +668,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -693,7 +693,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -714,7 +714,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -743,7 +743,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -772,7 +772,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -809,7 +809,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -832,7 +832,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -863,7 +863,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -894,7 +894,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -937,7 +937,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -958,7 +958,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -1012,7 +1012,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -1051,7 +1051,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -1103,7 +1103,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
@@ -1132,7 +1132,7 @@ const elToString = (element: Element): string => {
 //     const domPos = posAt(doc, ...p);
 //     const pos = serializePosition(doc, parser, ...domPos);
 //     expect(pos).toEqual(expectedPos);
-//     const domPos2 = toRange(findPosition(doc, parser, pos)!);
+//     const domPos2 = toRange(findPosition(doc, parser, pos));
 //     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
 //   });
 // }
@@ -1161,7 +1161,7 @@ const elToString = (element: Element): string => {
 //     const domPos = posAt(doc, ...p);
 //     const pos = serializePosition(doc, parser, ...domPos);
 //     expect(pos).toEqual(expectedPos);
-//     const domPos2 = toRange(findPosition(doc, parser, pos)!);
+//     const domPos2 = toRange(findPosition(doc, parser, pos));
 //     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
 //   });
 // }
@@ -1198,7 +1198,7 @@ const elToString = (element: Element): string => {
 //     const domPos = posAt(doc, ...p);
 //     const pos = serializePosition(doc, parser, ...domPos);
 //     expect(pos).toEqual(expectedPos);
-//     const domPos2 = toRange(findPosition(doc, parser, pos)!);
+//     const domPos2 = toRange(findPosition(doc, parser, pos));
 //     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
 //   });
 // }
@@ -1219,7 +1219,7 @@ const elToString = (element: Element): string => {
     const domPos = posAt(doc, ...p);
     const pos = serializePosition(doc, parser, ...domPos);
     expect(pos).toEqual(expectedPos);
-    const domPos2 = toRange(findPosition(doc, parser, pos)!);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
     expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
   });
 }
