@@ -5,7 +5,6 @@ import {
   TOKEN_VOID,
   TOKEN_SOFT_BREAK,
   TOKEN_BLOCK,
-  isHiddenNode,
 } from "./parser.js";
 import type {
   DomPosition,
@@ -201,6 +200,7 @@ export const serializePosition = (
     ({
       _next: next,
       _parentBlock: parentBlock,
+      _prevBlock: prevBlock,
       _domNode: domNode,
       _nodeSize: nodeSize,
       _readToken: readToken,
@@ -210,26 +210,25 @@ export const serializePosition = (
       }
 
       const path = parse((): Path => {
-        const blocks: Element[] = [];
-        // TODO improve type
-        let block: Element | null;
-        while ((block = domNode<typeof TOKEN_BLOCK>()) && block !== root) {
-          blocks.unshift(block);
+        const p: number[] = [];
+        while (readToken() && domNode() !== root) {
+          let i = 0;
+          while (true) {
+            prevBlock();
+            if (!readToken()) {
+              break;
+            }
+            i++;
+          }
+          p.unshift(i);
           parentBlock();
         }
 
-        if (!blocks.length) {
+        if (!p.length) {
           return [0];
         }
 
-        let i = 0;
-        let sib: Element = blocks[blocks.length - 1]!;
-        while ((sib = sib.previousElementSibling!)) {
-          if (!isHiddenNode(sib)) {
-            i++;
-          }
-        }
-        return [i];
+        return p;
       });
 
       let offset = 0;

@@ -126,6 +126,10 @@ interface ParserContext {
   /**
    * @internal
    */
+  _prevBlock: () => void;
+  /**
+   * @internal
+   */
   _nextBlock: () => void;
   /**
    * @internal
@@ -270,6 +274,13 @@ export const createParser = (
         : token === TOKEN_VOID
           ? 1
           : 0;
+    },
+    _prevBlock: () => {
+      while ((_token = null) || (node = walker!.previousSibling())) {
+        if (readToken() === TOKEN_BLOCK) {
+          return;
+        }
+      }
     },
     _nextBlock: () => {
       while ((_token = null) || (node = walker!.nextSibling())) {
