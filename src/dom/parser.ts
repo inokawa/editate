@@ -1,4 +1,4 @@
-import { isElementNode, isTextNode } from "./utils.js";
+import { isDocumentFragment, isElementNode, isTextNode } from "./utils.js";
 
 const LINE_BREAK_ELEMENT = 1;
 const HIDDEN_ELEMENT = 2;
@@ -186,8 +186,10 @@ export const createParser = (
             return (_token = TOKEN_BLOCK);
           }
         }
+      } else if (isDocumentFragment(node)) {
+        // same as span
       } else {
-        // e.g. Comment
+        // e.g. Comment/ProcessingInstruction
         return (_token = TOKEN_HIDDEN);
       }
     }
@@ -308,6 +310,7 @@ export const createParser = (
     try {
       if (!walker) {
         walker = document.createTreeWalker(root!, SHOW_TEXT | SHOW_ELEMENT);
+        node = root!;
       }
       if (startNode) {
         walker.currentNode = node = startNode;
