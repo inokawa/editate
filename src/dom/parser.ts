@@ -74,10 +74,7 @@ export const TOKEN_BLOCK = 4;
 const TOKEN_ANCHORABLE = 5;
 const TOKEN_HIDDEN = 6;
 
-/**
- * @internal
- */
-export type TokenType =
+type InternalTokenType =
   | typeof TOKEN_NULL
   | typeof TOKEN_TEXT
   | typeof TOKEN_VOID
@@ -86,12 +83,15 @@ export type TokenType =
   | typeof TOKEN_ANCHORABLE
   | typeof TOKEN_HIDDEN;
 
-type VisibleTokenType = Exclude<
-  TokenType,
+/**
+ * @internal
+ */
+export type TokenType = Exclude<
+  InternalTokenType,
   typeof TOKEN_NULL | typeof TOKEN_HIDDEN
 >;
 
-type InferDomNode<T extends TokenType> = T extends typeof TOKEN_TEXT
+type InferDomNode<T extends InternalTokenType> = T extends typeof TOKEN_TEXT
   ? Text
   : T extends typeof TOKEN_NULL | typeof TOKEN_HIDDEN
     ? never
@@ -108,7 +108,7 @@ interface ParserContext {
   /**
    * @internal
    */
-  _next: () => VisibleTokenType | void;
+  _next: () => TokenType | void;
   /**
    * @internal
    */
@@ -116,9 +116,9 @@ interface ParserContext {
   /**
    * @internal
    */
-  _domNode: <T extends TokenType | void = void>() => T extends TokenType
-    ? InferDomNode<T>
-    : Node;
+  _domNode: <
+    T extends InternalTokenType | void = void,
+  >() => T extends InternalTokenType ? InferDomNode<T> : Node;
   /**
    * @internal
    */
@@ -150,9 +150,9 @@ export const createParser = (
 ): Parser => {
   let walker: TreeWalker | null = null;
   let node: Node | null = null;
-  let _token: TokenType | null = null;
+  let _token: InternalTokenType | null = null;
 
-  const readToken = (): TokenType => {
+  const readToken = (): InternalTokenType => {
     if (_token != null) {
       return _token;
     }
@@ -259,7 +259,7 @@ export const createParser = (
   };
 
   const context: ParserContext = {
-    _next: (): VisibleTokenType | void => {
+    _next: (): TokenType | void => {
       while (nextNode()) {
         const t = readToken();
         if (t && t !== TOKEN_HIDDEN) {
@@ -267,7 +267,7 @@ export const createParser = (
         }
       }
     },
-    _readToken: readToken,
+    _readToken: readToken as () => TokenType,
     _domNode: () => {
       return node as any;
     },
