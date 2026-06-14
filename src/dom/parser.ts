@@ -314,8 +314,10 @@ export const createParser = (
     const prevToken = _token;
     try {
       if (!walker) {
-        walker = document.createTreeWalker(root!, SHOW_TEXT | SHOW_ELEMENT);
-        node = root!;
+        walker = document.createTreeWalker(
+          (node = root!),
+          SHOW_TEXT | SHOW_ELEMENT,
+        );
       }
       return scopeFn(context);
     } finally {
