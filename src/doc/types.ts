@@ -29,7 +29,7 @@ export type InferInlineNode<T extends DocNode> = InferChild<T>;
 export type InferBlockNode<T extends DocNode> = InferBlock<T>;
 
 export type Path = readonly number[];
-export type DomPosition = readonly [path: Path, offset: number];
+export type DomPosition = readonly [offset: number, affinity: boolean];
 export type Range = readonly [start: number, end: number];
 
 export type Selection = readonly [anchor: number, focus: number];

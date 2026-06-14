@@ -44,19 +44,41 @@ export const getText = async (
 
       const {
         createParser,
-        defaultIsBlockNode,
-        TOKEN_BLOCK,
+        TOKEN_SPAN,
         TOKEN_TEXT,
         TOKEN_VOID,
         TOKEN_SOFT_BREAK,
       } = window.editate;
 
-      const parse = createParser(
-        document,
-        blockTag
-          ? (n) => n.tagName === blockTag.toUpperCase()
-          : defaultIsBlockNode,
-      );
+      const SINGLE_LINE_CONTAINER_NAMES = new Set([
+        // https://w3c.github.io/editing/docs/execCommand/#single-line-container
+        // non-list single-line container
+        "DIV",
+        "H1",
+        "H2",
+        "H3",
+        "H4",
+        "H5",
+        "H6",
+        "P",
+        "PRE",
+        // list single-line container
+        "LI",
+        "DT",
+        "DD",
+
+        // other elements for HTML paste
+        "TH",
+        "TD",
+      ]);
+
+      const isBlock: (node: Element) => boolean = blockTag
+        ? (n) => n.tagName === blockTag.toUpperCase()
+        : (node) => {
+            return SINGLE_LINE_CONTAINER_NAMES.has(node.tagName);
+          };
+
+      const parse = createParser(document);
 
       return parse(({ _next: next, _domNode: domNode }) => {
         let type: TokenType | void;
@@ -88,8 +110,10 @@ export const getText = async (
         };
 
         while ((type = next())) {
-          if (type === TOKEN_BLOCK) {
-            completeRow();
+          if (type === TOKEN_SPAN) {
+            if (isBlock(domNode<typeof type>())) {
+              completeRow();
+            }
           } else {
             hasContent = true;
 
@@ -174,12 +198,7 @@ export const getSelection = (
   return editable.evaluate((element, { blockTag }) => {
     return window.editate.takeSelectionSnapshot(
       element,
-      window.editate.createParser(
-        element.ownerDocument,
-        blockTag
-          ? (n) => n.tagName === blockTag.toUpperCase()
-          : window.editate.defaultIsBlockNode,
-      ),
+      window.editate.createParser(element.ownerDocument),
     );
   }, config);
 };

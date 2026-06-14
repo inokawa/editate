@@ -3,10 +3,10 @@ import type { Editor } from "../../editor.js";
 import {
   getDOMSelection,
   getSelectionRangeInEditor,
-  TOKEN_BLOCK,
   TOKEN_TEXT,
   TOKEN_SOFT_BREAK,
   TOKEN_VOID,
+  TOKEN_SPAN,
 } from "../../dom/index.js";
 import { isCommentNode } from "../../dom/utils.js";
 import type {
@@ -35,6 +35,32 @@ export const htmlPaste = <T extends DocNode>(
   parse: Parser,
   serializers: HtmlSerializers<T>,
 ): Fragment => {
+  const SINGLE_LINE_CONTAINER_NAMES = new Set([
+    // https://w3c.github.io/editing/docs/execCommand/#single-line-container
+    // non-list single-line container
+    "DIV",
+    "H1",
+    "H2",
+    "H3",
+    "H4",
+    "H5",
+    "H6",
+    "P",
+    "PRE",
+    // list single-line container
+    "LI",
+    "DT",
+    "DD",
+
+    // other elements for HTML paste
+    "TH",
+    "TD",
+  ]);
+
+  const isBlock = (node: Element): boolean => {
+    return SINGLE_LINE_CONTAINER_NAMES.has(node.tagName);
+  };
+
   const serializeText = serializers["text"];
   const serializeVoid = (n: Element) => {
     const s = serializers[n.tagName.toLowerCase() as keyof typeof serializers];
@@ -94,8 +120,10 @@ export const htmlPaste = <T extends DocNode>(
     };
 
     while ((type = next())) {
-      if (type === TOKEN_BLOCK) {
-        completeRow();
+      if (type === TOKEN_SPAN) {
+        if (isBlock(domNode<typeof type>())) {
+          completeRow();
+        }
       } else {
         hasContent = true;
 

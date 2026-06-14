@@ -4,7 +4,6 @@ import {
   takeSelectionSnapshot,
   setSelectionToDOM,
   getPointedCaretPosition,
-  defaultIsBlockNode,
   serializeRange,
 } from "./dom/index.js";
 import { createMutationObserver } from "./dom/mutation.js";
@@ -119,10 +118,6 @@ export interface EditorOptions<
    */
   readonly?: boolean;
   /**
-   * TODO
-   */
-  isBlock?: (node: HTMLElement) => boolean;
-  /**
    * Callback invoked when errors happen.
    *
    * @default console.warn
@@ -235,7 +230,6 @@ export const createEditor = <
   doc,
   readonly = false,
   schema,
-  isBlock = defaultIsBlockNode,
   onWarn = console.warn,
   onError = defaultOnError,
 }: EditorOptions<T, S>): Editor<T> => {
@@ -461,10 +455,7 @@ export const createEditor = <
 
       const document = getCurrentDocument(element);
 
-      const parser = createParser(
-        document,
-        isBlock as (node: Element) => boolean,
-      );
+      const parser = createParser(document);
 
       const setEditableState = () => {
         element.contentEditable = readonly ? "false" : "true";

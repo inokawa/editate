@@ -89,31 +89,34 @@ const isSameNode = (a: InlineNode, b: InlineNode): boolean => {
 
 const sizeCache = new WeakMap<BlockNode, number>();
 
-const calcBlockSize = (
-  { children }: BlockNode,
-  start: number = 0,
-  end: number = children.length,
-): number => {
+const getBlockSize = (node: BlockNode): number => {
+  const prev = sizeCache.get(node);
+  if (prev != null) {
+    return prev;
+  }
+  const children = node.children;
   let size = 0;
   let count = 0;
-  for (let i = start; i < end; i++) {
+  let hardbreak = 0;
+  for (let i = 0; i < children.length - 1; i++) {
     const n = children[i]!;
+    // TODO calc separately (hardbreak/nodesize)
+    // isBlock(n) ? getBlockSize() : getNodeSize(n)
     size += getNodeSize(n);
     if (count !== 0 && isBlockNode(n)) {
-      size++;
+      hardbreak++;
     }
     count++;
   }
-  return size;
+  // TODO cache separately
+  const res = size + hardbreak;
+  sizeCache.set(node, res);
+  return res;
 };
 
 export const getNodeSize = (node: Node): number => {
   if (isBlockNode(node)) {
-    let size = sizeCache.get(node);
-    if (size == null) {
-      sizeCache.set(node, (size = calcBlockSize(node)));
-    }
-    return size;
+    return getBlockSize(node);
   }
   return isTextNode(node) ? node.text.length : 1;
 };
@@ -123,17 +126,9 @@ export const getNodeSize = (node: Node): number => {
  */
 export const positionToOffset = (
   node: DocNode | BlockNode,
-  [path, offset]: DomPosition,
+  [offset, affinity]: DomPosition,
 ): number => {
-  let size = 0;
-  for (const p of path) {
-    size += calcBlockSize(node, 0, p);
-    if (p !== 0) {
-      size++;
-    }
-    node = node.children[p]! as BlockNode;
-  }
-  return size + offset;
+  return offset;
 };
 
 export const offsetToPosition = (
@@ -141,7 +136,7 @@ export const offsetToPosition = (
   offset: number,
 ): DomPosition => {
   const res = getBlockAt(node, offset);
-  return [res._path, res._offset];
+  return [offset];
 };
 
 /**

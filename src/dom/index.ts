@@ -1,5 +1,5 @@
-import { type TokenType, type Parser, TOKEN_BLOCK } from "./parser.js";
-import type { DomPosition, SelectionSnapshot, Path } from "../doc/types.js";
+import { type TokenType, type Parser, TOKEN_SPAN } from "./parser.js";
+import type { DomPosition, SelectionSnapshot } from "../doc/types.js";
 import { min } from "../utils.js";
 import { isElementNode } from "./utils.js";
 
@@ -8,9 +8,8 @@ export {
   TOKEN_TEXT,
   TOKEN_VOID,
   TOKEN_SOFT_BREAK,
-  TOKEN_BLOCK,
+  TOKEN_SPAN,
 } from "./parser.js";
-export { defaultIsBlockNode } from "./default.js";
 
 // const DOCUMENT_POSITION_DISCONNECTED = 0x01;
 const DOCUMENT_POSITION_PRECEDING = 0x02;
@@ -119,35 +118,26 @@ export type DomPoint = [node: Node, offsetAtNode: number];
 export const findPosition = (
   root: Element,
   parse: Parser,
-  [path, offset]: DomPosition,
+  [offset, affinity]: DomPosition,
 ): DomPoint => {
   return parse(
-    ({
-      _next: next,
-      _nextBlock: nextBlock,
-      _domNode: domNode,
-      _nodeSize: nodeSize,
-    }): DomPoint => {
-      let pathIndex = 0;
+    ({ _next: next, _domNode: domNode, _nodeSize: nodeSize }): DomPoint => {
+      // TODO optimize
       let type: TokenType | void;
       while ((type = next())) {
-        if (type === TOKEN_BLOCK) {
-          if (pathIndex < path.length) {
-            for (
-              let blockIndex = path[pathIndex++]!;
-              blockIndex > 0;
-              blockIndex--
-            ) {
-              nextBlock();
+        const size = nodeSize();
+        if (offset <= size) {
+          if (affinity && offset === size) {
+            while ((type = next())) {
+              if (type !== TOKEN_SPAN) {
+                return [domNode<typeof type>(), 0];
+              }
             }
+            break;
           }
-        } else {
-          const size = nodeSize();
-          if (offset <= size) {
-            return [domNode<typeof type>(), offset];
-          }
-          offset -= size;
+          return [domNode<typeof type>(), offset];
         }
+        offset -= size;
       }
 
       // special path for empty content with empty selection, necessary for placeholder
@@ -169,7 +159,7 @@ export const serializePosition = (
   let excludeEnd = true;
   if (root === node && !node.hasChildNodes()) {
     // for placeholder
-    return [[0], 0];
+    return [0, false];
   }
 
   if (isElementNode(node) && node.hasChildNodes()) {
@@ -190,42 +180,15 @@ export const serializePosition = (
   return parse(
     ({
       _next: next,
-      _moveTo: moveTo,
-      _parentBlock: parentBlock,
-      _prevBlock: prevBlock,
       _domNode: domNode,
       _nodeSize: nodeSize,
       _readToken: readToken,
     }) => {
-      moveTo(node);
-      if (readToken() !== TOKEN_BLOCK) {
-        parentBlock();
-      }
-
-      const path = parse((): Path => {
-        const p: number[] = [];
-        while (readToken() && domNode() !== root) {
-          let i = 0;
-          while (true) {
-            prevBlock();
-            if (!readToken()) {
-              break;
-            }
-            i++;
-          }
-          p.unshift(i);
-          parentBlock();
-        }
-
-        if (!p.length) {
-          return [0];
-        }
-
-        return p;
-      });
-
-      let offset = 0;
-      while (next()) {
+      let offset = offsetAtNode;
+      let isPrevSpan = true;
+      let type: TokenType | void;
+      while ((type = readToken())) {
+        // TODO optimize
         const comp = compareDomPosition(node, domNode());
         if (
           comp === 0 || // same object
@@ -238,8 +201,10 @@ export const serializePosition = (
           break;
         }
         offset += nodeSize();
+        isPrevSpan = type === TOKEN_SPAN;
+        next();
       }
-      return [path, offset + offsetAtNode];
+      return [offset, isPrevSpan && offsetAtNode === 0];
     },
     root,
   );
@@ -273,8 +238,8 @@ export const takeSelectionSnapshot = (
   const domRange = getSelectionRangeInEditor(selection, root);
   if (!domRange) {
     return [
-      [[0], 0],
-      [[0], 0],
+      [0, false],
+      [0, false],
     ];
   }
 

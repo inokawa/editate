@@ -135,11 +135,7 @@ const compiler: Plugin<[], Root, ReactElement[]> = function () {
       if (offset < end) {
         contents.push(value.slice(offset, end));
       }
-      result.push(
-        <div key={i} data-block>
-          {contents.length ? contents : <br />}
-        </div>,
-      );
+      result.push(<div key={i}>{contents.length ? contents : <br />}</div>);
     }
     return result;
   };
@@ -162,7 +158,6 @@ export const WithRemark: StoryObj = {
       if (!ref.current) return;
       return createPlainEditor({
         text,
-        isBlock: (n) => !!n.dataset.block,
         onChange: setText,
       }).input(ref.current);
     }, []);

@@ -375,7 +375,6 @@ export const SpanAsBlock: StoryObj = {
       if (!ref.current) return;
       return createPlainEditor({
         text: text,
-        isBlock: (node) => !!node.dataset.line,
         onChange: setText,
       }).input(ref.current);
     }, []);
@@ -390,7 +389,7 @@ export const SpanAsBlock: StoryObj = {
         }}
       >
         {text.split("\n").map((r, i) => (
-          <span key={i} data-line style={{ display: "block" }}>
+          <span key={i} style={{ display: "block" }}>
             {r ? r : <br />}
           </span>
         ))}

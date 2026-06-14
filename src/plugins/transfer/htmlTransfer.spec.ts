@@ -4,9 +4,8 @@
 import { expect, it } from "vitest";
 import { htmlPaste } from "./htmlTransfer.js";
 import { createParser } from "../../dom/parser.js";
-import { defaultIsBlockNode } from "../../dom/default.js";
 
-const parser = createParser(document, defaultIsBlockNode);
+const parser = createParser(document);
 
 it("single paragraph root", () => {
   const html = `<meta charset='utf-8'><div><br><div><span>export</span><span> </span><span>const</span><span> </span><span>editable</span><span> </span><span>=</span><span> (</span></div><div><span>  </span><span>element</span><span>:</span><span> </span><span>HTMLElement</span><span>,</span></div><div><span>  { </span><span>readonly</span><span>, </span><span>nodes</span><span>, </span><span>onChange</span><span> }</span><span>:</span><span> </span><span>EditableOptions</span></div><div><span></span></div></div>`;

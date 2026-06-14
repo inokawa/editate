@@ -70,7 +70,7 @@ export const TOKEN_VOID = 2;
 /** @internal */
 export const TOKEN_SOFT_BREAK = 3;
 /** @internal */
-export const TOKEN_BLOCK = 4;
+export const TOKEN_SPAN = 4;
 const TOKEN_ANCHORABLE = 5;
 const TOKEN_HIDDEN = 6;
 
@@ -79,7 +79,7 @@ type InternalTokenType =
   | typeof TOKEN_TEXT
   | typeof TOKEN_VOID
   | typeof TOKEN_SOFT_BREAK
-  | typeof TOKEN_BLOCK
+  | typeof TOKEN_SPAN
   | typeof TOKEN_ANCHORABLE
   | typeof TOKEN_HIDDEN;
 
@@ -123,31 +123,12 @@ interface ParserContext {
    * @internal
    */
   _nodeSize: () => number;
-  /**
-   * @internal
-   */
-  _moveTo: (node: Node) => void;
-  /**
-   * @internal
-   */
-  _prevBlock: () => void;
-  /**
-   * @internal
-   */
-  _nextBlock: () => void;
-  /**
-   * @internal
-   */
-  _parentBlock: () => void;
 }
 
 /**
  * @internal
  */
-export const createParser = (
-  document: Document,
-  isBlock: (node: Element) => boolean,
-): Parser => {
+export const createParser = (document: Document): Parser => {
   let walker: TreeWalker | null = null;
   let node: Node | null = null;
   let _token: InternalTokenType | null = null;
@@ -186,12 +167,11 @@ export const createParser = (
                 : elementType === STUB_ELEMENT
                   ? TOKEN_VOID
                   : TOKEN_HIDDEN);
-          } else if (isBlock(node)) {
-            return (_token = TOKEN_BLOCK);
           }
+          return (_token = TOKEN_SPAN);
         }
       } else if (isDocumentFragment(node)) {
-        // same as span
+        return (_token = TOKEN_SPAN);
       } else {
         // e.g. Comment/ProcessingInstruction
         return (_token = TOKEN_HIDDEN);
@@ -278,31 +258,6 @@ export const createParser = (
         : token === TOKEN_VOID
           ? 1
           : 0;
-    },
-    _moveTo: (nextNode) => {
-      _token = null;
-      walker!.currentNode = node = nextNode;
-    },
-    _prevBlock: () => {
-      while ((_token = null) || (node = walker!.previousSibling())) {
-        if (readToken() === TOKEN_BLOCK) {
-          return;
-        }
-      }
-    },
-    _nextBlock: () => {
-      while ((_token = null) || (node = walker!.nextSibling())) {
-        if (readToken() === TOKEN_BLOCK) {
-          return;
-        }
-      }
-    },
-    _parentBlock: () => {
-      while ((_token = null) || (node = walker!.parentNode())) {
-        if (readToken() === TOKEN_BLOCK) {
-          return;
-        }
-      }
     },
   };
   const parser: Parser = <T>(
