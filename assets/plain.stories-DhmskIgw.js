@@ -1,4 +1,4 @@
-import{c as e,i as t}from"./preload-helper-usAeo7Bx.js";import{C as n}from"./iframe-C74FbWK_.js";import{t as r}from"./jsx-runtime-O9QVJvLM.js";import{C as i,T as a,b as o,n as s,t as c,v as l,x as u,y as d}from"./src-aHMcLdWA.js";var f,p,m,h,g,_,v,y,b,x,S,C,w,T;t((()=>{f=e(n()),c(),p=r(),m={component:s},h={render:()=>{let e=(0,f.useRef)(null),[t,n]=(0,f.useState)(``);return(0,f.useEffect)(()=>{if(e.current)return s({text:t,onChange:n}).input(e.current)},[]),(0,p.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t.split(`
+import{c as e,i as t}from"./preload-helper-usAeo7Bx.js";import{C as n}from"./iframe-A3aaeNqi.js";import{t as r}from"./jsx-runtime-O9QVJvLM.js";import{C as i,T as a,b as o,n as s,t as c,v as l,x as u,y as d}from"./src-aHMcLdWA.js";var f,p,m,h,g,_,v,y,b,x,S,C,w,T;t((()=>{f=e(n()),c(),p=r(),m={component:s},h={render:()=>{let e=(0,f.useRef)(null),[t,n]=(0,f.useState)(``);return(0,f.useEffect)(()=>{if(e.current)return s({text:t,onChange:n}).input(e.current)},[]),(0,p.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t.split(`
 `).map((e,t)=>(0,p.jsx)(`div`,{children:e||(0,p.jsx)(`br`,{})},t))})}},g={render:()=>{let e=(0,f.useRef)(null),[t,n]=(0,f.useState)(`Hello world.
 こんにちは。
 👍❤️🧑‍🧑‍🧒`);return(0,f.useEffect)(()=>{if(e.current)return s({text:t,onChange:n}).input(e.current)},[]),(0,p.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t.split(`
@@ -11,7 +11,7 @@ import{c as e,i as t}from"./preload-helper-usAeo7Bx.js";import{C as n}from"./ifr
 `})]})}},b={render:()=>{let e=(0,f.useRef)(null),[t,n]=(0,f.useState)(`Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`),[r,i]=(0,f.useState)(`dolor`);(0,f.useEffect)(()=>{if(e.current)return s({text:t,onChange:n}).input(e.current)},[]);let a=r?RegExp(`(${r})`):null;return(0,p.jsxs)(`div`,{children:[(0,p.jsxs)(`div`,{children:[(0,p.jsx)(`label`,{htmlFor:`search`,children:`search word`}),(0,p.jsx)(`input`,{name:`search`,value:r,onChange:e=>i(e.target.value)})]}),(0,p.jsx)(`div`,{ref:e,style:{background:`white`},children:t.split(`
 `).map((e,t)=>(0,p.jsx)(`div`,{children:e?(a?e.split(a):[e]).map((e,t)=>e===r?(0,p.jsx)(`mark`,{children:e},t):(0,p.jsx)(`span`,{children:e},t)):(0,p.jsx)(`br`,{})},t))})]})}},x={render:()=>{let e=(0,f.useRef)(null),[t,n]=(0,f.useState)(`Hello world.
 こんにちは。
-👍❤️🧑‍🧑‍🧒`),r=(0,f.useMemo)(()=>s({text:t,onChange:n}),[]);(0,f.useEffect)(()=>{if(e.current)return r.input(e.current)},[]);let[c,m]=(0,f.useState)(`text`);return(0,p.jsxs)(`div`,{children:[(0,p.jsxs)(`div`,{style:{padding:4},children:[(0,p.jsxs)(`div`,{children:[(0,p.jsx)(`input`,{value:c,onChange:e=>{m(e.target.value)}}),(0,p.jsx)(`button`,{onClick:()=>{r.exec(a,c)},children:`insert`})]}),(0,p.jsx)(`div`,{children:(0,p.jsx)(`button`,{onClick:()=>{r.exec(i)},children:`delete selection`})}),(0,p.jsxs)(`div`,{children:[(0,p.jsx)(`button`,{disabled:!r.exec(u),onClick:()=>{r.exec(o)},children:`undo`}),(0,p.jsx)(`button`,{disabled:!r.exec(d),onClick:()=>{r.exec(l)},children:`redo`})]}),(0,p.jsxs)(`div`,{children:[(0,p.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`move`,`forward`,`character`),e.current?.focus()},children:`move forward`}),(0,p.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`move`,`backward`,`character`),e.current?.focus()},children:`move backward`}),(0,p.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`extend`,`forward`,`character`),e.current?.focus()},children:`move focus forward`}),(0,p.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`extend`,`backward`,`character`),e.current?.focus()},children:`move focus backward`})]})]}),(0,p.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t.split(`
+👍❤️🧑‍🧑‍🧒`),r=(0,f.useMemo)(()=>s({text:t,onChange:n}),[]);(0,f.useEffect)(()=>{if(e.current)return r.input(e.current)},[]);let[c,m]=(0,f.useState)(`text`);return(0,p.jsxs)(`div`,{children:[(0,p.jsxs)(`div`,{style:{padding:4,display:`flex`,flexDirection:`column`,gap:2},children:[(0,p.jsxs)(`div`,{children:[(0,p.jsx)(`input`,{value:c,onChange:e=>{m(e.target.value)}}),(0,p.jsx)(`button`,{onClick:()=>{r.exec(a,c)},children:`insert`})]}),(0,p.jsx)(`div`,{children:(0,p.jsx)(`button`,{onClick:()=>{r.exec(i)},children:`delete selection`})}),(0,p.jsxs)(`div`,{children:[(0,p.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`move`,`forward`,`character`),e.current?.focus()},children:`move forward`}),(0,p.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`move`,`backward`,`character`),e.current?.focus()},children:`move backward`}),(0,p.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`extend`,`forward`,`character`),e.current?.focus()},children:`move focus forward`}),(0,p.jsx)(`button`,{onClick:()=>{document.getSelection()?.modify(`extend`,`backward`,`character`),e.current?.focus()},children:`move focus backward`})]}),(0,p.jsxs)(`div`,{children:[(0,p.jsx)(`button`,{disabled:!r.exec(u),onClick:()=>{r.exec(o)},children:`undo`}),(0,p.jsx)(`button`,{disabled:!r.exec(d),onClick:()=>{r.exec(l)},children:`redo`})]})]}),(0,p.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t.split(`
 `).map((e,t)=>(0,p.jsx)(`div`,{children:e||(0,p.jsx)(`br`,{})},t))})]})}},S={render:()=>{let e=(0,f.useRef)(null),[t,n]=(0,f.useState)(`Hello world.
 こんにちは。
 👍❤️🧑‍🧑‍🧒`);return(0,f.useEffect)(()=>{if(e.current)return s({text:t,isBlock:e=>!!e.dataset.line,onChange:n}).input(e.current)},[]),(0,p.jsx)(`div`,{ref:e,style:{backgroundColor:`white`,border:`solid 1px darkgray`,padding:8},children:t.split(`
@@ -188,7 +188,10 @@ two !
     const [insertText, setInsertText] = useState("text");
     return <div>
         <div style={{
-        padding: 4
+        padding: 4,
+        display: "flex",
+        flexDirection: "column",
+        gap: 2
       }}>
           <div>
             <input value={insertText} onChange={e => {
@@ -205,18 +208,6 @@ two !
             editor.exec(Delete);
           }}>
               delete selection
-            </button>
-          </div>
-          <div>
-            <button disabled={!editor.exec(Undoable)} onClick={() => {
-            editor.exec(Undo);
-          }}>
-              undo
-            </button>
-            <button disabled={!editor.exec(Redoable)} onClick={() => {
-            editor.exec(Redo);
-          }}>
-              redo
             </button>
           </div>
           <div>
@@ -243,6 +234,18 @@ two !
             ref.current?.focus();
           }}>
               move focus backward
+            </button>
+          </div>
+          <div>
+            <button disabled={!editor.exec(Undoable)} onClick={() => {
+            editor.exec(Undo);
+          }}>
+              undo
+            </button>
+            <button disabled={!editor.exec(Redoable)} onClick={() => {
+            editor.exec(Redo);
+          }}>
+              redo
             </button>
           </div>
         </div>
