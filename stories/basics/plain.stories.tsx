@@ -259,7 +259,14 @@ export const Command: StoryObj = {
 
     return (
       <div>
-        <div style={{ padding: 4 }}>
+        <div
+          style={{
+            padding: 4,
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+          }}
+        >
           <div>
             <input
               value={insertText}
@@ -282,24 +289,6 @@ export const Command: StoryObj = {
               }}
             >
               delete selection
-            </button>
-          </div>
-          <div>
-            <button
-              disabled={!editor.exec(Undoable)}
-              onClick={() => {
-                editor.exec(Undo);
-              }}
-            >
-              undo
-            </button>
-            <button
-              disabled={!editor.exec(Redoable)}
-              onClick={() => {
-                editor.exec(Redo);
-              }}
-            >
-              redo
             </button>
           </div>
           <div>
@@ -340,6 +329,24 @@ export const Command: StoryObj = {
               }}
             >
               move focus backward
+            </button>
+          </div>
+          <div>
+            <button
+              disabled={!editor.exec(Undoable)}
+              onClick={() => {
+                editor.exec(Undo);
+              }}
+            >
+              undo
+            </button>
+            <button
+              disabled={!editor.exec(Redoable)}
+              onClick={() => {
+                editor.exec(Redo);
+              }}
+            >
+              redo
             </button>
           </div>
         </div>
