@@ -55,7 +55,9 @@ export const Basic: StoryObj = {
         schema: basicSchema,
       })
         .exec(internalTranferPlugin)
-        .exec(htmlTransferPlugin, { serializeText: (text) => ({ text }) })
+        .exec(htmlTransferPlugin, {
+          serializers: { text: (text) => ({ text }) },
+        })
         .exec(plainTransferPlugin);
       e.on("change", () => {
         setDoc(e.doc);
@@ -388,17 +390,15 @@ export const Image: StoryObj = {
           }),
         })
         .exec(htmlTransferPlugin, {
-          serializeText: (text) => ({ text }),
-          serializers: [
-            (e) => {
-              if (e.tagName === "IMG") {
-                return {
-                  type: "image",
-                  src: (e as HTMLImageElement).src,
-                };
-              }
+          serializers: {
+            text: (text) => ({ text }),
+            img: (e) => {
+              return {
+                type: "image",
+                src: e.src,
+              };
             },
-          ],
+          },
         })
         .exec(plainTransferPlugin);
       e.on("change", () => {
@@ -485,17 +485,15 @@ export const Video: StoryObj = {
       })
         .exec(internalTranferPlugin)
         .exec(htmlTransferPlugin, {
-          serializeText: (text) => ({ text }),
-          serializers: [
-            (e) => {
-              if (e.tagName === "VIDEO") {
-                return {
-                  type: "video",
-                  src: (e.childNodes[0] as HTMLSourceElement).src,
-                };
-              }
+          serializers: {
+            text: (text) => ({ text }),
+            video: (e) => {
+              return {
+                type: "video",
+                src: (e.childNodes[0] as HTMLSourceElement).src,
+              };
             },
-          ],
+          },
         })
         .exec(plainTransferPlugin);
       e.on("change", () => {
@@ -605,17 +603,15 @@ export const Iframe: StoryObj = {
       })
         .exec(internalTranferPlugin)
         .exec(htmlTransferPlugin, {
-          serializeText: (text) => ({ text }),
-          serializers: [
-            (e) => {
-              if (!!e.dataset.youtubeNode) {
-                return {
-                  type: "youtube",
-                  id: e.dataset.youtubeId!,
-                };
-              }
+          serializers: {
+            text: (text) => ({ text }),
+            iframe: (e) => {
+              return {
+                type: "youtube",
+                id: e.dataset.youtubeId!,
+              };
             },
-          ],
+          },
         })
         .exec(plainTransferPlugin);
       e.on("change", () => {

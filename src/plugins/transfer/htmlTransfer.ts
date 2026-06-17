@@ -10,15 +10,20 @@ import type { DocNode, InferInlineNode, TextNode } from "../../doc/types.js";
 import type { PasteHook } from "../../editor.js";
 import type { Parser } from "../../dom/parser.js";
 
+type HtmlSerializers<T extends DocNode> = Partial<{
+  [key in keyof HTMLElementTagNameMap]: (
+    node: HTMLElementTagNameMap[key],
+  ) => Exclude<InferInlineNode<T>, TextNode> | void;
+}> & {
+  text: (t: string) => Extract<InferInlineNode<T>, TextNode>;
+};
+
 /**
  * @internal
  */
 export const htmlPaste = <T extends DocNode>(
   parse: Parser,
-  serializeText: (t: string) => Extract<InferInlineNode<T>, TextNode>,
-  serializers: ((
-    node: HTMLElement,
-  ) => Exclude<InferInlineNode<T>, TextNode> | void)[] = [],
+  serializers: HtmlSerializers<T>,
 ): PasteHook => {
   return (dataTransfer) => {
     const html = dataTransfer.getData("text/html");
@@ -40,13 +45,16 @@ export const htmlPaste = <T extends DocNode>(
       }
 
       // TODO customizable dom to standard schema and validate
-      return domToFragment(dom, parse, serializeText, (n) => {
-        for (const s of serializers) {
-          const node = s(n as HTMLElement);
+      return domToFragment(dom, parse, serializers["text"], (n) => {
+        const s =
+          serializers[n.tagName.toLowerCase() as keyof typeof serializers];
+        if (s) {
+          const node = s(n as any);
           if (node) {
             return node;
           }
         }
+
         return;
       });
     }
@@ -60,10 +68,7 @@ export const htmlPaste = <T extends DocNode>(
 export function htmlTransferPlugin<T extends DocNode>(
   editor: Editor<T>,
   options: {
-    serializeText: (t: string) => Extract<InferInlineNode<T>, TextNode>;
-    serializers?: ((
-      node: HTMLElement,
-    ) => Exclude<InferInlineNode<T>, TextNode> | void)[];
+    serializers: HtmlSerializers<T>;
   },
 ) {
   editor.hook("mount", (element, parser) => {
@@ -80,7 +85,7 @@ export function htmlTransferPlugin<T extends DocNode>(
     });
     const cleanupPaste = editor.hook(
       "paste",
-      htmlPaste(parser, options.serializeText, options.serializers),
+      htmlPaste(parser, options.serializers),
     );
     return () => {
       cleanupCopy();
