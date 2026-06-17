@@ -56,10 +56,10 @@ export type CopyHook = (dataTransfer: DataTransfer) => void;
 /**
  * Functions to handle paste / drop events
  */
-export type PasteHook = (dataTransfer: DataTransfer, parser: Parser) => string | Fragment | null;
+export type PasteHook = (dataTransfer: DataTransfer) => string | Fragment | null;
 type EditorHookMap = {
     apply: (op: Operation, next: (op?: Operation) => void) => void;
-    mount: (element: HTMLElement) => void | (() => void);
+    mount: (element: HTMLElement, parser: Parser) => void | (() => void);
     keyboard: KeyboardHook;
     copy: CopyHook;
     paste: PasteHook;
