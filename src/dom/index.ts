@@ -1,24 +1,15 @@
-import {
-  type TokenType,
-  type Parser,
+import { type TokenType, type Parser, TOKEN_BLOCK } from "./parser.js";
+import type { DomPosition, SelectionSnapshot, Path } from "../doc/types.js";
+import { min } from "../utils.js";
+import { isElementNode } from "./utils.js";
+
+export {
+  createParser,
   TOKEN_TEXT,
   TOKEN_VOID,
   TOKEN_SOFT_BREAK,
   TOKEN_BLOCK,
 } from "./parser.js";
-import type {
-  DomPosition,
-  InlineNode,
-  SelectionSnapshot,
-  Fragment,
-  TextNode,
-  Path,
-  BlockNode,
-} from "../doc/types.js";
-import { min } from "../utils.js";
-import { isElementNode } from "./utils.js";
-
-export { createParser } from "./parser.js";
 export { defaultIsBlockNode } from "./default.js";
 
 // const DOCUMENT_POSITION_DISCONNECTED = 0x01;
@@ -298,73 +289,6 @@ export const takeSelectionSnapshot = (
   )
     ? [range[1], range[0]]
     : range;
-};
-
-/**
- * @internal
- */
-export const domToFragment = (
-  root: Node,
-  parse: Parser,
-  serializeText: (text: string) => TextNode,
-  serializeVoid: (node: Element) => InlineNode | void,
-): Fragment => {
-  return parse(({ _next: next, _domNode: domNode }) => {
-    let type: TokenType | void;
-    let row: InlineNode[] | null = null;
-    let text = "";
-    let hasContent = false;
-
-    const rows: BlockNode[] = [];
-
-    const completeText = () => {
-      if (text) {
-        if (!row) {
-          row = [];
-        }
-        row.push(serializeText(text));
-        text = "";
-      }
-    };
-    const completeRow = () => {
-      completeText();
-      if (!row && hasContent) {
-        row = [];
-      }
-      if (row) {
-        rows.push({ children: row });
-      }
-      row = null;
-      hasContent = false;
-    };
-
-    while ((type = next())) {
-      if (type === TOKEN_BLOCK) {
-        completeRow();
-      } else {
-        hasContent = true;
-
-        if (type === TOKEN_TEXT) {
-          text += domNode<typeof type>().data;
-        } else if (type === TOKEN_VOID) {
-          completeText();
-          const docNode = serializeVoid(domNode<typeof type>());
-          if (docNode) {
-            row!.push(docNode);
-          }
-        } else if (type === TOKEN_SOFT_BREAK) {
-          completeRow();
-        }
-      }
-    }
-    completeRow();
-
-    if (!rows.length) {
-      rows.push({ children: [] });
-    }
-
-    return rows;
-  }, root);
 };
 
 /**
