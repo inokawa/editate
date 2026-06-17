@@ -1014,7 +1014,7 @@ test.describe("Keydown", () => {
       await editable.dblclick({
         position: { x: 16, y: (await editable.boundingBox())!.height / 2 },
       });
-      const selectedText = await getSeletedText(editable);
+      const selectedText = await getText(editable, { selected: true });
       const expectedText = "こんにちは";
       expect(selectedText).toEqual([expectedText]);
       expect(await getSelection(editable)).toEqual([
@@ -1892,7 +1892,9 @@ test.describe("Drag and Drop", () => {
     editable: Locator,
     { line = 0, char = 0 }: { line?: number; char?: number },
   ) => {
-    const selectedTextLength = (await getSeletedText(editable)).join("").length;
+    const selectedTextLength = (
+      await getText(editable, { selected: true })
+    ).join("").length;
     const selected = await getSelectedRect(editable);
     const x = selected.x + selected.width / 2;
     const y = selected.y + selected.height / 2;
@@ -1930,7 +1932,7 @@ test.describe("Drag and Drop", () => {
       ]);
 
       // drop text to next line
-      const [selectedText] = await getSeletedText(editable);
+      const [selectedText] = await getText(editable, { selected: true });
       await dragSelectionTo(page, editable, { line: 1 });
       expect(await getText(editable)).toEqual(
         insertAt(
@@ -1967,7 +1969,7 @@ test.describe("Drag and Drop", () => {
       ]);
 
       // drop text to swap
-      const [selectedText] = await getSeletedText(editable);
+      const [selectedText] = await getText(editable, { selected: true });
       await dragSelectionTo(page, editable, { char: -2 });
       expect(await getText(editable)).toEqual(
         insertAt(
@@ -2004,7 +2006,7 @@ test.describe("Drag and Drop", () => {
       ]);
 
       // drop text to swap
-      const [selectedText] = await getSeletedText(editable);
+      const [selectedText] = await getText(editable, { selected: true });
       await dragSelectionTo(page, editable, { char: 2 });
       expect(await getText(editable)).toEqual(
         insertAt(

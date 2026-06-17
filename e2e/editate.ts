@@ -30,51 +30,28 @@ export const NON_EDITABLE_PLACEHOLDER = "$";
 
 export const getText = async (
   editable: Locator,
-  config: { blockTag?: string } = {},
+  config: { blockTag?: string; selected?: boolean } = {},
 ): Promise<string[]> => {
   return editable.evaluate(
-    (element, [NON_EDITABLE_PLACEHOLDER, { blockTag }]) => {
+    (element, [NON_EDITABLE_PLACEHOLDER, { blockTag, selected }]) => {
       const document = element.ownerDocument;
-      return window.editate
-        .domToFragment(
-          element,
-          window.editate.createParser(
-            document,
-            blockTag
-              ? (n) => n.tagName === blockTag.toUpperCase()
-              : window.editate.defaultIsBlockNode,
-          ),
-          (text) => ({ text }),
-          () => ({}),
-        )
-        .map((r) => {
-          return r.children.reduce<string>((acc, n) => {
-            return acc + ("text" in n ? n.text : NON_EDITABLE_PLACEHOLDER);
-          }, "");
-        });
-    },
-    [NON_EDITABLE_PLACEHOLDER, config] as const,
-  );
-};
+      let target: Node = element;
+      if (selected) {
+        const selection = document.getSelection()!;
+        target = selection.getRangeAt(0)!.cloneContents();
+      }
 
-export const getSeletedText = (
-  editable: Locator,
-  config: { blockTag?: string } = {},
-): Promise<string[]> => {
-  return editable.evaluate(
-    (element, [NON_EDITABLE_PLACEHOLDER, { blockTag }]) => {
-      const document = element.ownerDocument;
-      const selection = document.getSelection()!;
-      const range = selection.getRangeAt(0)!.cloneContents();
+      const parse = window.editate.createParser(
+        document,
+        blockTag
+          ? (n) => n.tagName === blockTag.toUpperCase()
+          : window.editate.defaultIsBlockNode,
+      );
+
       return window.editate
         .domToFragment(
-          range,
-          window.editate.createParser(
-            document,
-            blockTag
-              ? (n) => n.tagName === blockTag.toUpperCase()
-              : window.editate.defaultIsBlockNode,
-          ),
+          target,
+          parse,
           (text) => ({ text }),
           () => ({}),
         )
