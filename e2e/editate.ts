@@ -2,6 +2,7 @@ import { BrowserContext, Locator } from "@playwright/test";
 import * as esbuild from "esbuild";
 import * as path from "node:path";
 import { SelectionSnapshot } from "../src/doc/types.ts";
+import { TokenType } from "../src/dom/parser.ts";
 
 declare global {
   interface Window {
@@ -41,25 +42,75 @@ export const getText = async (
         target = selection.getRangeAt(0)!.cloneContents();
       }
 
-      const parse = window.editate.createParser(
+      const {
+        createParser,
+        defaultIsBlockNode,
+        TOKEN_BLOCK,
+        TOKEN_TEXT,
+        TOKEN_VOID,
+        TOKEN_SOFT_BREAK,
+      } = window.editate;
+
+      const parse = createParser(
         document,
         blockTag
           ? (n) => n.tagName === blockTag.toUpperCase()
-          : window.editate.defaultIsBlockNode,
+          : defaultIsBlockNode,
       );
 
-      return window.editate
-        .domToFragment(
-          target,
-          parse,
-          (text) => ({ text }),
-          () => ({}),
-        )
-        .map((r) => {
-          return r.children.reduce<string>((acc, n) => {
-            return acc + ("text" in n ? n.text : NON_EDITABLE_PLACEHOLDER);
-          }, "");
-        });
+      return parse(({ _next: next, _domNode: domNode }) => {
+        let type: TokenType | void;
+        let row: string[] | null = null;
+        let text = "";
+        let hasContent = false;
+
+        const rows: string[] = [];
+
+        const completeText = () => {
+          if (text) {
+            if (!row) {
+              row = [];
+            }
+            row.push(text);
+            text = "";
+          }
+        };
+        const completeRow = () => {
+          completeText();
+          if (!row && hasContent) {
+            row = [];
+          }
+          if (row) {
+            rows.push(row.join(""));
+          }
+          row = null;
+          hasContent = false;
+        };
+
+        while ((type = next())) {
+          if (type === TOKEN_BLOCK) {
+            completeRow();
+          } else {
+            hasContent = true;
+
+            if (type === TOKEN_TEXT) {
+              text += domNode<typeof type>().data;
+            } else if (type === TOKEN_VOID) {
+              completeText();
+              row!.push(NON_EDITABLE_PLACEHOLDER);
+            } else if (type === TOKEN_SOFT_BREAK) {
+              completeRow();
+            }
+          }
+        }
+        completeRow();
+
+        if (!rows.length) {
+          rows.push("");
+        }
+
+        return rows;
+      }, target);
     },
     [NON_EDITABLE_PLACEHOLDER, config] as const,
   );
