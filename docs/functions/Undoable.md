@@ -6,7 +6,7 @@
 
 > **Undoable**(`editor`): `boolean`
 
-Defined in: [plugins/history.ts:125](https://github.com/inokawa/editate/blob/b79665986a52dd60978d940ed7a1fd5d6a57fa28/src/plugins/history.ts#L125)
+Defined in: [plugins/history.ts:125](https://github.com/inokawa/editate/blob/67dafbb210b8f5568792788537128c9e23f2a4cc/src/plugins/history.ts#L125)
 
 Check if the history can be undone.
 
