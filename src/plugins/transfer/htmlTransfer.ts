@@ -64,7 +64,6 @@ export const htmlPaste = <T extends DocNode>(
     }
   }
 
-  // TODO customizable dom to standard schema and validate
   return parse(({ _next: next, _domNode: domNode }) => {
     let type: TokenType | void;
     let row: InlineNode[] | null = null;
