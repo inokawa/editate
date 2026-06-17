@@ -8,17 +8,19 @@ import {
 import { isCommentNode } from "../../dom/utils.js";
 import type { DocNode, InferInlineNode, TextNode } from "../../doc/types.js";
 import type { PasteHook } from "../../editor.js";
+import type { Parser } from "../../dom/parser.js";
 
 /**
  * @internal
  */
 export const htmlPaste = <T extends DocNode>(
+  parse: Parser,
   serializeText: (t: string) => Extract<InferInlineNode<T>, TextNode>,
   serializers: ((
     node: HTMLElement,
   ) => Exclude<InferInlineNode<T>, TextNode> | void)[] = [],
 ): PasteHook => {
-  return (dataTransfer, parse) => {
+  return (dataTransfer) => {
     const html = dataTransfer.getData("text/html");
     if (html) {
       let dom: Node = new DOMParser().parseFromString(html, "text/html").body;
@@ -64,24 +66,25 @@ export function htmlTransferPlugin<T extends DocNode>(
     ) => Exclude<InferInlineNode<T>, TextNode> | void)[];
   },
 ) {
-  let element: HTMLElement | null = null;
-  editor.hook("mount", (e) => {
-    element = e;
+  editor.hook("mount", (element, parser) => {
+    const cleanupCopy = editor.hook("copy", (dataTransfer) => {
+      const wrapper = document.createElement("div");
+      wrapper.appendChild(
+        // DOM range must exist here
+        getSelectionRangeInEditor(
+          getDOMSelection(element),
+          element,
+        )!.cloneContents(),
+      );
+      dataTransfer.setData("text/html", wrapper.innerHTML);
+    });
+    const cleanupPaste = editor.hook(
+      "paste",
+      htmlPaste(parser, options.serializeText, options.serializers),
+    );
     return () => {
-      element = null;
+      cleanupCopy();
+      cleanupPaste();
     };
   });
-  editor.hook("copy", (dataTransfer) => {
-    if (!element) return;
-    const wrapper = document.createElement("div");
-    wrapper.appendChild(
-      // DOM range must exist here
-      getSelectionRangeInEditor(
-        getDOMSelection(element),
-        element,
-      )!.cloneContents(),
-    );
-    dataTransfer.setData("text/html", wrapper.innerHTML);
-  });
-  editor.hook("paste", htmlPaste(options.serializeText, options.serializers));
 }
