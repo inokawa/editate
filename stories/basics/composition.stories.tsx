@@ -22,7 +22,9 @@ export default {
 export const TapDuringCompositionResetsCaret: StoryObj = {
   render: () => {
     const ref = useRef<HTMLDivElement>(null);
-    const [text, setText] = useState("Type a word in the middle, then tap here.");
+    const [text, setText] = useState(
+      "Type a word in the middle, then tap here.",
+    );
     const [selection, setSelection] = useState<readonly [number, number]>([
       0, 0,
     ]);
