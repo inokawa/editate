@@ -1,7 +1,7 @@
 import { BrowserContext, Locator } from "@playwright/test";
 import * as esbuild from "esbuild";
 import * as path from "node:path";
-import { SelectionSnapshot } from "../src/doc/types.ts";
+import { DomPosition, SelectionSnapshot } from "../src/doc/types.ts";
 import { TokenType } from "../src/dom/parser.ts";
 
 declare global {
@@ -167,11 +167,12 @@ export const waitForStyleSet = (
   );
 };
 
-export const getSelection = (
+export const getSelection = async (
   editable: Locator,
   config: { blockTag?: string } = {},
-): Promise<SelectionSnapshot> => {
-  return editable.evaluate((element, { blockTag }) => {
+): Promise<[number, number]> => {
+  const lines = await getText(editable, { blockTag: config.blockTag });
+  const selection = await editable.evaluate((element, { blockTag }) => {
     return window.editate.takeSelectionSnapshot(
       element,
       window.editate.createParser(
@@ -182,6 +183,19 @@ export const getSelection = (
       ),
     );
   }, config);
+
+  const tranformPos = ([path, offset]: DomPosition): number => {
+    const p = path.length ? path[0]! : 0;
+    for (let i = 0; i < p; i++) {
+      const length = lines[i]!.length;
+      offset += length;
+      if (i !== lines.length - 1) {
+        offset++;
+      }
+    }
+    return offset;
+  };
+  return [tranformPos(selection[0]), tranformPos(selection[1])];
 };
 
 export const getSelectedRect = (editable: Locator): Promise<DOMRect> => {
@@ -237,6 +251,17 @@ export const insertLineBreakAt = (
     }
     return r;
   });
+};
+
+export const sumLines = (value: readonly string[], line: number): number => {
+  let offset = 0;
+  for (let i = 0; i <= line; i++) {
+    offset += value[i]!.length;
+    if (i !== value.length - 1) {
+      offset++;
+    }
+  }
+  return offset;
 };
 
 // export const logInput = (editable: Locator) =>
