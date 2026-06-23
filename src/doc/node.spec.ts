@@ -85,6 +85,26 @@ describe(getChildAt.name, () => {
       expect(getChildAt(doc, offset)).toEqual(res);
     });
   });
+
+  describe("empty block", () => {
+    const t0 = "abcde";
+    const t1 = "";
+    const t2 = "klmno";
+    const doc: DocNode = {
+      children: [
+        { children: [{ text: t0 }] },
+        { children: [{ text: t1 }] },
+        { children: [{ text: t2 }] },
+      ],
+    };
+    it.each<[number, ReturnType<typeof getChildAt>]>([
+      [t0.length, [doc.children[0]!, t0.length, 0]],
+      [t0.length + 1, [doc.children[1]!, 0, 1]],
+      [t0.length + 2, [doc.children[2]!, 0, 2]],
+    ])(`$0`, (offset, res) => {
+      expect(getChildAt(doc, offset)).toEqual(res);
+    });
+  });
 });
 
 describe(sliceFragment.name, () => {
