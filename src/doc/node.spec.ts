@@ -86,7 +86,7 @@ describe(getChildAt.name, () => {
     });
   });
 
-  describe("empty block", () => {
+  describe("empty block in children", () => {
     const t0 = "abcde";
     const t1 = "";
     const t2 = "klmno";
@@ -101,6 +101,18 @@ describe(getChildAt.name, () => {
       [t0.length, [doc.children[0]!, t0.length, 0]],
       [t0.length + 1, [doc.children[1]!, 0, 1]],
       [t0.length + 2, [doc.children[2]!, 0, 2]],
+    ])(`$0`, (offset, res) => {
+      expect(getChildAt(doc, offset)).toEqual(res);
+    });
+  });
+
+  describe("empty block", () => {
+    const doc = {
+      children: [{ text: "" }],
+    };
+    it.each<[number, ReturnType<typeof getChildAt>]>([
+      [0, [doc.children[0]!, 0, 0]],
+      [1, null],
     ])(`$0`, (offset, res) => {
       expect(getChildAt(doc, offset)).toEqual(res);
     });
