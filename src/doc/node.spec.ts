@@ -8,28 +8,60 @@ import {
 } from "./types.js";
 
 describe(getChildAt.name, () => {
-  const t0 = "abcde";
-  const t1 = "fghij";
-  const t2 = "klmno";
-  const block: BlockNode = {
-    children: [{ text: t0 }, { text: t1 }, { text: t2 }],
-  };
-  it.each<[number, ReturnType<typeof getChildAt>]>([
-    [0, [block.children[0]!, 0, 0]],
-    [1, [block.children[0]!, 1, 0]],
-    [t0.length - 1, [block.children[0]!, t0.length - 1, 0]],
-    [t0.length, [block.children[1]!, 0, 1]],
-    [t0.length + 1, [block.children[1]!, 1, 1]],
-    [t0.length + t1.length - 1, [block.children[1]!, t1.length - 1, 1]],
-    [t0.length + t1.length, [block.children[2]!, 0, 2]],
-    [t0.length + t1.length + 1, [block.children[2]!, 1, 2]],
-    [
-      t0.length + t1.length + t2.length - 1,
-      [block.children[2]!, t2.length - 1, 2],
-    ],
-    [t0.length + t1.length + t2.length, null],
-  ])(`$0`, (offset, res) => {
-    expect(getChildAt(block, offset)).toEqual(res);
+  describe("block", () => {
+    const t0 = "abcde";
+    const t1 = "fghij";
+    const t2 = "klmno";
+    const doc: DocNode = {
+      children: [
+        { children: [{ text: t0 }] },
+        { children: [{ text: t1 }] },
+        { children: [{ text: t2 }] },
+      ],
+    };
+    it.each<[number, ReturnType<typeof getChildAt>]>([
+      [0, [doc.children[0]!, 0, 0]],
+      [1, [doc.children[0]!, 1, 0]],
+      [t0.length, [doc.children[0]!, t0.length, 0]],
+      [t0.length + 1, [doc.children[1]!, 0, 1]],
+      [t0.length + 2, [doc.children[1]!, 1, 1]],
+      [t0.length + 1 + t1.length, [doc.children[1]!, t1.length, 1]],
+      [t0.length + 1 + t1.length + 1, [doc.children[2]!, 0, 2]],
+      [t0.length + 1 + t1.length + 2, [doc.children[2]!, 1, 2]],
+      [
+        t0.length + 1 + t1.length + 1 + t2.length,
+        [doc.children[2]!, t2.length, 2],
+      ],
+      [t0.length + 1 + t1.length + 1 + t2.length + 1, null],
+    ])(`$0`, (offset, res) => {
+      expect(getChildAt(doc, offset)).toEqual(res);
+    });
+  });
+
+  describe("inline", () => {
+    const t0 = "abcde";
+    const t1 = "fghij";
+    const t2 = "klmno";
+    const doc: BlockNode = {
+      children: [{ text: t0 }, { text: t1 }, { text: t2 }],
+    };
+    it.each<[number, ReturnType<typeof getChildAt>]>([
+      [0, [doc.children[0]!, 0, 0]],
+      [1, [doc.children[0]!, 1, 0]],
+      [t0.length - 1, [doc.children[0]!, t0.length - 1, 0]],
+      [t0.length, [doc.children[1]!, 0, 1]],
+      [t0.length + 1, [doc.children[1]!, 1, 1]],
+      [t0.length + t1.length - 1, [doc.children[1]!, t1.length - 1, 1]],
+      [t0.length + t1.length, [doc.children[2]!, 0, 2]],
+      [t0.length + t1.length + 1, [doc.children[2]!, 1, 2]],
+      [
+        t0.length + t1.length + t2.length - 1,
+        [doc.children[2]!, t2.length - 1, 2],
+      ],
+      [t0.length + t1.length + t2.length, null],
+    ])(`$0`, (offset, res) => {
+      expect(getChildAt(doc, offset)).toEqual(res);
+    });
   });
 });
 
