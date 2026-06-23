@@ -1,4 +1,4 @@
-import { DocNode, Fragment, Path, BlockNode, Node, DomPosition, Range } from './types.js';
+import { Fragment, Path, Range } from './types.js';
 declare const OP_DELETE = "delete";
 type DeleteOperation = Readonly<{
     type: typeof OP_DELETE;
@@ -31,7 +31,5 @@ type SetNodeAttrOperation = Readonly<{
     value: unknown;
 }>;
 export type Operation = DeleteOperation | InsertTextOperation | InsertNodeOperation | FormatOperation | SetNodeAttrOperation;
-export declare const getNodeSize: (node: Node) => number;
-export declare const offsetToPosition: (node: DocNode | BlockNode, offset: number) => DomPosition;
 export declare const rebase: (position: number, ops: readonly Operation[]) => number;
 export {};

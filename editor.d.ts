@@ -1,6 +1,6 @@
 import { StandardSchemaV1 } from '@standard-schema/spec';
 import { DocNode, Fragment, Selection } from './doc/types.js';
-import { Operation } from './doc/edit.js';
+import { Operation } from './doc/operation.js';
 import { Parser } from './dom/parser.js';
 type EditorCommandOrPlugin<A extends unknown[], T extends DocNode = DocNode> = (editor: Editor<T>, ...args: A) => void | undefined;
 type EditorQuery<A extends unknown[], V, T extends DocNode = DocNode> = (editor: Editor<T>, ...args: A) => V;
