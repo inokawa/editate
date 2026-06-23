@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { applyOperation, getNodeSize, isValidSelection } from "./edit.js";
+import { applyOperation, getNodeSize, isValidSelection } from "./operation.js";
 import { type Selection } from "./types.js";
 import { is } from "../utils.js";
 

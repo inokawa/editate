@@ -1,4 +1,4 @@
-import { sliceFragment } from "../../doc/edit.js";
+import { sliceFragment } from "../../doc/operation.js";
 import { toRange } from "../../doc/position.js";
 import type { DocNode, InferInlineNode, InlineNode } from "../../doc/types.js";
 import { docToString } from "../../doc/utils.js";

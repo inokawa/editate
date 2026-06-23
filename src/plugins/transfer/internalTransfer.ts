@@ -1,4 +1,4 @@
-import { sliceFragment } from "../../doc/edit.js";
+import { sliceFragment } from "../../doc/operation.js";
 import { toRange } from "../../doc/position.js";
 import type { Editor } from "../../editor.js";
 

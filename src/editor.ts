@@ -19,7 +19,7 @@ import {
   selectionToDomSelection,
   positionToOffset,
   rebase,
-} from "./doc/edit.js";
+} from "./doc/operation.js";
 import { createParser } from "./dom/index.js";
 import { isCollapsed, toRange } from "./doc/position.js";
 import { historyPlugin } from "./plugins/history.js";

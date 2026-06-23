@@ -1,4 +1,4 @@
-import { joinBlocks } from "../doc/edit.js";
+import { joinBlocks } from "../doc/operation.js";
 import type { Editor } from "../editor.js";
 
 /**

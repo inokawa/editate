@@ -1,4 +1,4 @@
-export type { Operation } from "./doc/edit.js";
+export type { Operation } from "./doc/operation.js";
 export {
   Delete,
   InsertText,
