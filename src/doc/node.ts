@@ -204,3 +204,18 @@ export const selectionToDomSelection = (
 ): SelectionSnapshot => {
   return [offsetToPosition(doc, anchor), offsetToPosition(doc, focus)];
 };
+
+/**
+ * @internal
+ */
+export const sliceFragment = <T extends DocNode>(
+  doc: T,
+  start: number,
+  end: number,
+): T["children"] => {
+  if (start >= end) {
+    return [];
+  }
+
+  return splitBlock(splitBlock(doc, end)[0], start)[1].children;
+};

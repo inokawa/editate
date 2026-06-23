@@ -4,6 +4,7 @@ import {
   getChildAt,
   getNodeSize,
   isTextNode,
+  sliceFragment,
   splitBlock,
 } from "./node.js";
 import type {
@@ -17,7 +18,7 @@ import type {
   Node,
   Range,
 } from "./types.js";
-import { sliceFragment, stringToFragment } from "./utils.js";
+import { stringToFragment } from "./utils.js";
 
 const OP_DELETE = "delete";
 type DeleteOperation = Readonly<{

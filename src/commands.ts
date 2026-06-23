@@ -1,5 +1,10 @@
 import { isCollapsed, toRange } from "./doc/position.js";
-import { getBlockAt, getInlineAt, isTextNode } from "./doc/node.js";
+import {
+  getBlockAt,
+  getInlineAt,
+  isTextNode,
+  sliceFragment,
+} from "./doc/node.js";
 import type { Editor } from "./editor.js";
 import type {
   DocNode,
@@ -9,7 +14,6 @@ import type {
   Range,
   TextNode,
 } from "./doc/types.js";
-import { sliceFragment } from "./doc/utils.js";
 
 /**
  * Delete content in the selection or specified range.

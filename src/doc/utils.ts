@@ -1,25 +1,10 @@
-import { isBlockNode, isTextNode, splitBlock } from "./node.js";
+import { isBlockNode, isTextNode } from "./node.js";
 import {
   type BlockNode,
   type DocNode,
   type InlineNode,
   type TextNode,
 } from "./types.js";
-
-/**
- * @internal
- */
-export const sliceFragment = <T extends DocNode>(
-  doc: T,
-  start: number,
-  end: number,
-): T["children"] => {
-  if (start >= end) {
-    return [];
-  }
-
-  return splitBlock(splitBlock(doc, end)[0], start)[1].children;
-};
 
 /**
  * @internal
