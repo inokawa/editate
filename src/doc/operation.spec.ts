@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { applyOperation, isValidSelection } from "./operation.js";
 import { type Selection } from "./types.js";
 import { is } from "../utils.js";
@@ -20,10 +20,6 @@ const insertAt = (targetStr: string, index: number, text: string): string => {
 const deleteAt = (targetStr: string, index: number, length: number): string => {
   return targetStr.slice(0, index) + targetStr.slice(index + length);
 };
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
 
 it("discard if error", () => {
   const docText = "abcde";
