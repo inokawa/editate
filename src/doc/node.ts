@@ -104,9 +104,13 @@ export const getBlockAt = (
 export const getInlineAt = (
   node: DocNode | BlockNode,
   offset: number,
-): [node: InlineNode, offset: number, index: number] | null => {
+): [node: InlineNode, offset: number] | null => {
   const [blockNode, blockOffset] = getBlockAt(node, offset);
-  return getChildAt(blockNode, blockOffset);
+  const inline = getChildAt(blockNode, blockOffset);
+  if (inline) {
+    return [inline[0], inline[1]];
+  }
+  return null;
 };
 
 /**

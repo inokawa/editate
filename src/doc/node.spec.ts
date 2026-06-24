@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getChildAt, getNodeSize, sliceFragment } from "./node.js";
+import { getChildAt, getInlineAt, getNodeSize, sliceFragment } from "./node.js";
 import {
   type BlockNode,
   type DocNode,
@@ -118,6 +118,40 @@ describe(getChildAt.name, () => {
       const n = getChildAt(doc, offset);
       expect(fix(n)).toEqual(res);
     });
+  });
+});
+
+describe(getInlineAt.name, () => {
+  const t0 = "abcde";
+  const t1 = "fghij";
+  const t2 = "klmno";
+  const doc: DocNode = {
+    children: [
+      { children: [{ text: t0 }] },
+      { children: [{ text: t1 }] },
+      { children: [{ text: t2 }] },
+    ],
+  };
+  const n0 = { text: t0 };
+  const n1 = { text: t1 };
+  const n2 = { text: t2 };
+  it.each<[number, ReturnType<typeof getInlineAt>]>([
+    [0, [n0, 0]],
+    [1, [n0, 1]],
+    [t0.length - 1, [n0, t0.length - 1]],
+    [t0.length, null],
+    [t0.length + 1, [n1, 0]],
+    [t0.length + 2, [n1, 1]],
+    [t0.length + 1 + t1.length - 1, [n1, t1.length - 1]],
+    [t0.length + 1 + t1.length, null],
+    [t0.length + 1 + t1.length + 1, [n2, 0]],
+    [t0.length + 1 + t1.length + 2, [n2, 1]],
+    [t0.length + 1 + t1.length + 1 + t2.length - 1, [n2, t2.length - 1]],
+    [t0.length + 1 + t1.length + 1 + t2.length, null],
+    [t0.length + 1 + t1.length + 1 + t2.length + 1, null],
+  ])(`$0`, (offset, res) => {
+    const n = getInlineAt(doc, offset);
+    expect(n).toEqual(res);
   });
 });
 
