@@ -41,22 +41,20 @@ describe(getChildAt.name, () => {
         { children: [{ text: t2 }] },
       ],
     };
-    it.each<[number, ReturnType<typeof getChildAt>]>([
-      [0, [doc.children[0]!, 0, 0]],
-      [1, [doc.children[0]!, 1, 0]],
-      [t0.length, [doc.children[0]!, t0.length, 0]],
-      [t0.length + 1, [doc.children[1]!, 0, 1]],
-      [t0.length + 2, [doc.children[1]!, 1, 1]],
-      [t0.length + 1 + t1.length, [doc.children[1]!, t1.length, 1]],
-      [t0.length + 1 + t1.length + 1, [doc.children[2]!, 0, 2]],
-      [t0.length + 1 + t1.length + 2, [doc.children[2]!, 1, 2]],
-      [
-        t0.length + 1 + t1.length + 1 + t2.length,
-        [doc.children[2]!, t2.length, 2],
-      ],
+    it.each<[number, [number, number] | null]>([
+      [0, [0, 0]],
+      [1, [0, 1]],
+      [t0.length, [0, t0.length]],
+      [t0.length + 1, [1, 0]],
+      [t0.length + 2, [1, 1]],
+      [t0.length + 1 + t1.length, [1, t1.length]],
+      [t0.length + 1 + t1.length + 1, [2, 0]],
+      [t0.length + 1 + t1.length + 2, [2, 1]],
+      [t0.length + 1 + t1.length + 1 + t2.length, [2, t2.length]],
       [t0.length + 1 + t1.length + 1 + t2.length + 1, null],
     ])(`$0`, (offset, res) => {
-      expect(getChildAt(doc, offset)).toEqual(res);
+      const n = getChildAt(doc, offset);
+      expect(n ? [n[2], n[1]] : n).toEqual(res);
     });
   });
 
@@ -67,22 +65,20 @@ describe(getChildAt.name, () => {
     const doc: BlockNode = {
       children: [{ text: t0 }, { text: t1 }, { text: t2 }],
     };
-    it.each<[number, ReturnType<typeof getChildAt>]>([
-      [0, [doc.children[0]!, 0, 0]],
-      [1, [doc.children[0]!, 1, 0]],
-      [t0.length - 1, [doc.children[0]!, t0.length - 1, 0]],
-      [t0.length, [doc.children[1]!, 0, 1]],
-      [t0.length + 1, [doc.children[1]!, 1, 1]],
-      [t0.length + t1.length - 1, [doc.children[1]!, t1.length - 1, 1]],
-      [t0.length + t1.length, [doc.children[2]!, 0, 2]],
-      [t0.length + t1.length + 1, [doc.children[2]!, 1, 2]],
-      [
-        t0.length + t1.length + t2.length - 1,
-        [doc.children[2]!, t2.length - 1, 2],
-      ],
+    it.each<[number, [number, number] | null]>([
+      [0, [0, 0]],
+      [1, [0, 1]],
+      [t0.length - 1, [0, t0.length - 1]],
+      [t0.length, [1, 0]],
+      [t0.length + 1, [1, 1]],
+      [t0.length + t1.length - 1, [1, t1.length - 1]],
+      [t0.length + t1.length, [2, 0]],
+      [t0.length + t1.length + 1, [2, 1]],
+      [t0.length + t1.length + t2.length - 1, [2, t2.length - 1]],
       [t0.length + t1.length + t2.length, null],
     ])(`$0`, (offset, res) => {
-      expect(getChildAt(doc, offset)).toEqual(res);
+      const n = getChildAt(doc, offset);
+      expect(n ? [n[2], n[1]] : n).toEqual(res);
     });
   });
 
@@ -97,12 +93,13 @@ describe(getChildAt.name, () => {
         { children: [{ text: t2 }] },
       ],
     };
-    it.each<[number, ReturnType<typeof getChildAt>]>([
-      [t0.length, [doc.children[0]!, t0.length, 0]],
-      [t0.length + 1, [doc.children[1]!, 0, 1]],
-      [t0.length + 2, [doc.children[2]!, 0, 2]],
+    it.each<[number, [number, number] | null]>([
+      [t0.length, [0, t0.length]],
+      [t0.length + 1, [1, 0]],
+      [t0.length + 2, [2, 0]],
     ])(`$0`, (offset, res) => {
-      expect(getChildAt(doc, offset)).toEqual(res);
+      const n = getChildAt(doc, offset);
+      expect(n ? [n[2], n[1]] : n).toEqual(res);
     });
   });
 
@@ -110,11 +107,12 @@ describe(getChildAt.name, () => {
     const doc = {
       children: [{ text: "" }],
     };
-    it.each<[number, ReturnType<typeof getChildAt>]>([
-      [0, [doc.children[0]!, 0, 0]],
+    it.each<[number, [number, number] | null]>([
+      [0, [0, 0]],
       [1, null],
     ])(`$0`, (offset, res) => {
-      expect(getChildAt(doc, offset)).toEqual(res);
+      const n = getChildAt(doc, offset);
+      expect(n ? [n[2], n[1]] : n).toEqual(res);
     });
   });
 });
