@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { getChildAt, getInlineAt, getNodeSize, sliceFragment } from "./node.js";
+import {
+  getBlockAt,
+  getChildAt,
+  getInlineAt,
+  getNodeSize,
+  sliceFragment,
+} from "./node.js";
 import {
   type BlockNode,
   type DocNode,
@@ -35,9 +41,9 @@ describe(getChildAt.name, () => {
   };
 
   describe("block", () => {
-    const t0 = "abcde";
-    const t1 = "fghij";
-    const t2 = "klmno";
+    const t0 = "abcd";
+    const t1 = "efghi";
+    const t2 = "jklmno";
     const doc: DocNode = {
       children: [
         { children: [{ text: t0 }] },
@@ -63,9 +69,9 @@ describe(getChildAt.name, () => {
   });
 
   describe("inline", () => {
-    const t0 = "abcde";
-    const t1 = "fghij";
-    const t2 = "klmno";
+    const t0 = "abcd";
+    const t1 = "efghi";
+    const t2 = "jklmno";
     const doc: BlockNode = {
       children: [{ text: t0 }, { text: t1 }, { text: t2 }],
     };
@@ -87,9 +93,9 @@ describe(getChildAt.name, () => {
   });
 
   describe("empty block in children", () => {
-    const t0 = "abcde";
+    const t0 = "abcd";
     const t1 = "";
-    const t2 = "klmno";
+    const t2 = "jklmno";
     const doc: DocNode = {
       children: [
         { children: [{ text: t0 }] },
@@ -121,10 +127,47 @@ describe(getChildAt.name, () => {
   });
 });
 
+describe(getBlockAt.name, () => {
+  const t0 = "abcd";
+  const t1 = "efghi";
+  const t2 = "jklmno";
+  const doc: DocNode = {
+    children: [
+      { children: [{ text: t0 }] },
+      { children: [{ text: t1 }] },
+      { children: [{ text: t2 }] },
+    ],
+  };
+  const n0 = doc.children[0]!;
+  const n1 = doc.children[1]!;
+  const n2 = doc.children[2]!;
+  it.each<[number, [Node, number]]>([
+    [0, [n0, 0]],
+    [1, [n0, 1]],
+    [t0.length - 1, [n0, t0.length - 1]],
+    [t0.length, [n0, t0.length]],
+    [t0.length + 1, [n1, 0]],
+    [t0.length + 2, [n1, 1]],
+    [t0.length + 1 + t1.length - 1, [n1, t1.length - 1]],
+    [t0.length + 1 + t1.length, [n1, t1.length]],
+    [t0.length + 1 + t1.length + 1, [n2, 0]],
+    [t0.length + 1 + t1.length + 2, [n2, 1]],
+    [t0.length + 1 + t1.length + 1 + t2.length - 1, [n2, t2.length - 1]],
+    [t0.length + 1 + t1.length + 1 + t2.length, [n2, t2.length]],
+    [
+      t0.length + 1 + t1.length + 1 + t2.length + 1,
+      [doc, t0.length + 1 + t1.length + 1 + t2.length + 1],
+    ],
+  ])(`$0`, (offset, res) => {
+    const n = getBlockAt(doc, offset);
+    expect([n[0], n[1]]).toEqual(res);
+  });
+});
+
 describe(getInlineAt.name, () => {
-  const t0 = "abcde";
-  const t1 = "fghij";
-  const t2 = "klmno";
+  const t0 = "abcd";
+  const t1 = "efghi";
+  const t2 = "jklmno";
   const doc: DocNode = {
     children: [
       { children: [{ text: t0 }] },
@@ -156,9 +199,9 @@ describe(getInlineAt.name, () => {
 });
 
 describe(sliceFragment.name, () => {
-  const t0 = "abcde";
-  const t1 = "fghij";
-  const t2 = "klmno";
+  const t0 = "abcd";
+  const t1 = "efghi";
+  const t2 = "jklmno";
   const doc: DocNode = {
     children: [
       { children: [{ text: t0 }] },
