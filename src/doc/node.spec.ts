@@ -30,6 +30,10 @@ describe(getNodeSize.name, () => {
 });
 
 describe(getChildAt.name, () => {
+  const fix = (r: ReturnType<typeof getChildAt>): [number, number] | null => {
+    return r ? [r[2], r[1]] : r;
+  };
+
   describe("block", () => {
     const t0 = "abcde";
     const t1 = "fghij";
@@ -54,7 +58,7 @@ describe(getChildAt.name, () => {
       [t0.length + 1 + t1.length + 1 + t2.length + 1, null],
     ])(`$0`, (offset, res) => {
       const n = getChildAt(doc, offset);
-      expect(n ? [n[2], n[1]] : n).toEqual(res);
+      expect(fix(n)).toEqual(res);
     });
   });
 
@@ -78,7 +82,7 @@ describe(getChildAt.name, () => {
       [t0.length + t1.length + t2.length, null],
     ])(`$0`, (offset, res) => {
       const n = getChildAt(doc, offset);
-      expect(n ? [n[2], n[1]] : n).toEqual(res);
+      expect(fix(n)).toEqual(res);
     });
   });
 
@@ -99,7 +103,7 @@ describe(getChildAt.name, () => {
       [t0.length + 2, [2, 0]],
     ])(`$0`, (offset, res) => {
       const n = getChildAt(doc, offset);
-      expect(n ? [n[2], n[1]] : n).toEqual(res);
+      expect(fix(n)).toEqual(res);
     });
   });
 
@@ -112,7 +116,7 @@ describe(getChildAt.name, () => {
       [1, null],
     ])(`$0`, (offset, res) => {
       const n = getChildAt(doc, offset);
-      expect(n ? [n[2], n[1]] : n).toEqual(res);
+      expect(fix(n)).toEqual(res);
     });
   });
 });
