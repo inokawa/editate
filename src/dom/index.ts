@@ -50,54 +50,65 @@ export const getSelectionRangeInEditor = (
   }
 };
 
+export const selectionToRange = (
+  root: Element,
+  parse: Parser,
+  [anchor, focus]: SelectionSnapshot,
+  posDiff: number, // TODO remove
+): Range => {
+  const document = getCurrentDocument(root);
+  const isCollapsed = posDiff === 0;
+  const backward = posDiff > 0;
+  const start = backward ? focus : anchor;
+  const end = backward ? anchor : focus;
+
+  const domStart = findPosition(root, parse, start);
+  const domEnd = isCollapsed ? domStart : findPosition(root, parse, end);
+
+  const range = document.createRange();
+
+  const [startNode, startOffset] = domStart;
+  const [endNode, endOffset] = domEnd;
+
+  // embed or br
+  if (isElementNode(startNode) && root !== startNode) {
+    if (startOffset < 1) {
+      range.setStartBefore(startNode);
+    } else {
+      range.setStartAfter(startNode);
+    }
+  } else {
+    range.setStart(startNode, startOffset);
+  }
+
+  // embed or br
+  if (isElementNode(endNode) && root !== endNode) {
+    if (endOffset < 1) {
+      range.setEndBefore(endNode);
+    } else {
+      range.setEndAfter(endNode);
+    }
+  } else {
+    range.setEnd(endNode, endOffset);
+  }
+  return range;
+};
+
 /**
  * @internal
  */
 export const setSelectionToDOM = (
-  document: Document,
   root: Element,
   parse: Parser,
-  [anchor, focus]: SelectionSnapshot,
+  sel: SelectionSnapshot,
   posDiff: number, // TODO remove
   force?: boolean,
 ): void => {
   const selection = getDOMSelection(root);
 
   if (force || getSelectionRangeInEditor(selection, root)) {
-    const isCollapsed = posDiff === 0;
+    const range = selectionToRange(root, parse, sel, posDiff);
     const backward = posDiff > 0;
-    const start = backward ? focus : anchor;
-    const end = backward ? anchor : focus;
-
-    const domStart = findPosition(root, parse, start);
-    const domEnd = isCollapsed ? domStart : findPosition(root, parse, end);
-
-    const range = document.createRange();
-
-    const [startNode, startOffset] = domStart;
-    const [endNode, endOffset] = domEnd;
-
-    // embed or br
-    if (isElementNode(startNode) && root !== startNode) {
-      if (startOffset < 1) {
-        range.setStartBefore(startNode);
-      } else {
-        range.setStartAfter(startNode);
-      }
-    } else {
-      range.setStart(startNode, startOffset);
-    }
-
-    // embed or br
-    if (isElementNode(endNode) && root !== endNode) {
-      if (endOffset < 1) {
-        range.setEndBefore(endNode);
-      } else {
-        range.setEndAfter(endNode);
-      }
-    } else {
-      range.setEnd(endNode, endOffset);
-    }
 
     selection.removeAllRanges();
     selection.addRange(range);
