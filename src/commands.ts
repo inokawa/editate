@@ -1,16 +1,16 @@
-import { isCollapsed, toRange } from "./doc/position.js";
+import { isCollapsed, hasIntersection, toRange } from "./doc/position.js";
 import {
   getBlockAt,
   getInlineAt,
+  getNodeSize,
   isTextNode,
-  sliceFragment,
+  iterText,
 } from "./doc/node.js";
 import type { Editor } from "./editor.js";
 import type {
   DocNode,
   InferBlockNode,
   InferInlineNode,
-  InlineNode,
   Range,
   TextNode,
 } from "./doc/types.js";
@@ -105,27 +105,36 @@ export function ToggleFormat<T extends DocNode>(
   key: Extract<ToggleableKey<Omit<InferInlineNode<T>, "text">>, string>,
   range: Range = toRange(editor.selection),
 ) {
-  // TODO improve
-  let inlines: InlineNode[];
+  let hasText = false;
+  let inlines: Iterable<[TextNode, number]>;
   if (isCollapsed(range)) {
-    const inline = getInlineAt(editor.doc, range[0]);
-    if (inline) {
-      inlines = [inline[0]];
+    const inline = getInlineAt(editor.doc, range[0])?.[0];
+    if (inline && isTextNode(inline)) {
+      inlines = [[inline, range[0]]];
     } else {
       return;
     }
   } else {
-    inlines = sliceFragment(editor.doc, ...range).flatMap((n) => n.children);
+    inlines = iterText(editor.doc, ...range);
   }
 
-  const texts = inlines.filter(isTextNode);
+  let shouldFormat = false;
+  for (const [n, o] of inlines) {
+    if (hasIntersection(range, [o, o + getNodeSize(n)])) {
+      hasText = true;
+      if (!n[key as keyof typeof n]) {
+        shouldFormat = true;
+        break;
+      }
+    }
+  }
 
-  if (texts.length) {
+  if (hasText) {
     editor.apply({
       type: "format",
       range,
       key,
-      value: texts.some((n) => !n[key as keyof typeof n]) ? true : false,
+      value: shouldFormat,
     });
   }
 }
