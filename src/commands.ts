@@ -105,21 +105,17 @@ export function ToggleFormat<T extends DocNode>(
   key: Extract<ToggleableKey<Omit<InferInlineNode<T>, "text">>, string>,
   range: Range = toRange(editor.selection),
 ) {
+  let shouldFormat = false;
+
   if (isCollapsed(range)) {
     const n = getInlineAt(editor.doc, range[0])?.[0];
     if (n && isTextNode(n)) {
-      editor.apply({
-        type: "format",
-        range,
-        key,
-        value: !n[key as keyof typeof n],
-      });
+      shouldFormat = !n[key as keyof typeof n];
     } else {
       return;
     }
   } else {
     let hasText = false;
-    let shouldFormat = false;
     for (const [n, o] of iterText(editor.doc, ...range)) {
       if (hasIntersection(range, [o, o + getNodeSize(n)])) {
         hasText = true;
@@ -130,15 +126,17 @@ export function ToggleFormat<T extends DocNode>(
       }
     }
 
-    if (hasText) {
-      editor.apply({
-        type: "format",
-        range,
-        key,
-        value: shouldFormat,
-      });
+    if (!hasText) {
+      return;
     }
   }
+
+  editor.apply({
+    type: "format",
+    range,
+    key,
+    value: shouldFormat,
+  });
 }
 
 /**
