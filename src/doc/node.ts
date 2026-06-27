@@ -212,6 +212,58 @@ export const selectionToDomSelection = (
 /**
  * @internal
  */
+export function* iterNode<T extends Node>(
+  node: T,
+  start: number,
+  end: number,
+): Generator<[node: Node, offset: number], void, void> {
+  if (start >= end) {
+    return;
+  }
+  if (!isBlockNode(node)) {
+    return;
+  }
+  const res = getChildAt(node, start);
+  if (res) {
+    let offset = start - res[1];
+    let i = res[2];
+    const children = node.children;
+    const length = children.length;
+    while (offset <= end && i < length) {
+      const targetNode = children[i]!;
+      yield [targetNode, offset];
+
+      const size = getNodeSize(targetNode);
+      for (const r of iterNode(targetNode, 0, size)) {
+        yield [r[0], r[1] + offset];
+      }
+      i++;
+      offset += size;
+      if (isBlockNode(targetNode)) {
+        offset++;
+      }
+    }
+  }
+}
+
+/**
+ * @internal
+ */
+export function* iterText<T extends Node>(
+  node: T,
+  start: number,
+  end: number,
+): Generator<[node: TextNode, offset: number], void, void> {
+  for (const n of iterNode(node, start, end)) {
+    if (isTextNode(n[0])) {
+      yield n as [TextNode, number];
+    }
+  }
+}
+
+/**
+ * @internal
+ */
 export const sliceFragment = <T extends DocNode>(
   doc: T,
   start: number,

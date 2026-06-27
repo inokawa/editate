@@ -4,6 +4,8 @@ import {
   getChildAt,
   getInlineAt,
   getNodeSize,
+  iterNode,
+  iterText,
   sliceFragment,
 } from "./node.js";
 import {
@@ -11,8 +13,16 @@ import {
   type DocNode,
   type Fragment,
   type Node,
+  type Path,
   type Range,
 } from "./types.js";
+
+const nodeAtPath = (node: DocNode | BlockNode, path: Path): Node => {
+  for (let i = 0; i < path.length; i++) {
+    node = node.children[path[i]!]! as BlockNode; // TODO improve
+  }
+  return node;
+};
 
 describe(getNodeSize.name, () => {
   it.each<[Node, number]>([
@@ -138,9 +148,9 @@ describe(getBlockAt.name, () => {
       { children: [{ text: t2 }] },
     ],
   };
-  const n0 = doc.children[0]!;
-  const n1 = doc.children[1]!;
-  const n2 = doc.children[2]!;
+  const n0 = nodeAtPath(doc, [0]);
+  const n1 = nodeAtPath(doc, [1]);
+  const n2 = nodeAtPath(doc, [2]);
   it.each<[number, [Node, number]]>([
     [0, [n0, 0]],
     [1, [n0, 1]],
@@ -175,9 +185,9 @@ describe(getInlineAt.name, () => {
       { children: [{ text: t2 }] },
     ],
   };
-  const n0 = { text: t0 };
-  const n1 = { text: t1 };
-  const n2 = { text: t2 };
+  const n0 = nodeAtPath(doc, [0, 0]);
+  const n1 = nodeAtPath(doc, [1, 0]);
+  const n2 = nodeAtPath(doc, [2, 0]);
   it.each<[number, ReturnType<typeof getInlineAt>]>([
     [0, [n0, 0]],
     [1, [n0, 1]],
@@ -195,6 +205,197 @@ describe(getInlineAt.name, () => {
   ])(`$0`, (offset, res) => {
     const n = getInlineAt(doc, offset);
     expect(n).toEqual(res);
+  });
+});
+
+describe(iterNode.name, () => {
+  const t0 = "abcd";
+  const t1 = "efghi";
+  const t2 = "jklmno";
+  const doc: DocNode = {
+    children: [
+      { children: [{ text: t0 }] },
+      { children: [{ text: t1 }] },
+      { children: [{ text: t2 }] },
+    ],
+  };
+  const n0 = nodeAtPath(doc, [0]);
+  const n00 = nodeAtPath(doc, [0, 0]);
+  const n1 = nodeAtPath(doc, [1]);
+  const n10 = nodeAtPath(doc, [1, 0]);
+  const n2 = nodeAtPath(doc, [2]);
+  const n20 = nodeAtPath(doc, [2, 0]);
+
+  it.each<[Range, [Node, number][]]>([
+    [[1, 0], []],
+    [[1, 1], []],
+    [[0, 0], []],
+    [
+      [0, 1],
+      [
+        [n0, 0],
+        [n00, 0],
+      ],
+    ],
+    [
+      [0, t0.length],
+      [
+        [n0, 0],
+        [n00, 0],
+      ],
+    ],
+    [
+      [0, t0.length + 1],
+      [
+        [n0, 0],
+        [n00, 0],
+        [n1, t0.length + 1],
+        [n10, t0.length + 1],
+      ],
+    ],
+    [
+      [0, t0.length + 2],
+      [
+        [n0, 0],
+        [n00, 0],
+        [n1, t0.length + 1],
+        [n10, t0.length + 1],
+      ],
+    ],
+    [
+      [0, t0.length + 1 + t1.length],
+      [
+        [n0, 0],
+        [n00, 0],
+        [n1, t0.length + 1],
+        [n10, t0.length + 1],
+      ],
+    ],
+    [
+      [0, t0.length + 1 + t1.length + 1],
+      [
+        [n0, 0],
+        [n00, 0],
+        [n1, t0.length + 1],
+        [n10, t0.length + 1],
+        [n2, t0.length + 1 + t1.length + 1],
+        [n20, t0.length + 1 + t1.length + 1],
+      ],
+    ],
+    [
+      [0, t0.length + 1 + t1.length + 2],
+      [
+        [n0, 0],
+        [n00, 0],
+        [n1, t0.length + 1],
+        [n10, t0.length + 1],
+        [n2, t0.length + 1 + t1.length + 1],
+        [n20, t0.length + 1 + t1.length + 1],
+      ],
+    ],
+    [
+      [0, t0.length + 1 + t1.length + 1 + t2.length],
+      [
+        [n0, 0],
+        [n00, 0],
+        [n1, t0.length + 1],
+        [n10, t0.length + 1],
+        [n2, t0.length + 1 + t1.length + 1],
+        [n20, t0.length + 1 + t1.length + 1],
+      ],
+    ],
+    [
+      [0, Infinity],
+      [
+        [n0, 0],
+        [n00, 0],
+        [n1, t0.length + 1],
+        [n10, t0.length + 1],
+        [n2, t0.length + 1 + t1.length + 1],
+        [n20, t0.length + 1 + t1.length + 1],
+      ],
+    ],
+  ])(`$0`, (range, res) => {
+    expect([...iterNode(doc, ...range)]).toEqual(res);
+  });
+});
+
+describe(iterText.name, () => {
+  const t0 = "abcd";
+  const t1 = "efghi";
+  const t2 = "jklmno";
+  const doc: DocNode = {
+    children: [
+      { children: [{ text: t0 }] },
+      { children: [{ text: t1 }] },
+      { children: [{ text: t2 }] },
+    ],
+  };
+  const n0 = nodeAtPath(doc, [0, 0]);
+  const n1 = nodeAtPath(doc, [1, 0]);
+  const n2 = nodeAtPath(doc, [2, 0]);
+
+  it.each<[Range, [Node, number][]]>([
+    [[1, 0], []],
+    [[1, 1], []],
+    [[0, 0], []],
+    [[0, 1], [[n0, 0]]],
+    [[0, t0.length], [[n0, 0]]],
+    [
+      [0, t0.length + 1],
+      [
+        [n0, 0],
+        [n1, t0.length + 1],
+      ],
+    ],
+    [
+      [0, t0.length + 2],
+      [
+        [n0, 0],
+        [n1, t0.length + 1],
+      ],
+    ],
+    [
+      [0, t0.length + 1 + t1.length],
+      [
+        [n0, 0],
+        [n1, t0.length + 1],
+      ],
+    ],
+    [
+      [0, t0.length + 1 + t1.length + 1],
+      [
+        [n0, 0],
+        [n1, t0.length + 1],
+        [n2, t0.length + 1 + t1.length + 1],
+      ],
+    ],
+    [
+      [0, t0.length + 1 + t1.length + 2],
+      [
+        [n0, 0],
+        [n1, t0.length + 1],
+        [n2, t0.length + 1 + t1.length + 1],
+      ],
+    ],
+    [
+      [0, t0.length + 1 + t1.length + 1 + t2.length],
+      [
+        [n0, 0],
+        [n1, t0.length + 1],
+        [n2, t0.length + 1 + t1.length + 1],
+      ],
+    ],
+    [
+      [0, Infinity],
+      [
+        [n0, 0],
+        [n1, t0.length + 1],
+        [n2, t0.length + 1 + t1.length + 1],
+      ],
+    ],
+  ])(`$0`, (range, res) => {
+    expect([...iterText(doc, ...range)]).toEqual(res);
   });
 });
 
