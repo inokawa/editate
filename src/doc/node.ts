@@ -101,7 +101,7 @@ export const getBlockAt = (
 /**
  * @internal
  */
-export const getInlineAt = (
+export const getLeafAt = (
   node: DocNode | BlockNode,
   offset: number,
 ): [node: InlineNode, offset: number] | null => {

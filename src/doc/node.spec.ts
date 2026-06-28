@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getBlockAt,
   getChildAt,
-  getInlineAt,
+  getLeafAt,
   getNodeSize,
   iterNode,
   iterLeaf,
@@ -174,7 +174,7 @@ describe(getBlockAt.name, () => {
   });
 });
 
-describe(getInlineAt.name, () => {
+describe(getLeafAt.name, () => {
   const t0 = "abcd";
   const t1 = "efghi";
   const t2 = "jklmno";
@@ -188,7 +188,7 @@ describe(getInlineAt.name, () => {
   const n0 = nodeAtPath(doc, [0, 0]);
   const n1 = nodeAtPath(doc, [1, 0]);
   const n2 = nodeAtPath(doc, [2, 0]);
-  it.each<[number, ReturnType<typeof getInlineAt>]>([
+  it.each<[number, ReturnType<typeof getLeafAt>]>([
     [0, [n0, 0]],
     [1, [n0, 1]],
     [t0.length - 1, [n0, t0.length - 1]],
@@ -203,7 +203,7 @@ describe(getInlineAt.name, () => {
     [t0.length + 1 + t1.length + 1 + t2.length, null],
     [t0.length + 1 + t1.length + 1 + t2.length + 1, null],
   ])(`$0`, (offset, res) => {
-    const n = getInlineAt(doc, offset);
+    const n = getLeafAt(doc, offset);
     expect(n).toEqual(res);
   });
 });

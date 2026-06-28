@@ -1,7 +1,7 @@
 import { isCollapsed, hasIntersection, toRange } from "./doc/position.js";
 import {
   getBlockAt,
-  getInlineAt,
+  getLeafAt,
   getNodeSize,
   isTextNode,
   iterLeaf,
@@ -108,7 +108,7 @@ export function ToggleFormat<T extends DocNode>(
   let shouldFormat = false;
 
   if (isCollapsed(range)) {
-    const n = getInlineAt(editor.doc, range[0])?.[0];
+    const n = getLeafAt(editor.doc, range[0])?.[0];
     if (n && isTextNode(n)) {
       shouldFormat = !n[key as keyof typeof n];
     } else {
