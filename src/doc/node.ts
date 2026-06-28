@@ -249,14 +249,14 @@ export function* iterNode<T extends Node>(
 /**
  * @internal
  */
-export function* iterText<T extends Node>(
+export function* iterLeaf<T extends Node>(
   node: T,
   start: number,
   end: number,
-): Generator<[node: TextNode, offset: number], void, void> {
+): Generator<[node: InlineNode, offset: number], void, void> {
   for (const n of iterNode(node, start, end)) {
-    if (isTextNode(n[0])) {
-      yield n as [TextNode, number];
+    if (!isBlockNode(n[0])) {
+      yield n as [InlineNode, number];
     }
   }
 }

@@ -4,7 +4,7 @@ import {
   getInlineAt,
   getNodeSize,
   isTextNode,
-  iterText,
+  iterLeaf,
 } from "./doc/node.js";
 import type { Editor } from "./editor.js";
 import type {
@@ -116,8 +116,8 @@ export function ToggleFormat<T extends DocNode>(
     }
   } else {
     let hasText = false;
-    for (const [n, o] of iterText(editor.doc, ...range)) {
-      if (hasIntersection(range, [o, o + getNodeSize(n)])) {
+    for (const [n, o] of iterLeaf(editor.doc, ...range)) {
+      if (hasIntersection(range, [o, o + getNodeSize(n)]) && isTextNode(n)) {
         hasText = true;
         if (!n[key as keyof typeof n]) {
           shouldFormat = true;

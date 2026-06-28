@@ -5,7 +5,7 @@ import {
   getInlineAt,
   getNodeSize,
   iterNode,
-  iterText,
+  iterLeaf,
   sliceFragment,
 } from "./node.js";
 import {
@@ -320,7 +320,7 @@ describe(iterNode.name, () => {
   });
 });
 
-describe(iterText.name, () => {
+describe(iterLeaf.name, () => {
   const t0 = "abcd";
   const t1 = "efghi";
   const t2 = "jklmno";
@@ -395,7 +395,7 @@ describe(iterText.name, () => {
       ],
     ],
   ])(`$0`, (range, res) => {
-    expect([...iterText(doc, ...range)]).toEqual(res);
+    expect([...iterLeaf(doc, ...range)]).toEqual(res);
   });
 });
 
