@@ -751,3 +751,89 @@ export const Ruby: StoryObj = {
     );
   },
 };
+
+const inputSchema = v.strictObject({
+  children: v.array(
+    v.strictObject({
+      children: v.array(
+        v.union([
+          v.strictObject({
+            text: v.string(),
+          }),
+          v.strictObject({
+            type: v.literal("input"),
+            value: v.string(),
+          }),
+        ]),
+      ),
+    }),
+  ),
+});
+
+export const Input: StoryObj = {
+  render: () => {
+    const ref = useRef<HTMLDivElement>(null);
+
+    type Doc = v.InferOutput<typeof inputSchema>;
+    const [doc, setDoc] = useState<Doc>({
+      children: [
+        {
+          children: [
+            {
+              text: "Hello ",
+            },
+            {
+              type: "input",
+              value: "123",
+            },
+            {
+              text: "world.",
+            },
+          ],
+        },
+      ],
+    });
+
+    const editor = useMemo(() => {
+      const e = createEditor({
+        doc: doc,
+        schema: inputSchema,
+      }).exec(plainTransferPlugin, {
+        serializer: (n) => ("text" in n ? n.text : n.value),
+      });
+      e.on("change", () => {
+        setDoc(e.doc);
+      });
+      return e;
+    }, []);
+
+    useEffect(() => {
+      if (!ref.current) return;
+      return editor.input(ref.current);
+    }, []);
+
+    return (
+      <div>
+        <div
+          ref={ref}
+          style={{
+            backgroundColor: "white",
+            padding: 8,
+          }}
+        >
+          {doc.children.map((b, i) => (
+            <div key={i}>
+              {b.children.map((t, j) =>
+                "text" in t ? (
+                  <span key={j}>{t.text || <br />}</span>
+                ) : (
+                  <input key={j} defaultValue={t.value} />
+                ),
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  },
+};
