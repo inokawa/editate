@@ -648,7 +648,7 @@ export const createEditor = <
 
       const onSelectionChange = () => {
         // Safari may dispatch selectionchange event after dragstart
-        if (hasFocus && !isComposing && !isDragging) {
+        if (hasFocus && !isDragging) {
           syncSelection();
         }
       };
