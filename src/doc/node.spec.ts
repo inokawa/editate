@@ -341,7 +341,7 @@ describe(getLeafAt.name, () => {
   const t0s = t0.length;
   const t1s = t1.length;
   const t2s = t2.length;
-  it.each<[number, ReturnType<typeof getLeafAt>]>([
+  it.each<[number, [Node, number] | null]>([
     [0, [n0, 0]],
     [1, [n0, 1]],
     [t0s - 1, [n0, t0s - 1]],
@@ -357,7 +357,7 @@ describe(getLeafAt.name, () => {
     [t0s + 1 + t1s + 1 + t2s + 1, null],
   ])(`$0`, (offset, res) => {
     const n = getLeafAt(doc, offset);
-    expect(n).toEqual(res);
+    expect(n && [n[0], n[1]]).toEqual(res);
   });
 });
 

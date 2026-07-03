@@ -116,11 +116,12 @@ export const getLeafAt = (
   node: DocNode | BlockNode,
   offset: number,
   isBackwardAffinity?: boolean,
-): [node: InlineNode, offset: number] | null => {
-  const [blockNode, blockOffset] = getBlockAt(node, offset);
+): [node: InlineNode, offset: number, path: Path] | null => {
+  const [blockNode, blockOffset, path] = getBlockAt(node, offset);
   const inline = getChildAt(blockNode, blockOffset, isBackwardAffinity);
   if (inline) {
-    return [inline[0], inline[1]];
+    (path as number[]).push(inline[2]);
+    return [inline[0], inline[1], path];
   }
   return null;
 };
