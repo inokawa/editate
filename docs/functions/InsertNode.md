@@ -6,7 +6,7 @@
 
 > **InsertNode**\<`T`\>(`editor`, `node`, `position?`): `void`
 
-Defined in: [commands.ts:42](https://github.com/inokawa/editate/blob/3570f29556b1df8ef9302ca8b08012a032554651/src/commands.ts#L42)
+Defined in: [commands.ts:41](https://github.com/inokawa/editate/blob/0810ace32d66275e904514e9febc6b53ae2e180f/src/commands.ts#L41)
 
 Insert node at the caret or specified position.
 
@@ -24,7 +24,7 @@ Insert node at the caret or specified position.
 
 ### node
 
-`Exclude`\<`InferInlineNode`\<`T`\>, `TextNode`\>
+[`InferVoidNode`](../type-aliases/InferVoidNode.md)\<`T`\>
 
 ### position?
 

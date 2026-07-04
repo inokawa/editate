@@ -37,5 +37,9 @@
 
 ## Type Aliases
 
+- [InferBlockNode](type-aliases/InferBlockNode.md)
+- [InferInlineNode](type-aliases/InferInlineNode.md)
+- [InferVoidNode](type-aliases/InferVoidNode.md)
+- [InferTextNode](type-aliases/InferTextNode.md)
 - [Operation](type-aliases/Operation.md)
 - [EditorContext](type-aliases/EditorContext.md)

@@ -6,7 +6,7 @@
 
 > **Format**\<`T`, `N`, `K`\>(`editor`, `key`, `value`, `range?`): `void`
 
-Defined in: [commands.ts:87](https://github.com/inokawa/editate/blob/3570f29556b1df8ef9302ca8b08012a032554651/src/commands.ts#L87)
+Defined in: [commands.ts:86](https://github.com/inokawa/editate/blob/0810ace32d66275e904514e9febc6b53ae2e180f/src/commands.ts#L86)
 
 Format content in the selection or specified range.
 
@@ -18,7 +18,7 @@ Format content in the selection or specified range.
 
 ### N
 
-`N` *extends* `Omit`\<`InferInlineNode`\<`T`\>, `"text"`\>
+`N` *extends* `Omit`\<[`InferTextNode`](../type-aliases/InferTextNode.md)\<`T`\>, `"text"`\>
 
 ### K
 

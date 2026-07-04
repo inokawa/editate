@@ -6,7 +6,7 @@
 
 > **Undo**(`editor`): `void`
 
-Defined in: [plugins/history.ts:111](https://github.com/inokawa/editate/blob/3570f29556b1df8ef9302ca8b08012a032554651/src/plugins/history.ts#L111)
+Defined in: [plugins/history.ts:111](https://github.com/inokawa/editate/blob/0810ace32d66275e904514e9febc6b53ae2e180f/src/plugins/history.ts#L111)
 
 Undos the last edit.
 
