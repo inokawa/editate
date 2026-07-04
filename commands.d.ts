@@ -1,5 +1,6 @@
 import { Editor } from './editor.js';
-import { DocNode, InferBlockNode, InferInlineNode, Range, TextNode } from './doc/types.js';
+import { DocNode, Range } from './doc/types.js';
+import { InferBlockNode, InferTextNode, InferVoidNode } from './doc/types-infer.js';
 /**
  * Delete content in the selection or specified range.
  */
@@ -11,7 +12,7 @@ export declare function InsertText(editor: Editor, text: string, position?: numb
 /**
  * Insert node at the caret or specified position.
  */
-export declare function InsertNode<T extends DocNode>(editor: Editor<T>, node: Exclude<InferInlineNode<T>, TextNode>, position?: number): void;
+export declare function InsertNode<T extends DocNode>(editor: Editor<T>, node: InferVoidNode<T>, position?: number): void;
 /**
  * Replace text in the selection or specified range.
  */
@@ -26,11 +27,11 @@ type ToggleableKey<T> = {
 /**
  * Format content in the selection or specified range.
  */
-export declare function Format<T extends DocNode, N extends Omit<InferInlineNode<T>, "text">, K extends Extract<keyof N, string>>(editor: Editor<T>, key: K, value: N[K], range?: Range): void;
+export declare function Format<T extends DocNode, N extends Omit<InferTextNode<T>, "text">, K extends Extract<keyof N, string>>(editor: Editor<T>, key: K, value: N[K], range?: Range): void;
 /**
  * Toggle formatting in the selection or specified range.
  */
-export declare function ToggleFormat<T extends DocNode>(editor: Editor<T>, key: Extract<ToggleableKey<Omit<InferInlineNode<T>, "text">>, string>, range?: Range): void;
+export declare function ToggleFormat<T extends DocNode>(editor: Editor<T>, key: Extract<ToggleableKey<Omit<InferTextNode<T>, "text">>, string>, range?: Range): void;
 /**
  * Set attr to a block node at the caret or specified position.
  */

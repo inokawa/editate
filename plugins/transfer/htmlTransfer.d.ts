@@ -1,5 +1,6 @@
 import { Editor } from '../../editor.js';
-import { DocNode, InferInlineNode, TextNode } from '../../doc/types.js';
+import { DocNode, TextNode } from '../../doc/types.js';
+import { InferInlineNode } from '../../doc/types-infer.js';
 type HtmlSerializers<T extends DocNode> = Partial<{
     [key in keyof HTMLElementTagNameMap]: (node: HTMLElementTagNameMap[key]) => Exclude<InferInlineNode<T>, TextNode> | void;
 }> & {

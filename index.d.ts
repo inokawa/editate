@@ -1,4 +1,5 @@
 export type { Operation } from './doc/operation.js';
+export type * from './doc/types-infer.js';
 export { Delete, InsertText, InsertNode, ReplaceText, ReplaceDoc, Format, ToggleFormat, SetBlockAttr, ToggleBlockAttr, } from './commands.js';
 export { createEditor } from './editor.js';
 export type { EditorOptions, Editor, EditorContext } from './editor.js';
