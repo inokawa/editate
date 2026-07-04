@@ -3054,7 +3054,7 @@ describe("patch node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "patch_node",
       path: [0, 0],
@@ -3081,7 +3081,6 @@ describe("patch node", () => {
   });
 
   it("update void node", () => {
-    const docText = "abcde";
     const docText2 = "fghij";
     const doc = {
       children: [
@@ -3089,7 +3088,7 @@ describe("patch node", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
-    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
+    const sel: Selection = [2, 2];
     const res = applyOperation(doc, sel, {
       type: "patch_node",
       path: [0, 0],
