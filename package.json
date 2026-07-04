@@ -21,7 +21,7 @@
   "scripts": {
     "build": "vite build",
     "tsc": "tsc -p . --noEmit",
-    "test": "vitest --run",
+    "test": "vitest --run --typecheck",
     "format": "prettier '**/*.{js,ts,jsx,tsx}' --write --cache",
     "format:ci": "prettier '**/*.{js,ts,jsx,tsx}' -l",
     "storybook": "storybook dev -p 6006",

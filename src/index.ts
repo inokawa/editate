@@ -1,4 +1,5 @@
 export type { Operation } from "./doc/operation.js";
+export type * from "./doc/types-infer.js";
 export {
   Delete,
   InsertText,
