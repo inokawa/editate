@@ -3085,7 +3085,7 @@ describe("patch node", () => {
     const docText2 = "fghij";
     const doc = {
       children: [
-        { attr: 0, children: [{ foo: "baz" }] },
+        { attr: 0, children: [{ attr: 0, foo: "baz" }] },
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     };
@@ -3101,11 +3101,7 @@ describe("patch node", () => {
       children: [
         {
           attr: 0,
-          children: [
-            {
-              foo: "bar",
-            },
-          ],
+          children: [{ attr: 0, foo: "bar" }],
         },
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
