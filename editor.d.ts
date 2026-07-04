@@ -85,8 +85,8 @@ export interface Editor<T extends DocNode = DocNode> {
      * @param fn {@link EditorCommandOrPlugin} or {@link EditorQuery}
      * @param args arguments of the function
      */
-    exec<A extends unknown[]>(fn: EditorCommandOrPlugin<A, T>, ...args: A): this;
-    exec<A extends unknown[], V>(fn: EditorQuery<A, V, T>, ...args: A): V;
+    exec<const A extends unknown[]>(fn: EditorCommandOrPlugin<A, T>, ...args: A): this;
+    exec<const A extends unknown[], V>(fn: EditorQuery<A, V, T>, ...args: A): V;
     /**
      * A function to subscribe editor events.
      * @returns cleanup function
