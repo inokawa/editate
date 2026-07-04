@@ -1,5 +1,6 @@
 import { expectTypeOf, it } from "vitest";
 import type {
+  InferBlockNode,
   InferInlineNode,
   InferTextNode,
   InferVoidNode,
@@ -9,6 +10,10 @@ it("text", () => {
   type Doc = {
     children: { children: { text: string }[] }[];
   };
+  expectTypeOf({ children: [{ children: [{ text: "abc" }] }] }).toExtend<
+    InferBlockNode<Doc>
+  >();
+  expectTypeOf({ children: [{ text: "abc" }] }).toExtend<InferBlockNode<Doc>>();
   expectTypeOf({ text: "abc" }).toExtend<InferInlineNode<Doc>>();
   expectTypeOf({ text: "abc" }).toExtend<InferTextNode<Doc>>();
   expectTypeOf({ text: "abc" }).not.toExtend<InferVoidNode<Doc>>();
@@ -21,6 +26,10 @@ it("text and void", () => {
   type Doc = {
     children: { children: ({ text: string } | { foo: string })[] }[];
   };
+  expectTypeOf({ children: [{ children: [{ text: "abc" }] }] }).toExtend<
+    InferBlockNode<Doc>
+  >();
+  expectTypeOf({ children: [{ text: "abc" }] }).toExtend<InferBlockNode<Doc>>();
   expectTypeOf({ text: "abc" }).toExtend<InferInlineNode<Doc>>();
   expectTypeOf({ text: "abc" }).toExtend<InferTextNode<Doc>>();
   expectTypeOf({ text: "abc" }).not.toExtend<InferVoidNode<Doc>>();
