@@ -8,4 +8,11 @@ export type InferInlineNode<T extends Node> = Flatten<T extends {
 } ? InferInlineNode<N> : T>;
 export type InferVoidNode<T extends DocNode> = Exclude<InferInlineNode<T>, TextNode>;
 export type InferTextNode<T extends DocNode> = Extract<InferInlineNode<T>, TextNode>;
+type FlattenAllNodes<T extends Node> = T extends any ? T | (T extends {
+    children: readonly (infer N extends Node)[];
+} ? FlattenAllNodes<N> : never) : never;
+type LookupValue<N extends Node, K extends PropertyKey> = FlattenAllNodes<N> extends infer AllNodes extends Node ? AllNodes extends any ? K extends keyof AllNodes ? AllNodes[K] : never : never : never;
+export type ExtractAttrValue<N extends Node, K extends PropertyKey> = [
+    LookupValue<N, K>
+] extends [never] ? never : LookupValue<N, K>;
 export {};
