@@ -70,7 +70,7 @@ export function ReplaceDoc<T extends DocNode>(
 ) {
   // TODO revisit
   editor.apply({
-    type: "set_node_attr",
+    type: "patch_node",
     path: [],
     key: "children",
     value: fragment,
@@ -153,7 +153,7 @@ export function SetBlockAttr<
   offset: number = editor.selection[0],
 ) {
   const path = getBlockAt(editor.doc, offset)[2];
-  editor.apply({ type: "set_node_attr", path, key, value });
+  editor.apply({ type: "patch_node", path, key, value });
 }
 
 /**
@@ -172,7 +172,7 @@ export function ToggleBlockAttr<
 ) {
   const [block, , path] = getBlockAt(editor.doc, offset);
   editor.apply({
-    type: "set_node_attr",
+    type: "patch_node",
     path,
     key,
     value: block[key as keyof typeof block] === onValue ? offValue : onValue,

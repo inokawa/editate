@@ -2929,7 +2929,7 @@ describe("format", () => {
   });
 });
 
-describe("set attr", () => {
+describe("patch node", () => {
   describe("validation", () => {
     it("path less than min", () => {
       const docText = "abcde";
@@ -2938,7 +2938,7 @@ describe("set attr", () => {
       };
       const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
-        type: "set_node_attr",
+        type: "patch_node",
         path: [-1],
         key: "foo",
         value: "bar",
@@ -2955,7 +2955,7 @@ describe("set attr", () => {
       };
       const sel: Selection = [2, 2];
       const res = applyOperation(doc, sel, {
-        type: "set_node_attr",
+        type: "patch_node",
         path: [100],
         key: "foo",
         value: "bar",
@@ -2977,7 +2977,7 @@ describe("set attr", () => {
     };
     const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const res = applyOperation(doc, sel, {
-      type: "set_node_attr",
+      type: "patch_node",
       path: [],
       key: "foo",
       value: "bar",
@@ -3004,7 +3004,7 @@ describe("set attr", () => {
     };
     const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const res = applyOperation(doc, sel, {
-      type: "set_node_attr",
+      type: "patch_node",
       path: [0],
       key: "foo",
       value: "bar",
@@ -3030,7 +3030,7 @@ describe("set attr", () => {
     };
     const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
     const res = applyOperation(doc, sel, {
-      type: "set_node_attr",
+      type: "patch_node",
       path: [1],
       key: "foo",
       value: "bar",
@@ -3040,6 +3040,74 @@ describe("set attr", () => {
       children: [
         { attr: 0, children: [{ attr: 0, text: docText }] },
         { attr: 1, foo: "bar", children: [{ attr: 0, text: docText2 }] },
+      ],
+    });
+    expect(res[1]).toEqual(sel);
+  });
+
+  it("update text node", () => {
+    const docText = "abcde";
+    const docText2 = "fghij";
+    const doc: Doc = {
+      children: [
+        { attr: 0, children: [{ attr: 0, text: docText }] },
+        { attr: 1, children: [{ attr: 0, text: docText2 }] },
+      ],
+    };
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
+    const res = applyOperation(doc, sel, {
+      type: "patch_node",
+      path: [0, 0],
+      key: "foo",
+      value: "bar",
+    });
+
+    expect(res[0]).toEqual({
+      children: [
+        {
+          attr: 0,
+          children: [
+            {
+              attr: 0,
+              text: docText,
+              foo: "bar",
+            },
+          ],
+        },
+        { attr: 1, children: [{ attr: 0, text: docText2 }] },
+      ],
+    });
+    expect(res[1]).toEqual(sel);
+  });
+
+  it("update void node", () => {
+    const docText = "abcde";
+    const docText2 = "fghij";
+    const doc = {
+      children: [
+        { attr: 0, children: [{ foo: "baz" }] },
+        { attr: 1, children: [{ attr: 0, text: docText2 }] },
+      ],
+    };
+    const sel: Selection = [docText.length + 1 + 2, docText.length + 1 + 2];
+    const res = applyOperation(doc, sel, {
+      type: "patch_node",
+      path: [0, 0],
+      key: "foo",
+      value: "bar",
+    });
+
+    expect(res[0]).toEqual({
+      children: [
+        {
+          attr: 0,
+          children: [
+            {
+              foo: "bar",
+            },
+          ],
+        },
+        { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     });
     expect(res[1]).toEqual(sel);
