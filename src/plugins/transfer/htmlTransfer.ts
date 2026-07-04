@@ -13,11 +13,11 @@ import type {
   BlockNode,
   DocNode,
   Fragment,
-  InferInlineNode,
   InlineNode,
   TextNode,
 } from "../../doc/types.js";
 import type { Parser, TokenType } from "../../dom/parser.js";
+import type { InferInlineNode } from "../../doc/types-infer.js";
 
 type HtmlSerializers<T extends DocNode> = Partial<{
   [key in keyof HTMLElementTagNameMap]: (

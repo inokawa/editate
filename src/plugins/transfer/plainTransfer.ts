@@ -1,6 +1,7 @@
 import { sliceFragment } from "../../doc/node.js";
 import { toRange } from "../../doc/position.js";
-import type { DocNode, InferInlineNode, InlineNode } from "../../doc/types.js";
+import type { InferInlineNode } from "../../doc/types-infer.js";
+import type { DocNode, InlineNode } from "../../doc/types.js";
 import { docToString } from "../../doc/utils.js";
 import type { Editor } from "../../editor.js";
 

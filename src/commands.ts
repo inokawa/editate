@@ -7,13 +7,12 @@ import {
   iterLeaf,
 } from "./doc/node.js";
 import type { Editor } from "./editor.js";
+import type { DocNode, Range } from "./doc/types.js";
 import type {
-  DocNode,
   InferBlockNode,
-  InferInlineNode,
-  Range,
-  TextNode,
-} from "./doc/types.js";
+  InferTextNode,
+  InferVoidNode,
+} from "./doc/types-infer.js";
 
 /**
  * Delete content in the selection or specified range.
@@ -41,7 +40,7 @@ export function InsertText(
  */
 export function InsertNode<T extends DocNode>(
   editor: Editor<T>,
-  node: Exclude<InferInlineNode<T>, TextNode>,
+  node: InferVoidNode<T>,
   position: number = editor.selection[0],
 ) {
   editor.apply({
@@ -86,7 +85,7 @@ type ToggleableKey<T> = {
  */
 export function Format<
   T extends DocNode,
-  N extends Omit<InferInlineNode<T>, "text">,
+  N extends Omit<InferTextNode<T>, "text">,
   K extends Extract<keyof N, string>,
 >(
   editor: Editor<T>,
@@ -102,7 +101,7 @@ export function Format<
  */
 export function ToggleFormat<T extends DocNode>(
   editor: Editor<T>,
-  key: Extract<ToggleableKey<Omit<InferInlineNode<T>, "text">>, string>,
+  key: Extract<ToggleableKey<Omit<InferTextNode<T>, "text">>, string>,
   range: Range = toRange(editor.selection),
 ) {
   let shouldFormat = false;

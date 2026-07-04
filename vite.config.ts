@@ -30,5 +30,5 @@ export default defineConfig({
       },
     },
   },
-  plugins: [dts({ exclude: ["**/*.{spec,stories}.*"] })],
+  plugins: [dts({ exclude: ["**/*.{spec,stories,test-d}.*"] })],
 });
