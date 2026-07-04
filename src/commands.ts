@@ -9,6 +9,7 @@ import {
 import type { Editor } from "./editor.js";
 import type { DocNode, Range } from "./doc/types.js";
 import type {
+  ExtractAttrValue,
   InferBlockNode,
   InferTextNode,
   InferVoidNode,
@@ -144,11 +145,11 @@ export function ToggleFormat<T extends DocNode>(
 export function SetBlockAttr<
   T extends DocNode,
   N extends InferBlockNode<T>,
-  K extends Extract<keyof N, string>,
+  K extends string,
 >(
   editor: Editor<T>,
   key: K,
-  value: N[K],
+  value: ExtractAttrValue<N, K>,
   offset: number = editor.selection[0],
 ) {
   const path = getBlockAt(editor.doc, offset)[2];
@@ -161,12 +162,12 @@ export function SetBlockAttr<
 export function ToggleBlockAttr<
   T extends DocNode,
   N extends InferBlockNode<T>,
-  K extends Extract<keyof N, string>,
+  K extends string,
 >(
   editor: Editor<T>,
   key: K,
-  onValue: N[K],
-  offValue: N[K],
+  onValue: ExtractAttrValue<N, K>,
+  offValue: ExtractAttrValue<N, K>,
   offset: number = editor.selection[0],
 ) {
   const [block, , path] = getBlockAt(editor.doc, offset);
@@ -174,6 +175,6 @@ export function ToggleBlockAttr<
     type: "set_node_attr",
     path,
     key,
-    value: (block as N)[key] === onValue ? offValue : onValue,
+    value: block[key as keyof typeof block] === onValue ? offValue : onValue,
   });
 }
