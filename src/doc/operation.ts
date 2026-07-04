@@ -48,9 +48,9 @@ type FormatOperation = Readonly<{
   value: unknown;
 }>;
 
-const OP_SET_NODE_ATTR = "set_node_attr";
-type SetNodeAttrOperation = Readonly<{
-  type: typeof OP_SET_NODE_ATTR;
+const OP_PATCH_NODE = "patch_node";
+type PatchNodeOperation = Readonly<{
+  type: typeof OP_PATCH_NODE;
   path: Path;
   key: string;
   value: unknown;
@@ -61,13 +61,13 @@ export type Operation =
   | InsertTextOperation
   | InsertNodeOperation
   | FormatOperation
-  | SetNodeAttrOperation;
+  | PatchNodeOperation;
 
 /**
  * @internal
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =>
-  type === OP_INSERT_NODE || type === OP_FORMAT || type === OP_SET_NODE_ATTR;
+  type !== OP_INSERT_TEXT && type !== OP_DELETE;
 
 const isSameNode = (a: InlineNode, b: InlineNode): boolean => {
   const aKeys = keys(a);
@@ -369,7 +369,7 @@ export const applyOperation = <T extends DocNode>(
       }
       break;
     }
-    case OP_SET_NODE_ATTR: {
+    case OP_PATCH_NODE: {
       const { path, key, value } = op;
       const node = getNodeAtPath(doc, path);
       if (node) {

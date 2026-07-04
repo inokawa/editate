@@ -300,7 +300,7 @@ it("undo set attr", () => {
   expect(editor.selection).toEqual(selection);
 
   editor.apply({
-    type: "set_node_attr",
+    type: "patch_node",
     path: [0],
     key: "foo",
     value: "bar",
