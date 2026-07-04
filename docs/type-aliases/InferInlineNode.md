@@ -6,7 +6,7 @@
 
 > **InferInlineNode**\<`T`\> = `Flatten`\<`T` *extends* `object` ? `InferInlineNode`\<`N`\> : `T`\>
 
-Defined in: [doc/types-infer.ts:10](https://github.com/inokawa/editate/blob/0810ace32d66275e904514e9febc6b53ae2e180f/src/doc/types-infer.ts#L10)
+Defined in: [doc/types-infer.ts:10](https://github.com/inokawa/editate/blob/df4de2ad3f6def53d366037a34e4ef8fc1047ab2/src/doc/types-infer.ts#L10)
 
 ## Type Parameters
 
