@@ -23,13 +23,13 @@ type FormatOperation = Readonly<{
     key: string;
     value: unknown;
 }>;
-declare const OP_SET_NODE_ATTR = "set_node_attr";
-type SetNodeAttrOperation = Readonly<{
-    type: typeof OP_SET_NODE_ATTR;
+declare const OP_PATCH_NODE = "patch_node";
+type PatchNodeOperation = Readonly<{
+    type: typeof OP_PATCH_NODE;
     path: Path;
     key: string;
     value: unknown;
 }>;
-export type Operation = DeleteOperation | InsertTextOperation | InsertNodeOperation | FormatOperation | SetNodeAttrOperation;
+export type Operation = DeleteOperation | InsertTextOperation | InsertNodeOperation | FormatOperation | PatchNodeOperation;
 export declare const rebase: (position: number, ops: readonly Operation[]) => number;
 export {};
