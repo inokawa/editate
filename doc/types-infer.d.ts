@@ -1,12 +1,12 @@
-import { DocNode, Node, TextNode } from './types.js';
+import { Node, TextNode } from './types.js';
 export type InferBlockNode<T extends Node> = T extends {
     children: readonly (infer N extends Node)[];
 } ? T | InferBlockNode<N> : never;
 export type InferInlineNode<T extends Node> = T extends {
     children: readonly (infer N extends Node)[];
 } ? InferInlineNode<N> : T;
-export type InferVoidNode<T extends DocNode> = Exclude<InferInlineNode<T>, TextNode>;
-export type InferTextNode<T extends DocNode> = Extract<InferInlineNode<T>, TextNode>;
+export type InferVoidNode<T extends Node> = Exclude<InferInlineNode<T>, TextNode>;
+export type InferTextNode<T extends Node> = Extract<InferInlineNode<T>, TextNode>;
 type FlattenAllNodes<T extends Node> = T extends any ? T | (T extends {
     children: readonly (infer N extends Node)[];
 } ? FlattenAllNodes<N> : never) : never;
