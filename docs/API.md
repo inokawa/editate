@@ -6,6 +6,12 @@
 
 ## Functions
 
+- [getChildAt](functions/getChildAt.md)
+- [getBlockAt](functions/getBlockAt.md)
+- [getLeafAt](functions/getLeafAt.md)
+- [getNodeSize](functions/getNodeSize.md)
+- [iterNode](functions/iterNode.md)
+- [iterLeaf](functions/iterLeaf.md)
 - [Delete](functions/Delete.md)
 - [InsertText](functions/InsertText.md)
 - [InsertNode](functions/InsertNode.md)
