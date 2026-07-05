@@ -9,7 +9,7 @@ export interface BlockNode {
 }
 export type Node = BlockNode | InlineNode;
 export interface DocNode {
-    readonly children: readonly BlockNode[];
+    readonly children: readonly BlockNode[] | readonly InlineNode[];
 }
 export type Fragment = DocNode["children"];
 export type Path = readonly number[];
