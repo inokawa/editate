@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "editate": "0.6.6",
+    "editate": "0.6.12",
     "solid-js": "^1.9.13"
   },
   "devDependencies": {

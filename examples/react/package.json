@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "editate": "0.6.6",
+    "editate": "0.6.12",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
   },
