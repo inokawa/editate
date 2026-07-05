@@ -1,3 +1,8 @@
-import { BlockNode, DocNode, Node, DomPosition } from './types.js';
+import { BlockNode, DocNode, InlineNode, Node, Path, DomPosition } from './types.js';
 export declare const getNodeSize: (node: Node) => number;
+export declare const getChildAt: <T extends BlockNode>({ children }: T, offset: number) => [node: T["children"][number], offset: number, index: number] | null;
+export declare const getBlockAt: (node: DocNode | BlockNode, offset: number) => [node: BlockNode, offset: number, path: Path];
+export declare const getLeafAt: (node: DocNode | BlockNode, offset: number) => [node: InlineNode, offset: number] | null;
 export declare const offsetToPosition: (node: DocNode | BlockNode, offset: number) => DomPosition;
+export declare function iterNode<T extends Node>(node: T, start: number, end: number): Generator<[node: Node, offset: number], void, void>;
+export declare function iterLeaf<T extends Node>(node: T, start: number, end: number): Generator<[node: InlineNode, offset: number], void, void>;
