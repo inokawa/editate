@@ -169,7 +169,7 @@ export const serializePosition = (
   let excludeEnd = true;
   if (root === node && !node.hasChildNodes()) {
     // for placeholder
-    return [[0], 0];
+    return [[], 0];
   }
 
   if (isElementNode(node) && node.hasChildNodes()) {
@@ -215,10 +215,6 @@ export const serializePosition = (
           }
           p.unshift(i);
           parentBlock();
-        }
-
-        if (!p.length) {
-          return [0];
         }
 
         return p;

@@ -217,20 +217,16 @@ export const RichText: StoryObj = {
 
 const tagSchema = v.strictObject({
   children: v.array(
-    v.strictObject({
-      children: v.array(
-        v.union([
-          v.strictObject({
-            text: v.string(),
-          }),
-          v.strictObject({
-            type: v.literal("tag"),
-            label: v.string(),
-            value: v.string(),
-          }),
-        ]),
-      ),
-    }),
+    v.union([
+      v.strictObject({
+        text: v.string(),
+      }),
+      v.strictObject({
+        type: v.literal("tag"),
+        label: v.string(),
+        value: v.string(),
+      }),
+    ]),
   ),
 });
 
@@ -241,14 +237,10 @@ export const Tag: StoryObj = {
     type Doc = v.InferOutput<typeof tagSchema>;
     const [doc, setDoc] = useState<Doc>({
       children: [
-        {
-          children: [
-            { text: "Hello " },
-            { type: "tag", label: "Apple", value: "1" },
-            { text: " world " },
-            { type: "tag", label: "Orange", value: "2" },
-          ],
-        },
+        { text: "Hello " },
+        { type: "tag", label: "Apple", value: "1" },
+        { text: " world " },
+        { type: "tag", label: "Orange", value: "2" },
       ],
     });
 
@@ -305,7 +297,7 @@ export const Tag: StoryObj = {
             padding: 8,
           }}
         >
-          {doc.children[0].children.map((t, j) =>
+          {doc.children.map((t, j) =>
             "text" in t ? (
               <span key={j}>{t.text || <br />}</span>
             ) : (
