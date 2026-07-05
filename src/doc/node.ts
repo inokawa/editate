@@ -52,9 +52,6 @@ export const getNodeSize = (node: Node): number => {
   return isTextNode(node) ? node.text.length : 1;
 };
 
-/**
- * @internal
- */
 export const getChildAt = <T extends BlockNode>(
   { children }: T,
   offset: number,
@@ -74,9 +71,6 @@ export const getChildAt = <T extends BlockNode>(
   return null;
 };
 
-/**
- * @internal
- */
 export const getBlockAt = (
   node: DocNode | BlockNode,
   offset: number,
@@ -98,9 +92,6 @@ export const getBlockAt = (
   return [node, offset, path];
 };
 
-/**
- * @internal
- */
 export const getLeafAt = (
   node: DocNode | BlockNode,
   offset: number,
@@ -209,9 +200,6 @@ export const selectionToDomSelection = (
   return [offsetToPosition(doc, anchor), offsetToPosition(doc, focus)];
 };
 
-/**
- * @internal
- */
 export function* iterNode<T extends Node>(
   node: T,
   start: number,
@@ -246,9 +234,6 @@ export function* iterNode<T extends Node>(
   }
 }
 
-/**
- * @internal
- */
 export function* iterLeaf<T extends Node>(
   node: T,
   start: number,

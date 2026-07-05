@@ -1,3 +1,11 @@
+export {
+  getChildAt,
+  getBlockAt,
+  getLeafAt,
+  getNodeSize,
+  iterNode,
+  iterLeaf,
+} from "./doc/node.js";
 export type { Operation } from "./doc/operation.js";
 export type {
   InferBlockNode,
