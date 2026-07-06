@@ -13,10 +13,7 @@ export interface DocNode {
 }
 export type Fragment = DocNode["children"];
 export type Path = readonly number[];
-export type DomPosition = readonly [path: Path, offset: number];
 export type Range = readonly [start: number, end: number];
 export type Selection = readonly [anchor: number, focus: number];
-export type SelectionSnapshot = readonly [
-    anchor: DomPosition,
-    focus: DomPosition
-];
+export type DomPosition = readonly [path: Path, offset: number];
+export type DomSelection = readonly [anchor: DomPosition, focus: DomPosition];
