@@ -1,5 +1,5 @@
 import { type TokenType, type Parser, TOKEN_BLOCK } from "./parser.js";
-import type { DomPosition, SelectionSnapshot, Path } from "../doc/types.js";
+import type { DomPosition, DomSelection, Path } from "../doc/types.js";
 import { min } from "../utils.js";
 import { isElementNode } from "./utils.js";
 
@@ -57,7 +57,7 @@ export const setSelectionToDOM = (
   document: Document,
   root: Element,
   parse: Parser,
-  [anchor, focus]: SelectionSnapshot,
+  [anchor, focus]: DomSelection,
   posDiff: number, // TODO remove
   force?: boolean,
 ): void => {
@@ -264,7 +264,7 @@ export const serializeRange = (
 export const takeSelectionSnapshot = (
   root: Element,
   parse: Parser,
-): SelectionSnapshot => {
+): DomSelection => {
   const selection = getDOMSelection(root);
   const domRange = getSelectionRangeInEditor(selection, root);
   if (!domRange) {

@@ -6,7 +6,7 @@ import type {
   Path,
   TextNode,
   DomPosition,
-  SelectionSnapshot,
+  DomSelection,
   Selection,
 } from "./types.js";
 
@@ -185,7 +185,7 @@ export const offsetToPosition = (
  */
 export const domSelectionToSelection = (
   doc: DocNode,
-  [anchor, focus]: SelectionSnapshot,
+  [anchor, focus]: DomSelection,
 ): Selection => {
   return [positionToOffset(doc, anchor), positionToOffset(doc, focus)];
 };
@@ -196,7 +196,7 @@ export const domSelectionToSelection = (
 export const selectionToDomSelection = (
   doc: DocNode,
   [anchor, focus]: Selection,
-): SelectionSnapshot => {
+): DomSelection => {
   return [offsetToPosition(doc, anchor), offsetToPosition(doc, focus)];
 };
 
