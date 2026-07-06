@@ -1,4 +1,4 @@
-import { isStructureChildren, joinBlocks } from "../doc/operation.js";
+import { hasBlockChildren, joinBlocks } from "../doc/operation.js";
 import type { Editor } from "../editor.js";
 
 /**
@@ -18,7 +18,7 @@ export function singlelinePlugin(editor: Editor) {
       const fragment = op.fragment;
       op = {
         ...op,
-        fragment: isStructureChildren(fragment)
+        fragment: hasBlockChildren(fragment)
           ? [joinBlocks(...fragment)]
           : fragment,
       };

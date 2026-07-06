@@ -73,7 +73,7 @@ export const isUnsafeOperation = ({ type }: Operation): boolean =>
 /**
  * @internal
  */
-export const isStructureChildren = (
+export const hasBlockChildren = (
   children: Fragment,
 ): children is Extract<typeof children, readonly BlockNode[]> => {
   return children.some(isBlockNode);
@@ -224,8 +224,8 @@ const replaceRange = <T extends DocNode>(
   const [before, maybeAfter] = splitBlock(doc, start);
   const after = start < end ? splitBlock(doc, end)[1] : maybeAfter;
 
-  const isDocBlock = isStructureChildren(doc.children);
-  if (isStructureChildren(inserted)) {
+  const isDocBlock = hasBlockChildren(doc.children);
+  if (hasBlockChildren(inserted)) {
     if (!isDocBlock) {
       inserted = joinBlocks(...inserted).children;
     }
