@@ -1721,6 +1721,51 @@ describe("insert node", () => {
     });
     expect(res[1]).toEqual(sel);
   });
+
+  it("insert text at empty line", () => {
+    const docText = "abcde";
+    const doc: Doc = {
+      children: [{ attr: 0, children: [{ attr: 0, text: "" }] }],
+    };
+    const sel: Selection = [2, 2];
+    const res = applyOperation(doc, sel, {
+      type: "insert_node",
+      at: 0,
+      fragment: [{ children: [{ text: docText }] }],
+    });
+
+    expect(res[0]).toEqual({
+      children: [
+        {
+          attr: 0,
+          children: [{ text: docText }],
+        },
+      ],
+    });
+    expect(res[1]).toEqual([sel[0] + docText.length, sel[1] + docText.length]);
+  });
+
+  it("insert void at empty line", () => {
+    const doc: Doc = {
+      children: [{ attr: 0, children: [{ attr: 0, text: "" }] }],
+    };
+    const sel: Selection = [2, 2];
+    const res = applyOperation(doc, sel, {
+      type: "insert_node",
+      at: 0,
+      fragment: [{ children: [{ foo: "bar" }] }],
+    });
+
+    expect(res[0]).toEqual({
+      children: [
+        {
+          attr: 0,
+          children: [{ foo: "bar" }],
+        },
+      ],
+    });
+    expect(res[1]).toEqual([sel[0] + 1, sel[1] + 1]);
+  });
 });
 
 describe("delete", () => {
@@ -2313,6 +2358,61 @@ describe("delete", () => {
       ],
     });
     expect(res[1]).toEqual(sel);
+  });
+
+  it("delete text to empty line", () => {
+    const docText = "abcde";
+    const doc = {
+      children: [
+        {
+          attr: 0,
+          children: [{ attr: 0, text: docText }],
+        },
+      ],
+    };
+    const sel: Selection = [0, docText.length];
+
+    const res = applyOperation(doc, sel, {
+      type: "delete",
+      range: [0, docText.length],
+    });
+
+    expect(res[0]).toEqual({
+      children: [
+        {
+          attr: 0,
+          children: [{ attr: 0, text: "" }],
+        },
+      ],
+    });
+    expect(res[1]).toEqual([0, 0]);
+  });
+
+  it("delete void to empty line", () => {
+    const doc = {
+      children: [
+        {
+          attr: 0,
+          children: [{ foo: "bar" }],
+        },
+      ],
+    };
+    const sel: Selection = [0, 1];
+
+    const res = applyOperation(doc, sel, {
+      type: "delete",
+      range: [0, 1],
+    });
+
+    expect(res[0]).toEqual({
+      children: [
+        {
+          attr: 0,
+          children: [{ text: "" }],
+        },
+      ],
+    });
+    expect(res[1]).toEqual([0, 0]);
   });
 
   it("delete empty line from the start", () => {
