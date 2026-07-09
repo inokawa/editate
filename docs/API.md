@@ -29,6 +29,7 @@
 - [Redo](functions/Redo.md)
 - [Undoable](functions/Undoable.md)
 - [Redoable](functions/Redoable.md)
+- [selectionRectPlugin](functions/selectionRectPlugin.md)
 - [singlelinePlugin](functions/singlelinePlugin.md)
 - [fileTransferPlugin](functions/fileTransferPlugin.md)
 - [plainTransferPlugin](functions/plainTransferPlugin.md)

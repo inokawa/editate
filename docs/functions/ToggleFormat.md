@@ -6,7 +6,7 @@
 
 > **ToggleFormat**\<`T`\>(`editor`, `key`, `range?`): `void`
 
-Defined in: [commands.ts:103](https://github.com/inokawa/editate/blob/3dc85ceb3788e4fdcdb5f4f9a60ed562bf8442f3/src/commands.ts#L103)
+Defined in: [commands.ts:106](https://github.com/inokawa/editate/blob/3aaa0d3290473e1eb077dff1cd2673a227e22ec2/src/commands.ts#L106)
 
 Toggle formatting in the selection or specified range.
 
