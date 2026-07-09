@@ -16,7 +16,7 @@ export declare function InsertNode<T extends DocNode>(editor: Editor<T>, node: I
 /**
  * Replace text in the selection or specified range.
  */
-export declare function ReplaceText(editor: Editor, text: string): void;
+export declare function ReplaceText(editor: Editor, text: string, range?: Range): void;
 /**
  * Replace document in the editor.
  */
