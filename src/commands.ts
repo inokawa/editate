@@ -54,8 +54,11 @@ export function InsertNode<T extends DocNode>(
 /**
  * Replace text in the selection or specified range.
  */
-export function ReplaceText(editor: Editor, text: string) {
-  const range = toRange(editor.selection);
+export function ReplaceText(
+  editor: Editor,
+  text: string,
+  range: Range = toRange(editor.selection),
+) {
   editor
     .apply({ type: "delete", range })
     .apply({ type: "insert_text", at: range[0], text });

@@ -505,7 +505,6 @@ export const createEditor = <
         // TODO optimize
         // Mutation to selected DOM may change selection, so restore it.
         setSelectionToDOM(
-          document,
           element,
           parser,
           selectionToDomSelection(doc, selection),
@@ -532,7 +531,6 @@ export const createEditor = <
           // It should be ignored especially in firefox not to confuse editor state
           document.removeEventListener("selectionchange", onSelectionChange);
           setSelectionToDOM(
-            document,
             element,
             parser,
             selectionToDomSelection(doc, selection),
