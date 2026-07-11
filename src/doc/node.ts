@@ -272,7 +272,7 @@ export const sliceText = <T extends Node>(
   let str = "";
   let offset = start;
   for (const [leaf, leafStart] of iterLeafs(node, start, end)) {
-    for (let i = max(0, leafStart - offset); i > 0; i--) {
+    for (let i = leafStart - offset; i > 0; i--) {
       str += "\n";
     }
 
@@ -291,7 +291,7 @@ export const sliceText = <T extends Node>(
     offset = leafEnd;
   }
 
-  for (let i = max(0, min(end, getNodeSize(node)) - offset); i > 0; i--) {
+  for (let i = min(end, getNodeSize(node)) - offset; i > 0; i--) {
     str += "\n";
   }
   return str;
