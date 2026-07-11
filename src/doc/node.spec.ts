@@ -7,7 +7,7 @@ import {
   iterNode,
   iterLeaf,
   sliceFragment,
-  docToString,
+  nodeToString,
 } from "./node.js";
 import {
   type BlockNode,
@@ -471,8 +471,11 @@ describe(sliceFragment.name, () => {
   });
 });
 
-describe(docToString.name, () => {
-  it.each<[DocNode, string]>([
+describe(nodeToString.name, () => {
+  it.each<[Node, string]>([
+    [{ text: "" }, ""],
+    [{ text: "Hello world" }, "Hello world"],
+    [{ foo: "bar" }, ""],
     [{ children: [{ text: "" }] }, ""],
     [{ children: [{ text: "Hello world" }] }, "Hello world"],
     [{ children: [{ children: [{ text: "" }] }] }, ""],
@@ -530,6 +533,6 @@ describe(docToString.name, () => {
       "\nHello\n\n\n world\n",
     ],
   ])(`$1`, (doc, str) => {
-    expect(docToString(doc)).toEqual(str);
+    expect(nodeToString(doc)).toEqual(str);
   });
 });
