@@ -259,22 +259,25 @@ export function* iterLeaf<T extends Node>(
 /**
  * @internal
  */
-export const docToString = <T extends DocNode>(
-  { children }: T,
-  serializer: (node: InlineNode) => string = (n) =>
+export const nodeToString = <T extends Node>(
+  node: T,
+  inlineToString: (node: InlineNode) => string = (n) =>
     isTextNode(n) ? n.text : "",
 ): string => {
-  if (hasBlockChildren(children)) {
-    return children.reduce((acc: string, r, i) => {
-      if (i !== 0) {
-        acc += "\n";
-      }
-      return (
-        acc + r.children.reduce((acc: string, n) => acc + serializer(n), "")
-      );
-    }, "");
+  if (isBlockNode(node)) {
+    const children = node.children;
+    if (hasBlockChildren(children)) {
+      return children.reduce((acc: string, r, i) => {
+        if (i !== 0) {
+          acc += "\n";
+        }
+        return acc + nodeToString(r, inlineToString);
+      }, "");
+    } else {
+      return children.reduce((acc: string, c) => acc + inlineToString(c), "");
+    }
   } else {
-    return children.reduce((acc: string, c) => acc + serializer(c), "");
+    return inlineToString(node);
   }
 };
 

@@ -1,4 +1,4 @@
-import { docToString } from "../doc/node.js";
+import { nodeToString } from "../doc/node.js";
 import { stringToFragment } from "../doc/utils.js";
 import { createEditor, type Editor, type EditorOptions } from "../editor.js";
 import { plainTransferPlugin, singlelinePlugin } from "../plugins/index.js";
@@ -40,7 +40,7 @@ export const createPlainEditor = ({
     editor.exec(singlelinePlugin);
   }
   editor.on("change", () => {
-    onChange(docToString(editor.doc));
+    onChange(nodeToString(editor.doc));
   });
   return editor;
 };
