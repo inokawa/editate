@@ -32,6 +32,7 @@ export const hasBlockChildren = (
 };
 
 const sizeCache = new WeakMap<BlockNode, number>();
+const textCache = new WeakMap<BlockNode, string>();
 
 const calcBlockSize = (
   { children }: BlockNode,
@@ -66,6 +67,7 @@ export const getChildAt = <T extends BlockNode>(
   { children }: T,
   offset: number,
 ): [node: T["children"][number], offset: number, index: number] | null => {
+  // TODO optimize
   const length = children.length;
   for (let i = 0; i < length; i++) {
     const node = children[i]!;
@@ -256,26 +258,42 @@ export function* iterLeaf<T extends Node>(
   }
 }
 
+const defaultInlineToString = (node: InlineNode): string =>
+  isTextNode(node) ? node.text : "";
+
 export const nodeToString = (
   node: Node,
-  inlineToString: (node: InlineNode) => string = (n) =>
-    isTextNode(n) ? n.text : "",
+  inlineToString: (node: InlineNode) => string = defaultInlineToString,
 ): string => {
   if (isBlockNode(node)) {
-    const children = node.children;
-    if (hasBlockChildren(children)) {
-      return children.reduce((acc: string, r, i) => {
-        if (i !== 0) {
-          acc += "\n";
-        }
-        return acc + nodeToString(r, inlineToString);
-      }, "");
-    } else {
-      return children.reduce((acc: string, c) => acc + inlineToString(c), "");
+    let str = textCache.get(node);
+    if (str == null) {
+      const children = node.children;
+      textCache.set(
+        node,
+        (str = hasBlockChildren(children)
+          ? children.reduce((acc: string, r, i) => {
+              if (i !== 0) {
+                acc += "\n";
+              }
+              return acc + nodeToString(r, inlineToString);
+            }, "")
+          : children.reduce((acc: string, c) => acc + inlineToString(c), "")),
+      );
     }
+    return str;
   } else {
     return inlineToString(node);
   }
+};
+
+export const sliceText = (
+  node: Node,
+  start: number,
+  end: number,
+  inlineToString?: (node: InlineNode) => string,
+): string => {
+  return nodeToString(node, inlineToString).slice(start, end);
 };
 
 /**

@@ -1,8 +1,7 @@
-import { sliceFragment } from "../../doc/node.js";
+import { sliceText } from "../../doc/node.js";
 import { toRange } from "../../doc/position.js";
 import type { InferInlineNode } from "../../doc/types-infer.js";
 import type { DocNode, InlineNode } from "../../doc/types.js";
-import { nodeToString } from "../../doc/node.js";
 import type { Editor } from "../../editor.js";
 
 /**
@@ -18,8 +17,9 @@ export function plainTransferPlugin<T extends DocNode>(
   editor.hook("copy", (dataTransfer) => {
     dataTransfer.setData(
       "text/plain",
-      nodeToString(
-        { children: sliceFragment(editor.doc, ...toRange(editor.selection)) },
+      sliceText(
+        editor.doc,
+        ...toRange(editor.selection),
         serializer as ((node: InlineNode) => string) | undefined,
       ),
     );
