@@ -7,6 +7,7 @@ import {
   iterNode,
   iterLeaf,
   sliceFragment,
+  docToString,
 } from "./node.js";
 import {
   type BlockNode,
@@ -467,5 +468,42 @@ describe(sliceFragment.name, () => {
     ],
   ])(`$0`, (range, res) => {
     expect(sliceFragment(doc, ...range)).toEqual(res);
+  });
+});
+
+describe(docToString.name, () => {
+  it.each<[DocNode, string]>([
+    [{ children: [{ children: [{ text: "" }] }] }, ""],
+    [{ children: [{ children: [{ text: "Hello world" }] }] }, "Hello world"],
+    [
+      {
+        children: [{ children: [{ text: "" }] }, { children: [{ text: "" }] }],
+      },
+      "\n",
+    ],
+    [
+      {
+        children: [
+          { children: [{ text: "Hello" }] },
+          { children: [{ text: " world" }] },
+        ],
+      },
+      "Hello\n world",
+    ],
+    [
+      {
+        children: [
+          { children: [{ text: "" }] },
+          { children: [{ text: "Hello" }] },
+          { children: [{ text: "" }] },
+          { children: [{ text: "" }] },
+          { children: [{ text: " world" }] },
+          { children: [{ text: "" }] },
+        ],
+      },
+      "\nHello\n\n\n world\n",
+    ],
+  ])(`$1`, (doc, str) => {
+    expect(docToString(doc)).toEqual(str);
   });
 });
