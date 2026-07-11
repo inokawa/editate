@@ -249,6 +249,28 @@ export function* iterLeaf<T extends Node>(
 /**
  * @internal
  */
+export const docToString = <T extends DocNode>(
+  doc: T,
+  serializer: (node: InlineNode) => string = (n) =>
+    isTextNode(n) ? n.text : "",
+): string => {
+  return doc.children.reduce((acc: string, r, i) => {
+    const isBlock = isBlockNode(r);
+    if (i !== 0 && isBlock) {
+      acc += "\n";
+    }
+    return (
+      acc +
+      (isBlock
+        ? r.children.reduce((acc: string, n) => acc + serializer(n), "")
+        : "")
+    );
+  }, "");
+};
+
+/**
+ * @internal
+ */
 export const sliceFragment = <T extends DocNode>(
   doc: T,
   start: number,

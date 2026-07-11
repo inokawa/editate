@@ -1,4 +1,5 @@
-import { docToString, stringToFragment } from "../doc/utils.js";
+import { docToString } from "../doc/node.js";
+import { stringToFragment } from "../doc/utils.js";
 import { createEditor, type Editor, type EditorOptions } from "../editor.js";
 import { plainTransferPlugin, singlelinePlugin } from "../plugins/index.js";
 
