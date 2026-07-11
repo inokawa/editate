@@ -251,7 +251,7 @@ export const Tag: StoryObj = {
       })
         .exec(internalTranferPlugin)
         .exec(plainTransferPlugin, {
-          serializer: (node) => ("text" in node ? node.text : node.label),
+          voidToString: (node) => node.label,
         })
         .exec(singlelinePlugin);
       e.on("change", () => {
@@ -700,7 +700,7 @@ export const Ruby: StoryObj = {
         doc: doc,
         schema: rubySchema,
       }).exec(plainTransferPlugin, {
-        serializer: (n) => ("text" in n ? n.text : n.value),
+        voidToString: (n) => n.value,
       });
       e.on("change", () => {
         setDoc(e.doc);

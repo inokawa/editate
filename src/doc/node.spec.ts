@@ -576,7 +576,7 @@ describe(sliceText.name, () => {
     });
   });
 
-  describe("slice with range", () => {
+  describe("slice texts", () => {
     const t0 = "abcd";
     const t1 = "efghi";
     const t2 = "jklmno";
@@ -615,5 +615,20 @@ describe(sliceText.name, () => {
     ])(`$0`, (range, str) => {
       expect(sliceText(doc, ...range)).toEqual(str);
     });
+  });
+
+  it("slice texts including void", () => {
+    const t0 = "abcd";
+    const t1 = "efghi";
+    const doc = {
+      children: [
+        { children: [{ text: t0 }] },
+        { children: [{ foo: "bar" }] },
+        { children: [{ text: t1 }] },
+      ],
+    };
+    expect(
+      sliceText(doc, 1, t0.length + 1 + 1 + 1 + t1.length - 1, (n) => n.foo),
+    ).toEqual(t0.slice(1) + "\n" + "bar" + "\n" + t1.slice(0, -1));
   });
 });

@@ -1,3 +1,5 @@
+import { max, min } from "../utils.js";
+import type { InferVoidNode } from "./types-infer.js";
 import type {
   BlockNode,
   DocNode,
@@ -32,7 +34,6 @@ export const hasBlockChildren = (
 };
 
 const sizeCache = new WeakMap<BlockNode, number>();
-const textCache = new WeakMap<BlockNode, string>();
 
 const calcBlockSize = (
   { children }: BlockNode,
@@ -247,6 +248,10 @@ export function* iterLeafs<T extends Node>(
   start: number,
   end: number,
 ): Generator<[node: InlineNode, offset: number], void, void> {
+  if (!isBlockNode(node)) {
+    yield [node, 0];
+    return;
+  }
   for (const n of iterChilds(node, start, end)) {
     if (isBlockNode(n[0])) {
       for (const r of iterLeafs(n[0], 0, getNodeSize(n[0]))) {
@@ -258,37 +263,38 @@ export function* iterLeafs<T extends Node>(
   }
 }
 
-const defaultInlineToString = (node: InlineNode): string =>
-  isTextNode(node) ? node.text : "";
+const defaultVoidToString = (): string => "";
 
-export const sliceText = (
-  node: Node,
-  start?: number,
-  end?: number,
-  inlineToString: (node: InlineNode) => string = defaultInlineToString,
+export const sliceText = <T extends Node>(
+  node: T,
+  start: number = 0,
+  end: number = Infinity,
+  voidToString: (node: InferVoidNode<T>) => string = defaultVoidToString,
 ): string => {
-  let str: string | undefined;
-  if (isBlockNode(node)) {
-    str = textCache.get(node);
-    if (str == null) {
-      const children = node.children;
-      textCache.set(
-        node,
-        (str = hasBlockChildren(children)
-          ? children.reduce((acc: string, r, i) => {
-              if (i !== 0) {
-                acc += "\n";
-              }
-              return acc + sliceText(r, undefined, undefined, inlineToString);
-            }, "")
-          : children.reduce((acc: string, c) => acc + inlineToString(c), "")),
-      );
+  let str = "";
+  let offset = start;
+  for (const [leaf, leafStart] of iterLeafs(node, start, end)) {
+    for (let i = max(0, leafStart - offset); i > 0; i--) {
+      str += "\n";
     }
-  } else {
-    str = inlineToString(node);
+
+    const size = getNodeSize(leaf);
+    const leafEnd = leafStart + size;
+    if (isTextNode(leaf)) {
+      const textStart = max(leafStart, start) - leafStart;
+      const textEnd = min(leafEnd, end) - leafStart;
+      str +=
+        textStart === 0 && textEnd === size
+          ? leaf.text
+          : leaf.text.slice(textStart, textEnd);
+    } else {
+      str += voidToString(leaf as InferVoidNode<T>);
+    }
+    offset = leafEnd;
   }
-  if (start != null || end != null) {
-    return str.slice(start, end);
+
+  for (let i = max(0, min(end, getNodeSize(node)) - offset); i > 0; i--) {
+    str += "\n";
   }
   return str;
 };

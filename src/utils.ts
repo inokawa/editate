@@ -1,7 +1,7 @@
 /**
  * @internal
  */
-export const min = Math.min;
+export const { min, max } = Math;
 
 /**
  * @internal
