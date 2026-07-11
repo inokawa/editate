@@ -1,4 +1,4 @@
-export { getChildAt, getBlockAt, getLeafAt, getNodeSize, iterNode, iterLeaf, } from './doc/node.js';
+export { getChildAt, getBlockAt, getLeafAt, getNodeSize, iterNode, iterLeaf, nodeToString, } from './doc/node.js';
 export type { Operation } from './doc/operation.js';
 export type { InferBlockNode, InferInlineNode, InferTextNode, InferVoidNode, } from './doc/types-infer.js';
 export { Delete, InsertText, InsertNode, ReplaceText, ReplaceDoc, Format, ToggleFormat, SetBlockAttr, ToggleBlockAttr, } from './commands.js';
