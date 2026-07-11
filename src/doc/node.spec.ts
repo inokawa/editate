@@ -472,7 +472,7 @@ describe(sliceFragment.name, () => {
 });
 
 describe(sliceText.name, () => {
-  describe("without range", () => {
+  describe("serialize node", () => {
     it.each<[Node, string]>([
       [{ text: "" }, ""],
       [{ text: "Hello world" }, "Hello world"],
@@ -541,7 +541,7 @@ describe(sliceText.name, () => {
     });
   });
 
-  describe("with range", () => {
+  describe("slice with range", () => {
     const t0 = "abcd";
     const t1 = "efghi";
     const t2 = "jklmno";
@@ -552,25 +552,33 @@ describe(sliceText.name, () => {
         { children: [{ text: t2 }] },
       ],
     };
-    const str = sliceText(doc);
-    it.each<[Range]>([
-      [[1, 0]],
-      [[1, 1]],
-      [[0, 0]],
-      [[0, 1]],
-      [[0, t0.length]],
-      [[0, t0.length + 1]],
-      [[0, t0.length + 2]],
-      [[0, t0.length + 1 + t1.length]],
-      [[0, t0.length + 1 + t1.length + 1]],
-      [[0, t0.length + 1 + t1.length + 2]],
-      [[0, t0.length + 1 + t1.length + 1 + t2.length]],
-      [[0, Infinity]],
-      [[3, t0.length + 2]],
-      [[3, t0.length + 1 + t1.length + 2]],
-      [[t0.length, t0.length + 1]],
-    ])(`$0`, (range) => {
-      expect(sliceText(doc, ...range)).toEqual(str.slice(...range));
+    it.each<[Range, string]>([
+      [[1, 0], ""],
+      [[1, 1], ""],
+      [[0, 0], ""],
+      [[0, 1], t0.slice(0, 1)],
+      [[0, t0.length], t0],
+      [[0, t0.length + 1], t0 + "\n"],
+      [[0, t0.length + 2], t0 + "\n" + t1.slice(0, 1)],
+      [[0, t0.length + 1 + t1.length], t0 + "\n" + t1],
+      [[0, t0.length + 1 + t1.length + 1], t0 + "\n" + t1 + "\n"],
+      [
+        [0, t0.length + 1 + t1.length + 2],
+        t0 + "\n" + t1 + "\n" + t2.slice(0, 1),
+      ],
+      [
+        [0, t0.length + 1 + t1.length + 1 + t2.length],
+        t0 + "\n" + t1 + "\n" + t2,
+      ],
+      [[0, Infinity], t0 + "\n" + t1 + "\n" + t2],
+      [[3, t0.length + 2], t0.slice(3) + "\n" + t1.slice(0, 1)],
+      [
+        [3, t0.length + 1 + t1.length + 2],
+        t0.slice(3) + "\n" + t1 + "\n" + t2.slice(0, 1),
+      ],
+      [[t0.length, t0.length + 1], "\n"],
+    ])(`$0`, (range, str) => {
+      expect(sliceText(doc, ...range)).toEqual(str);
     });
   });
 });
