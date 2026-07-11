@@ -1,4 +1,4 @@
-import { nodeToString } from "../doc/node.js";
+import { sliceText } from "../doc/node.js";
 import { stringToFragment } from "../doc/utils.js";
 import { createEditor, type Editor, type EditorOptions } from "../editor.js";
 import { plainTransferPlugin, singlelinePlugin } from "../plugins/index.js";
@@ -40,7 +40,7 @@ export const createPlainEditor = ({
     editor.exec(singlelinePlugin);
   }
   editor.on("change", () => {
-    onChange(nodeToString(editor.doc));
+    onChange(sliceText(editor.doc));
   });
   return editor;
 };

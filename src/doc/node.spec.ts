@@ -7,7 +7,6 @@ import {
   iterNode,
   iterLeaf,
   sliceFragment,
-  nodeToString,
   sliceText,
 } from "./node.js";
 import {
@@ -472,101 +471,106 @@ describe(sliceFragment.name, () => {
   });
 });
 
-describe(nodeToString.name, () => {
-  it.each<[Node, string]>([
-    [{ text: "" }, ""],
-    [{ text: "Hello world" }, "Hello world"],
-    [{ foo: "bar" }, ""],
-    [{ children: [{ text: "" }] }, ""],
-    [{ children: [{ text: "Hello world" }] }, "Hello world"],
-    [{ children: [{ children: [{ text: "" }] }] }, ""],
-    [{ children: [{ children: [{ text: "Hello world" }] }] }, "Hello world"],
-    [
-      {
-        children: [
-          {
-            children: [
-              { text: "Hello" },
-              { text: " ", bold: true },
-              { text: "world", bold: false },
-            ],
-          },
-        ],
-      },
-      "Hello world",
-    ],
-    [
-      {
-        children: [{ children: [{ text: "" }] }, { children: [{ text: "" }] }],
-      },
-      "\n",
-    ],
-    [
-      {
-        children: [
-          { children: [{ text: "Hello" }] },
-          { children: [{ text: " world" }] },
-        ],
-      },
-      "Hello\n world",
-    ],
-    [
-      {
-        children: [
-          { children: [{ text: "Hello" }] },
-          { children: [{ text: " " }] },
-          { children: [{ text: "world" }] },
-        ],
-      },
-      "Hello\n \nworld",
-    ],
-    [
-      {
-        children: [
-          { children: [{ text: "" }] },
-          { children: [{ text: "Hello" }] },
-          { children: [{ text: "" }] },
-          { children: [{ text: "" }] },
-          { children: [{ text: " world" }] },
-          { children: [{ text: "" }] },
-        ],
-      },
-      "\nHello\n\n\n world\n",
-    ],
-  ])(`$1`, (doc, str) => {
-    expect(nodeToString(doc)).toEqual(str);
-  });
-});
-
 describe(sliceText.name, () => {
-  const t0 = "abcd";
-  const t1 = "efghi";
-  const t2 = "jklmno";
-  const doc: DocNode = {
-    children: [
-      { children: [{ text: t0 }] },
-      { children: [{ text: t1 }] },
-      { children: [{ text: t2 }] },
-    ],
-  };
-  const str = nodeToString(doc);
-  it.each<[Range]>([
-    [[1, 0]],
-    [[1, 1]],
-    [[0, 0]],
-    [[0, 1]],
-    [[0, t0.length]],
-    [[0, t0.length + 1]],
-    [[0, t0.length + 2]],
-    [[0, t0.length + 1 + t1.length]],
-    [[0, t0.length + 1 + t1.length + 1]],
-    [[0, t0.length + 1 + t1.length + 2]],
-    [[0, t0.length + 1 + t1.length + 1 + t2.length]],
-    [[0, Infinity]],
-    [[3, t0.length + 2]],
-    [[3, t0.length + 1 + t1.length + 2]],
-    [[t0.length, t0.length + 1]],
-  ])(`$0`, (range) => {
-    expect(sliceText(doc, ...range)).toEqual(str.slice(...range));
+  describe("without range", () => {
+    it.each<[Node, string]>([
+      [{ text: "" }, ""],
+      [{ text: "Hello world" }, "Hello world"],
+      [{ foo: "bar" }, ""],
+      [{ children: [{ text: "" }] }, ""],
+      [{ children: [{ text: "Hello world" }] }, "Hello world"],
+      [{ children: [{ children: [{ text: "" }] }] }, ""],
+      [{ children: [{ children: [{ text: "Hello world" }] }] }, "Hello world"],
+      [
+        {
+          children: [
+            {
+              children: [
+                { text: "Hello" },
+                { text: " ", bold: true },
+                { text: "world", bold: false },
+              ],
+            },
+          ],
+        },
+        "Hello world",
+      ],
+      [
+        {
+          children: [
+            { children: [{ text: "" }] },
+            { children: [{ text: "" }] },
+          ],
+        },
+        "\n",
+      ],
+      [
+        {
+          children: [
+            { children: [{ text: "Hello" }] },
+            { children: [{ text: " world" }] },
+          ],
+        },
+        "Hello\n world",
+      ],
+      [
+        {
+          children: [
+            { children: [{ text: "Hello" }] },
+            { children: [{ text: " " }] },
+            { children: [{ text: "world" }] },
+          ],
+        },
+        "Hello\n \nworld",
+      ],
+      [
+        {
+          children: [
+            { children: [{ text: "" }] },
+            { children: [{ text: "Hello" }] },
+            { children: [{ text: "" }] },
+            { children: [{ text: "" }] },
+            { children: [{ text: " world" }] },
+            { children: [{ text: "" }] },
+          ],
+        },
+        "\nHello\n\n\n world\n",
+      ],
+    ])(`$1`, (doc, str) => {
+      expect(sliceText(doc)).toEqual(str);
+    });
+  });
+
+  describe("with range", () => {
+    const t0 = "abcd";
+    const t1 = "efghi";
+    const t2 = "jklmno";
+    const doc: DocNode = {
+      children: [
+        { children: [{ text: t0 }] },
+        { children: [{ text: t1 }] },
+        { children: [{ text: t2 }] },
+      ],
+    };
+    const str = sliceText(doc);
+    it.each<[Range]>([
+      [[1, 0]],
+      [[1, 1]],
+      [[0, 0]],
+      [[0, 1]],
+      [[0, t0.length]],
+      [[0, t0.length + 1]],
+      [[0, t0.length + 2]],
+      [[0, t0.length + 1 + t1.length]],
+      [[0, t0.length + 1 + t1.length + 1]],
+      [[0, t0.length + 1 + t1.length + 2]],
+      [[0, t0.length + 1 + t1.length + 1 + t2.length]],
+      [[0, Infinity]],
+      [[3, t0.length + 2]],
+      [[3, t0.length + 1 + t1.length + 2]],
+      [[t0.length, t0.length + 1]],
+    ])(`$0`, (range) => {
+      expect(sliceText(doc, ...range)).toEqual(str.slice(...range));
+    });
   });
 });
