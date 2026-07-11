@@ -6,6 +6,7 @@ export {
   iterNode,
   iterLeaf,
   nodeToString,
+  sliceText,
 } from "./doc/node.js";
 export type { Operation } from "./doc/operation.js";
 export type {

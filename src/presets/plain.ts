@@ -32,7 +32,7 @@ export const createPlainEditor = ({
   onChange,
   ...opts
 }: PlainEditorOptions): Editor<PlainDoc> => {
-  const editor = createEditor({
+  const editor = createEditor<PlainDoc>({
     ...opts,
     doc: { children: stringToFragment(text) },
   }).exec(plainTransferPlugin);
