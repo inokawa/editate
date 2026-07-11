@@ -212,7 +212,7 @@ export const selectionToDomSelection = (
   return [offsetToPosition(doc, anchor), offsetToPosition(doc, focus)];
 };
 
-export function* iterNode<T extends Node>(
+export function* iterChilds<T extends Node>(
   node: T,
   start: number,
   end: number,
@@ -233,12 +233,8 @@ export function* iterNode<T extends Node>(
       const targetNode = children[i]!;
       yield [targetNode, offset];
 
-      const size = getNodeSize(targetNode);
-      for (const r of iterNode(targetNode, 0, size)) {
-        yield [r[0], r[1] + offset];
-      }
       i++;
-      offset += size;
+      offset += getNodeSize(targetNode);
       if (isBlockNode(targetNode)) {
         offset++;
       }
@@ -246,13 +242,17 @@ export function* iterNode<T extends Node>(
   }
 }
 
-export function* iterLeaf<T extends Node>(
+export function* iterLeafs<T extends Node>(
   node: T,
   start: number,
   end: number,
 ): Generator<[node: InlineNode, offset: number], void, void> {
-  for (const n of iterNode(node, start, end)) {
-    if (!isBlockNode(n[0])) {
+  for (const n of iterChilds(node, start, end)) {
+    if (isBlockNode(n[0])) {
+      for (const r of iterLeafs(n[0], 0, getNodeSize(n[0]))) {
+        yield [r[0], r[1] + n[1]];
+      }
+    } else {
       yield n as [InlineNode, number];
     }
   }

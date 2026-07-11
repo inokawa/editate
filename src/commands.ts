@@ -4,7 +4,7 @@ import {
   getLeafAt,
   getNodeSize,
   isTextNode,
-  iterLeaf,
+  iterLeafs,
 } from "./doc/node.js";
 import type { Editor } from "./editor.js";
 import type { DocNode, Range } from "./doc/types.js";
@@ -119,7 +119,7 @@ export function ToggleFormat<T extends DocNode>(
     }
   } else {
     let hasText = false;
-    for (const [n, o] of iterLeaf(editor.doc, ...range)) {
+    for (const [n, o] of iterLeafs(editor.doc, ...range)) {
       if (hasIntersection(range, [o, o + getNodeSize(n)]) && isTextNode(n)) {
         hasText = true;
         if (!n[key as keyof typeof n]) {
