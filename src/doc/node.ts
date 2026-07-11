@@ -261,12 +261,15 @@ export function* iterLeaf<T extends Node>(
 const defaultInlineToString = (node: InlineNode): string =>
   isTextNode(node) ? node.text : "";
 
-export const nodeToString = (
+export const sliceText = (
   node: Node,
+  start?: number,
+  end?: number,
   inlineToString: (node: InlineNode) => string = defaultInlineToString,
 ): string => {
+  let str: string | undefined;
   if (isBlockNode(node)) {
-    let str = textCache.get(node);
+    str = textCache.get(node);
     if (str == null) {
       const children = node.children;
       textCache.set(
@@ -276,24 +279,18 @@ export const nodeToString = (
               if (i !== 0) {
                 acc += "\n";
               }
-              return acc + nodeToString(r, inlineToString);
+              return acc + sliceText(r, undefined, undefined, inlineToString);
             }, "")
           : children.reduce((acc: string, c) => acc + inlineToString(c), "")),
       );
     }
-    return str;
   } else {
-    return inlineToString(node);
+    str = inlineToString(node);
   }
-};
-
-export const sliceText = (
-  node: Node,
-  start: number,
-  end: number,
-  inlineToString?: (node: InlineNode) => string,
-): string => {
-  return nodeToString(node, inlineToString).slice(start, end);
+  if (start != null || end != null) {
+    return str.slice(start, end);
+  }
+  return str;
 };
 
 /**
