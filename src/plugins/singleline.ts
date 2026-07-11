@@ -1,4 +1,5 @@
-import { hasBlockChildren, joinBlocks } from "../doc/operation.js";
+import { hasBlockChildren } from "../doc/node.js";
+import { joinBlocks } from "../doc/operation.js";
 import type { Editor } from "../editor.js";
 
 /**

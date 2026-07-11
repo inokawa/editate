@@ -473,8 +473,24 @@ describe(sliceFragment.name, () => {
 
 describe(docToString.name, () => {
   it.each<[DocNode, string]>([
+    [{ children: [{ text: "" }] }, ""],
+    [{ children: [{ text: "Hello world" }] }, "Hello world"],
     [{ children: [{ children: [{ text: "" }] }] }, ""],
     [{ children: [{ children: [{ text: "Hello world" }] }] }, "Hello world"],
+    [
+      {
+        children: [
+          {
+            children: [
+              { text: "Hello" },
+              { text: " ", bold: true },
+              { text: "world", bold: false },
+            ],
+          },
+        ],
+      },
+      "Hello world",
+    ],
     [
       {
         children: [{ children: [{ text: "" }] }, { children: [{ text: "" }] }],
@@ -489,6 +505,16 @@ describe(docToString.name, () => {
         ],
       },
       "Hello\n world",
+    ],
+    [
+      {
+        children: [
+          { children: [{ text: "Hello" }] },
+          { children: [{ text: " " }] },
+          { children: [{ text: "world" }] },
+        ],
+      },
+      "Hello\n \nworld",
     ],
     [
       {

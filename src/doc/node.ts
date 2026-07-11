@@ -8,6 +8,7 @@ import type {
   DomPosition,
   DomSelection,
   Selection,
+  Fragment,
 } from "./types.js";
 
 /**
@@ -20,6 +21,15 @@ export const isTextNode = (node: Node): node is TextNode => "text" in node;
  */
 export const isBlockNode = (node: Node): node is BlockNode =>
   "children" in node;
+
+/**
+ * @internal
+ */
+export const hasBlockChildren = (
+  children: Fragment,
+): children is Extract<typeof children, readonly BlockNode[]> => {
+  return children.some(isBlockNode);
+};
 
 const sizeCache = new WeakMap<BlockNode, number>();
 
@@ -250,22 +260,22 @@ export function* iterLeaf<T extends Node>(
  * @internal
  */
 export const docToString = <T extends DocNode>(
-  doc: T,
+  { children }: T,
   serializer: (node: InlineNode) => string = (n) =>
     isTextNode(n) ? n.text : "",
 ): string => {
-  return doc.children.reduce((acc: string, r, i) => {
-    const isBlock = isBlockNode(r);
-    if (i !== 0 && isBlock) {
-      acc += "\n";
-    }
-    return (
-      acc +
-      (isBlock
-        ? r.children.reduce((acc: string, n) => acc + serializer(n), "")
-        : "")
-    );
-  }, "");
+  if (hasBlockChildren(children)) {
+    return children.reduce((acc: string, r, i) => {
+      if (i !== 0) {
+        acc += "\n";
+      }
+      return (
+        acc + r.children.reduce((acc: string, n) => acc + serializer(n), "")
+      );
+    }, "");
+  } else {
+    return children.reduce((acc: string, c) => acc + serializer(c), "");
+  }
 };
 
 /**
