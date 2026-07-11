@@ -7,3 +7,4 @@ export declare const offsetToPosition: (node: DocNode | BlockNode, offset: numbe
 export declare function iterNode<T extends Node>(node: T, start: number, end: number): Generator<[node: Node, offset: number], void, void>;
 export declare function iterLeaf<T extends Node>(node: T, start: number, end: number): Generator<[node: InlineNode, offset: number], void, void>;
 export declare const nodeToString: (node: Node, inlineToString?: (node: InlineNode) => string) => string;
+export declare const sliceText: (node: Node, start: number, end: number, inlineToString?: (node: InlineNode) => string) => string;
