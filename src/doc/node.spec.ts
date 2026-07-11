@@ -408,6 +408,28 @@ describe(iterLeafs.name, () => {
         [n2, t0.length + 1 + t1.length + 1],
       ],
     ],
+    [
+      [3, t0.length + 2],
+      [
+        [n0, 0],
+        [n1, t0.length + 1],
+      ],
+    ],
+    [
+      [3, t0.length + 1 + t1.length + 2],
+      [
+        [n0, 0],
+        [n1, t0.length + 1],
+        [n2, t0.length + 1 + t1.length + 1],
+      ],
+    ],
+    [
+      [t0.length, t0.length + 1],
+      [
+        [n0, 0],
+        [n1, t0.length + 1],
+      ],
+    ],
   ])(`$0`, (range, res) => {
     expect([...iterLeafs(doc, ...range)]).toEqual(res);
   });
