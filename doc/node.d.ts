@@ -4,6 +4,6 @@ export declare const getChildAt: <T extends BlockNode>({ children }: T, offset: 
 export declare const getBlockAt: (node: DocNode | BlockNode, offset: number) => [node: BlockNode, offset: number, path: Path];
 export declare const getLeafAt: (node: DocNode | BlockNode, offset: number) => [node: InlineNode, offset: number] | null;
 export declare const offsetToPosition: (node: DocNode | BlockNode, offset: number) => DomPosition;
-export declare function iterNode<T extends Node>(node: T, start: number, end: number): Generator<[node: Node, offset: number], void, void>;
-export declare function iterLeaf<T extends Node>(node: T, start: number, end: number): Generator<[node: InlineNode, offset: number], void, void>;
+export declare function iterChilds<T extends Node>(node: T, start: number, end: number): Generator<[node: Node, offset: number], void, void>;
+export declare function iterLeafs<T extends Node>(node: T, start: number, end: number): Generator<[node: InlineNode, offset: number], void, void>;
 export declare const sliceText: (node: Node, start?: number, end?: number, inlineToString?: (node: InlineNode) => string) => string;
