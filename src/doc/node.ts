@@ -256,11 +256,8 @@ export function* iterLeaf<T extends Node>(
   }
 }
 
-/**
- * @internal
- */
-export const nodeToString = <T extends Node>(
-  node: T,
+export const nodeToString = (
+  node: Node,
   inlineToString: (node: InlineNode) => string = (n) =>
     isTextNode(n) ? n.text : "",
 ): string => {
