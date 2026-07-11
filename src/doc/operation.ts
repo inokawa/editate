@@ -3,6 +3,7 @@ import {
   getBlockAt,
   getChildAt,
   getNodeSize,
+  hasBlockChildren,
   isBlockNode,
   isTextNode,
   sliceFragment,
@@ -69,15 +70,6 @@ export type Operation =
  */
 export const isUnsafeOperation = ({ type }: Operation): boolean =>
   type !== OP_INSERT_TEXT && type !== OP_DELETE;
-
-/**
- * @internal
- */
-export const hasBlockChildren = (
-  children: Fragment,
-): children is Extract<typeof children, readonly BlockNode[]> => {
-  return children.some(isBlockNode);
-};
 
 const isSameNode = (a: InlineNode, b: InlineNode): boolean => {
   const aKeys = keys(a);
