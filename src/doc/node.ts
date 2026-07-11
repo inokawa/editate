@@ -286,7 +286,9 @@ export const sliceText = <T extends Node>(
           ? leaf.text
           : leaf.text.slice(textStart, textEnd);
     } else {
-      str += voidToString ? voidToString(leaf as InferVoidNode<T>) : "";
+      if (voidToString) {
+        str += voidToString(leaf as InferVoidNode<T>);
+      }
     }
     offset = leafEnd;
   }
