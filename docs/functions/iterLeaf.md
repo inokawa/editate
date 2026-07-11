@@ -6,7 +6,7 @@
 
 > **iterLeaf**\<`T`\>(`node`, `start`, `end`): `Generator`\<\[`InlineNode`, `number`\], `void`, `void`\>
 
-Defined in: [doc/node.ts:237](https://github.com/inokawa/editate/blob/3aaa0d3290473e1eb077dff1cd2673a227e22ec2/src/doc/node.ts#L237)
+Defined in: [doc/node.ts:249](https://github.com/inokawa/editate/blob/ff326faf39e28307d1c4cd189dd4dfbf2a46580b/src/doc/node.ts#L249)
 
 ## Type Parameters
 

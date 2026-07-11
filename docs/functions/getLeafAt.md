@@ -6,7 +6,7 @@
 
 > **getLeafAt**(`node`, `offset`): \[`InlineNode`, `number`\] \| `null`
 
-Defined in: [doc/node.ts:95](https://github.com/inokawa/editate/blob/3aaa0d3290473e1eb077dff1cd2673a227e22ec2/src/doc/node.ts#L95)
+Defined in: [doc/node.ts:107](https://github.com/inokawa/editate/blob/ff326faf39e28307d1c4cd189dd4dfbf2a46580b/src/doc/node.ts#L107)
 
 ## Parameters
 

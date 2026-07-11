@@ -12,6 +12,8 @@
 - [getNodeSize](functions/getNodeSize.md)
 - [iterNode](functions/iterNode.md)
 - [iterLeaf](functions/iterLeaf.md)
+- [nodeToString](functions/nodeToString.md)
+- [sliceText](functions/sliceText.md)
 - [Delete](functions/Delete.md)
 - [InsertText](functions/InsertText.md)
 - [InsertNode](functions/InsertNode.md)
