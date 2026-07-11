@@ -6,7 +6,7 @@
 
 > **plainTransferPlugin**\<`T`\>(`editor`, `options?`): `void`
 
-Defined in: [plugins/transfer/plainTransfer.ts:10](https://github.com/inokawa/editate/blob/ff326faf39e28307d1c4cd189dd4dfbf2a46580b/src/plugins/transfer/plainTransfer.ts#L10)
+Defined in: [plugins/transfer/plainTransfer.ts:10](https://github.com/inokawa/editate/blob/08be6f5c1ac0bfde7172d49f43a249aebf0f3e4e/src/plugins/transfer/plainTransfer.ts#L10)
 
 A plugin to handle copying / pasting plain text.
 
@@ -24,7 +24,7 @@ A plugin to handle copying / pasting plain text.
 
 ### options?
 
-#### serializer?
+#### voidToString?
 
 (`node`) => `string`
 
