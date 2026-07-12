@@ -6,7 +6,7 @@
 
 > **SetBlockAttr**\<`T`, `N`, `K`\>(`editor`, `key`, `value`, `offset?`): `void`
 
-Defined in: [commands.ts:148](https://github.com/inokawa/editate/blob/08be6f5c1ac0bfde7172d49f43a249aebf0f3e4e/src/commands.ts#L148)
+Defined in: [commands.ts:148](https://github.com/inokawa/editate/blob/29f62a4fb76bfaef323485a4496ac6eb476a8fb2/src/commands.ts#L148)
 
 Set attr to a block node at the caret or specified position.
 

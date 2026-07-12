@@ -6,7 +6,7 @@
 
 > **getChildAt**\<`T`\>(`__namedParameters`, `offset`): \[`T`\[`"children"`\]\[`number`\], `number`, `number`\] \| `null`
 
-Defined in: [doc/node.ts:67](https://github.com/inokawa/editate/blob/08be6f5c1ac0bfde7172d49f43a249aebf0f3e4e/src/doc/node.ts#L67)
+Defined in: [doc/node.ts:67](https://github.com/inokawa/editate/blob/29f62a4fb76bfaef323485a4496ac6eb476a8fb2/src/doc/node.ts#L67)
 
 ## Type Parameters
 
