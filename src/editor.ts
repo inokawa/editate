@@ -479,19 +479,6 @@ export const createEditor = <
 
       setEditableState();
 
-      const queue = new Set<() => void>();
-      const queueBeforePaint = (fn: () => void) => {
-        if (!queue.size) {
-          requestAnimationFrame(() => {
-            queue.forEach((cb) => {
-              cb();
-            });
-            queue.clear();
-          });
-        }
-        queue.add(fn);
-      };
-
       const syncFocus = () => {
         if (!hasFocus) {
           // Set focus imperatively to return focus to the editor after a command execution via click.
@@ -500,18 +487,23 @@ export const createEditor = <
         }
       };
       const syncDomSelection = () => {
-        setSelectionToDOM(
-          element,
-          parser,
-          selectionToDomSelection(doc, selection),
-          selection[0] - selection[1],
-        );
-        domSelection = selection;
+        if (
+          selection[0] !== domSelection[0] ||
+          selection[1] !== domSelection[1]
+        ) {
+          setSelectionToDOM(
+            element,
+            parser,
+            selectionToDomSelection(doc, selection),
+            selection[0] - selection[1],
+          );
+          domSelection = selection;
+        }
       };
 
       const cleanupOnChange = editor.on("change", () => {
         if (!hasFocus) {
-          queueBeforePaint(syncFocus);
+          requestAnimationFrame(syncFocus);
         }
       });
       const cleanupOnSelectionChange = editor.on("selectionchange", () => {
@@ -519,7 +511,7 @@ export const createEditor = <
           selection[0] !== domSelection[0] ||
           selection[1] !== domSelection[1]
         ) {
-          queueBeforePaint(syncDomSelection);
+          setTimeout(syncDomSelection);
         }
       });
       const cleanupOnReadonly = editor.on("readonly", setEditableState);
