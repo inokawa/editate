@@ -464,6 +464,7 @@ export const createEditor = <
       let hasFocus = false;
       let isDragging = false;
       let domSelection: Selection = selection;
+      let selectionSyncing = false;
 
       const document = getCurrentDocument(element);
 
@@ -487,6 +488,7 @@ export const createEditor = <
         }
       };
       const syncDomSelection = () => {
+        selectionSyncing = false;
         if (
           selection[0] !== domSelection[0] ||
           selection[1] !== domSelection[1]
@@ -508,9 +510,11 @@ export const createEditor = <
       });
       const cleanupOnSelectionChange = editor.on("selectionchange", () => {
         if (
-          selection[0] !== domSelection[0] ||
-          selection[1] !== domSelection[1]
+          !selectionSyncing &&
+          (selection[0] !== domSelection[0] || selection[1] !== domSelection[1])
         ) {
+          selectionSyncing = true;
+          // Use setTimeout since raf is called earlier than mutation after re-render on Firefox
           setTimeout(syncDomSelection);
         }
       });
