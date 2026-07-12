@@ -519,8 +519,8 @@ export const createEditor = <
           selection[1] !== domSelection[1]
         ) {
           cancelSyncDomSelection();
-          // Use setTimeout since raf is called earlier than mutation after re-render on Firefox
-          syncDomSelectionTimer = setTimeout(syncDomSelection);
+          // Use setTimeout to ensure synchronization is done after the mutation caused by re-render, especially on Firefox
+          syncDomSelectionTimer = setTimeout(syncDomSelection, 50);
         }
       });
       const cleanupOnReadonly = editor.on("readonly", setEditableState);
