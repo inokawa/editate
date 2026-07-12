@@ -464,7 +464,7 @@ export const createEditor = <
       let hasFocus = false;
       let isDragging = false;
       let domSelection: Selection = selection;
-      let selectionTimer: ReturnType<typeof setTimeout> | null = null;
+      let syncDomSelectionTimer: ReturnType<typeof setTimeout> | null = null;
 
       const document = getCurrentDocument(element);
 
@@ -488,7 +488,7 @@ export const createEditor = <
         }
       };
       const syncDomSelection = () => {
-        selectionTimer = null;
+        syncDomSelectionTimer = null;
         if (
           selection[0] !== domSelection[0] ||
           selection[1] !== domSelection[1]
@@ -502,6 +502,11 @@ export const createEditor = <
           domSelection = selection;
         }
       };
+      const cancelSyncDomSelection = () => {
+        if (syncDomSelectionTimer != null) {
+          clearTimeout(syncDomSelectionTimer);
+        }
+      };
 
       const cleanupOnChange = editor.on("change", () => {
         if (!hasFocus) {
@@ -513,11 +518,9 @@ export const createEditor = <
           selection[0] !== domSelection[0] ||
           selection[1] !== domSelection[1]
         ) {
-          if (selectionTimer != null) {
-            clearTimeout(selectionTimer);
-          }
+          cancelSyncDomSelection();
           // Use setTimeout since raf is called earlier than mutation after re-render on Firefox
-          selectionTimer = setTimeout(syncDomSelection);
+          syncDomSelectionTimer = setTimeout(syncDomSelection);
         }
       });
       const cleanupOnReadonly = editor.on("readonly", setEditableState);
@@ -533,9 +536,7 @@ export const createEditor = <
       };
 
       const observer = createMutationObserver(element, () => {
-        if (selectionTimer != null) {
-          clearTimeout(selectionTimer);
-        }
+        cancelSyncDomSelection();
         // TODO optimize
         // Mutation to selected DOM may change selection, so restore it.
         setSelectionToDOM(
