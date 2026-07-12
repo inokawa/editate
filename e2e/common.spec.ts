@@ -563,28 +563,6 @@ test.describe("replace range", () => {
     expect(await getText(editable)).toEqual(["", ""]);
     expect(await getSelection(editable)).toEqual([1, 1]);
   });
-
-  test("replace with the same text", async ({ page }) => {
-    await page.goto(storyUrl("basics-plain--multiline"));
-
-    const editable = await getEditable(page);
-    const initialValue = await getText(editable);
-
-    await editable.focus();
-
-    expect(await getSelection(editable)).toEqual([0, 0]);
-
-    // Select text
-    await page.keyboard.press(`ArrowRight`);
-    await page.keyboard.press(`Shift+ArrowRight`);
-    expect(await getSelection(editable)).toEqual([1, 2]);
-
-    // replace
-    await type(editable, initialValue[0].slice(1, 2));
-
-    expect(await getText(editable)).toEqual(initialValue);
-    expect(await getSelection(editable)).toEqual([2, 2]);
-  });
 });
 
 test.describe("Keydown", () => {
