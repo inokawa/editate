@@ -463,6 +463,7 @@ export const createEditor = <
       let isComposing = false;
       let hasFocus = false;
       let isDragging = false;
+      let domSelection: Selection = selection;
 
       const document = getCurrentDocument(element);
 
@@ -478,15 +479,47 @@ export const createEditor = <
 
       setEditableState();
 
+      const queue = new Set<() => void>();
+      const queueBeforePaint = (fn: () => void) => {
+        if (!queue.size) {
+          requestAnimationFrame(() => {
+            queue.forEach((cb) => {
+              cb();
+            });
+            queue.clear();
+          });
+        }
+        queue.add(fn);
+      };
+
+      const syncFocus = () => {
+        if (!hasFocus) {
+          // Set focus imperatively to return focus to the editor after a command execution via click.
+          // It must be queued after the MO callback because that may cause an additional selectionchange event.
+          element.focus({ preventScroll: true });
+        }
+      };
+      const syncDomSelection = () => {
+        setSelectionToDOM(
+          element,
+          parser,
+          selectionToDomSelection(doc, selection),
+          selection[0] - selection[1],
+        );
+        domSelection = selection;
+      };
+
       const cleanupOnChange = editor.on("change", () => {
         if (!hasFocus) {
-          requestAnimationFrame(() => {
-            if (!hasFocus) {
-              // Set focus imperatively to return focus to the editor after a command execution via click.
-              // It must be queued after the MO callback because that may cause an additional selectionchange event.
-              element.focus({ preventScroll: true });
-            }
-          });
+          queueBeforePaint(syncFocus);
+        }
+      });
+      const cleanupOnSelectionChange = editor.on("selectionchange", () => {
+        if (
+          selection[0] !== domSelection[0] ||
+          selection[1] !== domSelection[1]
+        ) {
+          queueBeforePaint(syncDomSelection);
         }
       });
       const cleanupOnReadonly = editor.on("readonly", setEditableState);
@@ -514,7 +547,10 @@ export const createEditor = <
 
       const syncSelection = () => {
         updateSelection(
-          domSelectionToSelection(doc, takeSelectionSnapshot(element, parser)),
+          (domSelection = domSelectionToSelection(
+            doc,
+            takeSelectionSnapshot(element, parser),
+          )),
         );
       };
 
@@ -754,6 +790,7 @@ export const createEditor = <
         disposed = true;
 
         cleanupOnChange();
+        cleanupOnSelectionChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
