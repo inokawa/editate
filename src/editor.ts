@@ -463,6 +463,8 @@ export const createEditor = <
       let isComposing = false;
       let hasFocus = false;
       let isDragging = false;
+      let domSelection: Selection = selection;
+      let syncDomSelectionTimer: ReturnType<typeof setTimeout> | null = null;
 
       const document = getCurrentDocument(element);
 
@@ -478,15 +480,47 @@ export const createEditor = <
 
       setEditableState();
 
+      const syncFocus = () => {
+        if (!hasFocus) {
+          // Set focus imperatively to return focus to the editor after a command execution via click.
+          // It must be queued after the MO callback because that may cause an additional selectionchange event.
+          element.focus({ preventScroll: true });
+        }
+      };
+      const syncDomSelection = () => {
+        syncDomSelectionTimer = null;
+        if (
+          selection[0] !== domSelection[0] ||
+          selection[1] !== domSelection[1]
+        ) {
+          setSelectionToDOM(
+            element,
+            parser,
+            selectionToDomSelection(doc, selection),
+            selection[0] - selection[1],
+          );
+          domSelection = selection;
+        }
+      };
+      const cancelSyncDomSelection = () => {
+        if (syncDomSelectionTimer != null) {
+          clearTimeout(syncDomSelectionTimer);
+        }
+      };
+
       const cleanupOnChange = editor.on("change", () => {
         if (!hasFocus) {
-          requestAnimationFrame(() => {
-            if (!hasFocus) {
-              // Set focus imperatively to return focus to the editor after a command execution via click.
-              // It must be queued after the MO callback because that may cause an additional selectionchange event.
-              element.focus({ preventScroll: true });
-            }
-          });
+          requestAnimationFrame(syncFocus);
+        }
+      });
+      const cleanupOnSelectionChange = editor.on("selectionchange", () => {
+        if (
+          selection[0] !== domSelection[0] ||
+          selection[1] !== domSelection[1]
+        ) {
+          cancelSyncDomSelection();
+          // Use setTimeout since raf is called earlier than mutation after re-render on Firefox
+          syncDomSelectionTimer = setTimeout(syncDomSelection);
         }
       });
       const cleanupOnReadonly = editor.on("readonly", setEditableState);
@@ -502,6 +536,7 @@ export const createEditor = <
       };
 
       const observer = createMutationObserver(element, () => {
+        cancelSyncDomSelection();
         // TODO optimize
         // Mutation to selected DOM may change selection, so restore it.
         setSelectionToDOM(
@@ -514,7 +549,10 @@ export const createEditor = <
 
       const syncSelection = () => {
         updateSelection(
-          domSelectionToSelection(doc, takeSelectionSnapshot(element, parser)),
+          (domSelection = domSelectionToSelection(
+            doc,
+            takeSelectionSnapshot(element, parser),
+          )),
         );
       };
 
@@ -754,6 +792,7 @@ export const createEditor = <
         disposed = true;
 
         cleanupOnChange();
+        cleanupOnSelectionChange();
         cleanupOnReadonly();
 
         element.contentEditable = prevContentEditable;
