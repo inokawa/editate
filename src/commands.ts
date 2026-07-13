@@ -31,9 +31,9 @@ export function Delete(
 export function InsertText(
   editor: Editor,
   text: string,
-  position: number = editor.selection[0],
+  at: number = editor.selection[0],
 ) {
-  editor.apply({ type: "insert_text", at: position, text });
+  editor.apply({ type: "insert_text", at, text });
 }
 
 /**
@@ -42,11 +42,11 @@ export function InsertText(
 export function InsertNode<T extends DocNode>(
   editor: Editor<T>,
   node: InferVoidNode<T>,
-  position: number = editor.selection[0],
+  at: number = editor.selection[0],
 ) {
   editor.apply({
     type: "insert_node",
-    at: position,
+    at,
     fragment: [{ children: [node] }],
   });
 }
