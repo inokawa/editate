@@ -140,16 +140,21 @@ const concat = <T extends Node>(a: T[], b: readonly T[]): void => {
       const aLastIndex = prevLength - 1;
       const aLastNode = a[aLastIndex]!;
       const bFirstNode = a[prevLength]!;
-      if (isBlockNode(aLastNode)) {
-        if (isBlockNode(bFirstNode)) {
+      const isALastBlock = isBlockNode(aLastNode);
+      const isBFirstBlock = isBlockNode(bFirstNode);
+      if (isALastBlock) {
+        if (isBFirstBlock) {
           normalizeBlock(a as BlockNode[], prevLength - 1, prevLength);
         }
-      } else if (isTextNode(aLastNode)) {
-        if (isTextNode(bFirstNode)) {
+      } else if (!isALastBlock) {
+        if (!isBFirstBlock) {
           normalizeInline(a as TextNode[], prevLength - 1, prevLength);
         }
       }
     }
+  }
+  if (!a.length) {
+    a.push({ text: "" } as T);
   }
 };
 

@@ -73,7 +73,7 @@ const Menu = ({
 export const Emoji: StoryObj = {
   render: () => {
     const ref = useRef<HTMLDivElement>(null);
-    const [text, setText] = useState(`Type : to show suggestions 💪\n\n`);
+    const [text, setText] = useState(`Type : to show suggestions 💪\n`);
     const [pos, setPos] = useState<{
       top: number;
       left: number;
