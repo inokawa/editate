@@ -583,11 +583,10 @@ export const Mention: StoryObj = {
               left: r.left,
               caret: selectionStart,
             });
-            setIndex(0);
           } else {
             setPos(null);
-            setIndex(0);
           }
+          setIndex(0);
         });
       e.on("change", () => {
         setDoc(e.doc);

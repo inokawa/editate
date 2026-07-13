@@ -138,11 +138,10 @@ export const Emoji: StoryObj = {
               left: r.left,
               caret: selectionStart,
             });
-            setIndex(0);
           } else {
             setPos(null);
-            setIndex(0);
           }
+          setIndex(0);
         });
     }, []);
 
