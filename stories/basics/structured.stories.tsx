@@ -304,7 +304,6 @@ export const Tag: StoryObj = {
               <span
                 key={j}
                 contentEditable={false}
-                data-tag-value={t.value}
                 style={{
                   background: "slategray",
                   color: "white",
@@ -553,7 +552,6 @@ const youtubeSchema = v.strictObject({
 const Youtube = ({ id }: { id: string }) => {
   return (
     <iframe
-      data-youtube-node
       data-youtube-id={id}
       width="560"
       height="315"
