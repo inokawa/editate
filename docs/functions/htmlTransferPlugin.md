@@ -6,7 +6,7 @@
 
 > **htmlTransferPlugin**\<`T`\>(`editor`, `options`): `void`
 
-Defined in: [plugins/transfer/htmlTransfer.ts:128](https://github.com/inokawa/editate/blob/29f62a4fb76bfaef323485a4496ac6eb476a8fb2/src/plugins/transfer/htmlTransfer.ts#L128)
+Defined in: [plugins/transfer/htmlTransfer.ts:128](https://github.com/inokawa/editate/blob/6a0e7ca0cc82d503067f82e18382f88be718955f/src/plugins/transfer/htmlTransfer.ts#L128)
 
 A plugin to handle copying / pasting HTML
 
