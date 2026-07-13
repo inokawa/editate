@@ -7,7 +7,7 @@ import type { Editor } from "../editor.js";
  */
 export function selectionRectPlugin(
   editor: Editor,
-  onSelectionChange: (getRect: () => DOMRectReadOnly) => void,
+  onSelectionChange: (getRect: () => DOMRect) => void,
 ) {
   editor.hook("mount", (element, parser) => {
     let mounted = true;
