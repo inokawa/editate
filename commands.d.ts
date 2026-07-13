@@ -8,11 +8,11 @@ export declare function Delete(editor: Editor, range?: Range): void;
 /**
  * Insert text at the caret or specified position.
  */
-export declare function InsertText(editor: Editor, text: string, position?: number): void;
+export declare function InsertText(editor: Editor, text: string, at?: number): void;
 /**
  * Insert node at the caret or specified position.
  */
-export declare function InsertNode<T extends DocNode>(editor: Editor<T>, node: InferVoidNode<T>, position?: number): void;
+export declare function InsertNode<T extends DocNode>(editor: Editor<T>, node: InferVoidNode<T>, at?: number): void;
 /**
  * Replace text in the selection or specified range.
  */
