@@ -562,21 +562,6 @@ export const Mention: StoryObj = {
       setPos(null);
       setIndex(0);
     });
-    const onRectChange = useEffectEvent((getRect: () => DOMRectReadOnly) => {
-      const selectionStart = Math.min(...editor.selection);
-      if (MENTION_REG.test(sliceText(editor.doc, 0, selectionStart))) {
-        const r = getRect();
-        setPos({
-          top: r.top + r.height,
-          left: r.left,
-          caret: selectionStart,
-        });
-        setIndex(0);
-      } else {
-        setPos(null);
-        setIndex(0);
-      }
-    });
 
     const editor = useMemo(() => {
       const e = createEditor({
@@ -589,7 +574,21 @@ export const Mention: StoryObj = {
           Enter: onComplete,
           Escape: onClose,
         })
-        .exec(selectionRectPlugin, onRectChange);
+        .exec(selectionRectPlugin, (getRect) => {
+          const selectionStart = Math.min(...editor.selection);
+          if (MENTION_REG.test(sliceText(editor.doc, 0, selectionStart))) {
+            const r = getRect();
+            setPos({
+              top: r.top + r.height,
+              left: r.left,
+              caret: selectionStart,
+            });
+            setIndex(0);
+          } else {
+            setPos(null);
+            setIndex(0);
+          }
+        });
       e.on("change", () => {
         setDoc(e.doc);
       });

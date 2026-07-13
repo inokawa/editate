@@ -12,6 +12,7 @@ import {
   keymapPlugin,
   ReplaceText,
   selectionRectPlugin,
+  sliceText,
 } from "../../src";
 import * as emoji from "node-emoji";
 
@@ -116,21 +117,6 @@ export const Emoji: StoryObj = {
       setPos(null);
       setIndex(0);
     });
-    const onRectChange = useEffectEvent((getRect: () => DOMRectReadOnly) => {
-      const selectionStart = Math.min(...editor.selection);
-      if (MENTION_REG.test(text.slice(0, selectionStart))) {
-        const r = getRect();
-        setPos({
-          top: r.top + r.height,
-          left: r.left,
-          caret: selectionStart,
-        });
-        setIndex(0);
-      } else {
-        setPos(null);
-        setIndex(0);
-      }
-    });
 
     const editor = useMemo(() => {
       return createPlainEditor({
@@ -143,7 +129,21 @@ export const Emoji: StoryObj = {
           Enter: onComplete,
           Escape: onClose,
         })
-        .exec(selectionRectPlugin, onRectChange);
+        .exec(selectionRectPlugin, (getRect) => {
+          const selectionStart = Math.min(...editor.selection);
+          if (MENTION_REG.test(sliceText(editor.doc, 0, selectionStart))) {
+            const r = getRect();
+            setPos({
+              top: r.top + r.height,
+              left: r.left,
+              caret: selectionStart,
+            });
+            setIndex(0);
+          } else {
+            setPos(null);
+            setIndex(0);
+          }
+        });
     }, []);
 
     useEffect(() => {
