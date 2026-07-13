@@ -6,9 +6,10 @@ import type {
   DomSelection,
   Path,
 } from "../doc/types.js";
+import { selectionToDomSelection } from "../doc/node.js";
+import { isCollapsed } from "../doc/position.js";
 import { min } from "../utils.js";
 import { isElementNode } from "./utils.js";
-import { selectionToDomSelection } from "../doc/node.js";
 
 export {
   createParser,
@@ -66,14 +67,13 @@ export const selectionToRange = (
   const [anchor, focus] = selectionToDomSelection(doc, sel);
 
   const document = getCurrentDocument(root);
-  const posDiff = sel[0] - sel[1];
-  const isCollapsed = posDiff === 0;
-  const backward = posDiff > 0;
+  const collapsed = isCollapsed(sel);
+  const backward = sel[0] - sel[1] > 0;
   const start = backward ? focus : anchor;
   const end = backward ? anchor : focus;
 
   const domStart = findPosition(root, parse, start);
-  const domEnd = isCollapsed ? domStart : findPosition(root, parse, end);
+  const domEnd = collapsed ? domStart : findPosition(root, parse, end);
 
   const range = document.createRange();
 
