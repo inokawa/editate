@@ -1,7 +1,14 @@
 import { type TokenType, type Parser, TOKEN_BLOCK } from "./parser.js";
-import type { DomPosition, DomSelection, Path } from "../doc/types.js";
+import type {
+  DocNode,
+  Selection as JsSelection,
+  DomPosition,
+  DomSelection,
+  Path,
+} from "../doc/types.js";
 import { min } from "../utils.js";
 import { isElementNode } from "./utils.js";
+import { selectionToDomSelection } from "../doc/node.js";
 
 export {
   createParser,
@@ -53,10 +60,13 @@ export const getSelectionRangeInEditor = (
 export const selectionToRange = (
   root: Element,
   parse: Parser,
-  [anchor, focus]: DomSelection,
-  posDiff: number, // TODO remove
+  doc: DocNode,
+  sel: JsSelection,
 ): Range => {
+  const [anchor, focus] = selectionToDomSelection(doc, sel);
+
   const document = getCurrentDocument(root);
+  const posDiff = sel[0] - sel[1];
   const isCollapsed = posDiff === 0;
   const backward = posDiff > 0;
   const start = backward ? focus : anchor;
@@ -100,15 +110,15 @@ export const selectionToRange = (
 export const setSelectionToDOM = (
   root: Element,
   parse: Parser,
-  sel: DomSelection,
-  posDiff: number, // TODO remove
+  doc: DocNode,
+  sel: JsSelection,
   force?: boolean,
 ): void => {
   const selection = getDOMSelection(root);
 
   if (force || getSelectionRangeInEditor(selection, root)) {
-    const range = selectionToRange(root, parse, sel, posDiff);
-    const backward = posDiff > 0;
+    const range = selectionToRange(root, parse, doc, sel);
+    const backward = sel[0] - sel[1] > 0;
 
     selection.removeAllRanges();
     selection.addRange(range);

@@ -1,4 +1,3 @@
-import { selectionToDomSelection } from "../doc/node.js";
 import { selectionToRange } from "../dom/index.js";
 import type { Editor } from "../editor.js";
 
@@ -23,8 +22,8 @@ export function selectionRectPlugin(
           return selectionToRange(
             element,
             parser,
-            selectionToDomSelection(editor.doc, selection),
-            selection[0] - selection[1],
+            editor.doc,
+            selection,
           ).getBoundingClientRect();
         });
       });

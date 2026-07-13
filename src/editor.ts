@@ -10,11 +10,7 @@ import {
 import { createMutationObserver } from "./dom/mutation.js";
 import type { DocNode, Fragment, Selection } from "./doc/types.js";
 import { is, isFunction, isString, microtask } from "./utils.js";
-import {
-  domSelectionToSelection,
-  selectionToDomSelection,
-  positionToOffset,
-} from "./doc/node.js";
+import { domSelectionToSelection, positionToOffset } from "./doc/node.js";
 import {
   applyOperation,
   type Operation,
@@ -493,12 +489,7 @@ export const createEditor = <
           selection[0] !== domSelection[0] ||
           selection[1] !== domSelection[1]
         ) {
-          setSelectionToDOM(
-            element,
-            parser,
-            selectionToDomSelection(doc, selection),
-            selection[0] - selection[1],
-          );
+          setSelectionToDOM(element, parser, doc, selection);
           domSelection = selection;
         }
       };
@@ -539,12 +530,7 @@ export const createEditor = <
         cancelSyncDomSelection();
         // TODO optimize
         // Mutation to selected DOM may change selection, so restore it.
-        setSelectionToDOM(
-          element,
-          parser,
-          selectionToDomSelection(doc, selection),
-          selection[0] - selection[1],
-        );
+        setSelectionToDOM(element, parser, doc, selection);
       });
 
       const syncSelection = () => {
@@ -568,13 +554,7 @@ export const createEditor = <
           // Updating selection may schedule the next selectionchange event
           // It should be ignored especially in firefox not to confuse editor state
           document.removeEventListener("selectionchange", onSelectionChange);
-          setSelectionToDOM(
-            element,
-            parser,
-            selectionToDomSelection(doc, selection),
-            selection[0] - selection[1],
-            true,
-          );
+          setSelectionToDOM(element, parser, doc, selection, true);
           document.addEventListener("selectionchange", onSelectionChange);
         }
 
