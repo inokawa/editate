@@ -581,6 +581,7 @@ test.describe("replace range", () => {
 
     // replace
     await type(editable, initialValue[0].slice(1, 2));
+    await page.waitForTimeout(30); // wait for setTimeout
 
     expect(await getText(editable)).toEqual(initialValue);
     expect(await getSelection(editable)).toEqual([2, 2]);
