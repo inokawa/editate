@@ -299,7 +299,7 @@ export const Tag: StoryObj = {
         >
           {doc.children.map((t, j) =>
             "text" in t ? (
-              <span key={j}>{t.text || <br />}</span>
+              t.text || <br />
             ) : (
               <span
                 key={j}
@@ -415,7 +415,7 @@ export const Image: StoryObj = {
           <div key={i}>
             {b.children.map((t, j) =>
               "text" in t ? (
-                <span key={j}>{t.text || <br />}</span>
+                t.text || <br />
               ) : (
                 <img key={j} src={t.src} style={{ maxWidth: 200 }} />
               ),
@@ -510,7 +510,7 @@ export const Video: StoryObj = {
           <div key={i}>
             {b.children.map((t, j) =>
               "text" in t ? (
-                <span key={j}>{t.text || <br />}</span>
+                t.text || <br />
               ) : (
                 // safari needs contentEditable="false"
                 <video
@@ -627,11 +627,7 @@ export const Iframe: StoryObj = {
           {doc.children.map((b, i) => (
             <div key={i}>
               {b.children.map((t, j) =>
-                "text" in t ? (
-                  <span key={j}>{t.text || <br />}</span>
-                ) : (
-                  <Youtube key={j} id={t.id} />
-                ),
+                "text" in t ? t.text || <br /> : <Youtube key={j} id={t.id} />,
               )}
             </div>
           ))}
@@ -724,7 +720,7 @@ export const Ruby: StoryObj = {
             <div key={i}>
               {b.children.map((t, j) =>
                 "text" in t ? (
-                  <span key={j}>{t.text || <br />}</span>
+                  t.text || <br />
                 ) : (
                   <ruby key={j} contentEditable={false}>
                     {t.value}
