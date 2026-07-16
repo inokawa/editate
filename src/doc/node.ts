@@ -1,5 +1,5 @@
 import { max, min } from "../utils.js";
-import type { InferVoidNode } from "./types-infer.js";
+import type { InferInlineNode, InferVoidNode } from "./types-infer.js";
 import type {
   BlockNode,
   DocNode,
@@ -247,18 +247,18 @@ export function* iterLeafs<T extends Node>(
   node: T,
   start: number,
   end: number,
-): Generator<[node: InlineNode, offset: number], void, void> {
+): Generator<[node: InferInlineNode<T>, offset: number], void, void> {
   if (!isBlockNode(node)) {
-    yield [node, 0];
+    yield [node as InferInlineNode<T>, 0];
     return;
   }
   for (const n of iterChilds(node, start, end)) {
     if (isBlockNode(n[0])) {
       for (const r of iterLeafs(n[0], 0, getNodeSize(n[0]))) {
-        yield [r[0], r[1] + n[1]];
+        yield [r[0] as InferInlineNode<T>, r[1] + n[1]];
       }
     } else {
-      yield n as [InlineNode, number];
+      yield n as [InferInlineNode<T>, number];
     }
   }
 }

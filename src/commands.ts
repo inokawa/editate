@@ -1,11 +1,5 @@
-import { isCollapsed, hasIntersection, toRange } from "./doc/position.js";
-import {
-  getBlockAt,
-  getLeafAt,
-  getNodeSize,
-  isTextNode,
-  iterLeafs,
-} from "./doc/node.js";
+import { toRange } from "./doc/position.js";
+import { getBlockAt, isTextNode } from "./doc/node.js";
 import type { Editor } from "./editor.js";
 import type { DocNode, Range } from "./doc/types.js";
 import type {
@@ -14,6 +8,7 @@ import type {
   InferTextNode,
   InferVoidNode,
 } from "./doc/types-infer.js";
+import { LeafsInRange } from "./queries.js";
 
 /**
  * Delete content in the selection or specified range.
@@ -109,29 +104,19 @@ export function ToggleFormat<T extends DocNode>(
   range: Range = toRange(editor.selection),
 ) {
   let shouldFormat = false;
-
-  if (isCollapsed(range)) {
-    const n = getLeafAt(editor.doc, range[0])?.[0];
-    if (n && isTextNode(n)) {
-      shouldFormat = !n[key as keyof typeof n];
-    } else {
-      return;
-    }
-  } else {
-    let hasText = false;
-    for (const [n, o] of iterLeafs(editor.doc, ...range)) {
-      if (hasIntersection(range, [o, o + getNodeSize(n)]) && isTextNode(n)) {
-        hasText = true;
-        if (!n[key as keyof typeof n]) {
-          shouldFormat = true;
-          break;
-        }
+  let hasText = false;
+  for (const n of editor.exec(LeafsInRange, range)) {
+    if (isTextNode(n)) {
+      hasText = true;
+      if (!n[key as keyof typeof n]) {
+        shouldFormat = true;
+        break;
       }
     }
+  }
 
-    if (!hasText) {
-      return;
-    }
+  if (!hasText) {
+    return;
   }
 
   editor.apply({
