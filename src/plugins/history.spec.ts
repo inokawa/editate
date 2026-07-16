@@ -74,6 +74,44 @@ it("undo insert linebreak", () => {
   expect(editor.selection).toEqual(updatedSelection);
 });
 
+it("undo insert lines", () => {
+  const doc: DocNode = {
+    children: [
+      { children: [{ text: "abcde" }] },
+      { children: [{ text: "fghij" }] },
+    ],
+  };
+  const selection: Selection = [1, 1];
+  const editor = createEditor({ doc });
+  editor.selection = selection;
+  expect(editor.doc).toEqual(doc);
+  expect(editor.selection).toEqual(selection);
+
+  const text = "ABC\nDEFG";
+  editor.apply({ type: "insert_text", at: selection[0], text: text });
+  const updatedDoc: DocNode = {
+    children: [
+      { children: [{ text: "aABC" }] },
+      { children: [{ text: "DEFGbcde" }] },
+      { children: [{ text: "fghij" }] },
+    ],
+  };
+  const updatedSelection: Selection = [
+    selection[0] + text.length,
+    selection[1] + text.length,
+  ];
+  expect(editor.doc).toEqual(updatedDoc);
+  expect(editor.selection).toEqual(updatedSelection);
+
+  editor.exec(Undo);
+  expect(editor.doc).toEqual(doc);
+  expect(editor.selection).toEqual(selection);
+
+  editor.exec(Redo);
+  expect(editor.doc).toEqual(updatedDoc);
+  expect(editor.selection).toEqual(updatedSelection);
+});
+
 it("undo delete text", () => {
   const doc: DocNode = {
     children: [
@@ -123,6 +161,36 @@ it("undo delete linebreak", () => {
   editor.apply({ type: "delete", range: selection });
   const updatedDoc: DocNode = {
     children: [{ children: [{ text: "abcdefghij" }] }],
+  };
+  const updatedSelection: Selection = [selection[0], selection[0]];
+  expect(editor.doc).toEqual(updatedDoc);
+  expect(editor.selection).toEqual(updatedSelection);
+
+  editor.exec(Undo);
+  expect(editor.doc).toEqual(doc);
+  expect(editor.selection).toEqual(selection);
+
+  editor.exec(Redo);
+  expect(editor.doc).toEqual(updatedDoc);
+  expect(editor.selection).toEqual(updatedSelection);
+});
+
+it("undo delete lines", () => {
+  const doc: DocNode = {
+    children: [
+      { children: [{ text: "abcde" }] },
+      { children: [{ text: "fghij" }] },
+    ],
+  };
+  const selection: Selection = [4, 7];
+  const editor = createEditor({ doc });
+  editor.selection = selection;
+  expect(editor.doc).toEqual(doc);
+  expect(editor.selection).toEqual(selection);
+
+  editor.apply({ type: "delete", range: selection });
+  const updatedDoc: DocNode = {
+    children: [{ children: [{ text: "abcdghij" }] }],
   };
   const updatedSelection: Selection = [selection[0], selection[0]];
   expect(editor.doc).toEqual(updatedDoc);
