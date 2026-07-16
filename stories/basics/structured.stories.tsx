@@ -17,6 +17,8 @@ import {
   htmlTransferPlugin,
   plainTransferPlugin,
   fileTransferPlugin,
+  LeafsInRange,
+  selectionRectPlugin,
 } from "../../src";
 import * as v from "valibot";
 
@@ -145,6 +147,14 @@ export const RichText: StoryObj = {
       ],
     });
 
+    const [rect, setRect] = useState<{ top: number; left: number } | null>(
+      null,
+    );
+    const [bold, setBold] = useState(false);
+    const [italic, setItalic] = useState(false);
+    const [underline, setUnderline] = useState(false);
+    const [strike, setStrike] = useState(false);
+
     const toggleBold = () => {
       editor.exec(ToggleFormat, "bold");
     };
@@ -162,6 +172,30 @@ export const RichText: StoryObj = {
     };
 
     const editor = useMemo(() => {
+      const updateMenu = () => {
+        let hasBold = false;
+        let hasItalic = false;
+        let hasUnderline = false;
+        let hasStrike = false;
+        for (const leaf of editor.exec(LeafsInRange)) {
+          if (leaf.bold) {
+            hasBold = true;
+          }
+          if (leaf.italic) {
+            hasItalic = true;
+          }
+          if (leaf.underline) {
+            hasUnderline = true;
+          }
+          if (leaf.strike) {
+            hasStrike = true;
+          }
+        }
+        setBold(hasBold);
+        setItalic(hasItalic);
+        setUnderline(hasUnderline);
+        setStrike(hasStrike);
+      };
       const e = createEditor({
         doc: doc,
         schema: richSchema,
@@ -172,10 +206,28 @@ export const RichText: StoryObj = {
           "Mod+U": toggleUnderline,
           "Mod+S": toggleStrike,
         })
+        .exec(selectionRectPlugin, (getRect) => {
+          if (editor.selection[0] !== editor.selection[1]) {
+            setRect((prev) => {
+              const rect = getRect();
+              if (prev && prev.top === rect.top && prev.left === rect.left) {
+                return prev;
+              } else {
+                return { top: rect.top, left: rect.left };
+              }
+            });
+          } else {
+            setRect(null);
+          }
+        })
         .exec(internalTranferPlugin)
         .exec(plainTransferPlugin);
       e.on("change", () => {
         setDoc(e.doc);
+        updateMenu();
+      });
+      e.on("selectionchange", () => {
+        updateMenu();
       });
       return e;
     }, []);
@@ -188,10 +240,30 @@ export const RichText: StoryObj = {
     return (
       <div>
         <div>
-          <button onClick={toggleBold}>bold</button>
-          <button onClick={toggleItalic}>italic</button>
-          <button onClick={toggleUnderline}>underline</button>
-          <button onClick={toggleStrike}>strike</button>
+          <button
+            style={{ fontWeight: bold ? "bold" : undefined }}
+            onClick={toggleBold}
+          >
+            bold
+          </button>
+          <button
+            style={{ fontWeight: italic ? "bold" : undefined }}
+            onClick={toggleItalic}
+          >
+            italic
+          </button>
+          <button
+            style={{ fontWeight: underline ? "bold" : undefined }}
+            onClick={toggleUnderline}
+          >
+            underline
+          </button>
+          <button
+            style={{ fontWeight: strike ? "bold" : undefined }}
+            onClick={toggleStrike}
+          >
+            strike
+          </button>
           <button onClick={toggleAlign}>align</button>
         </div>
         <div
@@ -210,6 +282,42 @@ export const RichText: StoryObj = {
             </div>
           ))}
         </div>
+        {rect ? (
+          <div
+            style={{
+              position: "fixed",
+              top: rect.top - 30,
+              left: rect.left,
+              whiteSpace: "nowrap",
+            }}
+          >
+            <button
+              style={{ fontWeight: bold ? "bold" : undefined }}
+              onClick={toggleBold}
+            >
+              bold
+            </button>
+            <button
+              style={{ fontWeight: italic ? "bold" : undefined }}
+              onClick={toggleItalic}
+            >
+              italic
+            </button>
+            <button
+              style={{ fontWeight: underline ? "bold" : undefined }}
+              onClick={toggleUnderline}
+            >
+              underline
+            </button>
+            <button
+              style={{ fontWeight: strike ? "bold" : undefined }}
+              onClick={toggleStrike}
+            >
+              strike
+            </button>
+            <button onClick={toggleAlign}>align</button>
+          </div>
+        ) : null}
       </div>
     );
   },

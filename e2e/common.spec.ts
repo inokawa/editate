@@ -1776,7 +1776,7 @@ test.describe("keep selection on render", () => {
     {
       // Set block attr
       const setPromise = waitForStyleSet(editable, "textAlign", "right");
-      await page.getByRole("button", { name: "align" }).click();
+      await page.getByRole("button", { name: "align" }).first().click();
       expect(await getText(editable)).toEqual(initialValue);
       expect(await getSelection(editable)).toEqual([0, 0]);
       expect(await setPromise).toBe(true);
@@ -1793,7 +1793,7 @@ test.describe("keep selection on render", () => {
         "right",
         true,
       );
-      await page.getByRole("button", { name: "align" }).click();
+      await page.getByRole("button", { name: "align" }).first().click();
       expect(await getText(editable)).toEqual(initialValue);
       expect(await getSelection(editable)).toEqual(movedSelection);
       expect(await unsetPromise).toBe(true);
@@ -1820,7 +1820,7 @@ test.describe("keep selection on render", () => {
 
       // Set text format
       const setPromise = waitForStyleSet(editable, "fontStyle", "italic");
-      await page.getByRole("button", { name: "italic" }).click();
+      await page.getByRole("button", { name: "italic" }).first().click();
       expect(await getText(editable)).toEqual(initialValue);
       expect(await getSelection(editable)).toEqual(selectedSelection);
       expect(await setPromise).toBe(true);
@@ -1832,7 +1832,7 @@ test.describe("keep selection on render", () => {
         "italic",
         true,
       );
-      await page.getByRole("button", { name: "italic" }).click();
+      await page.getByRole("button", { name: "italic" }).first().click();
       expect(await getText(editable)).toEqual(initialValue);
       expect(await getSelection(editable)).toEqual(selectedSelection);
       expect(await unsetPromise).toBe(true);
