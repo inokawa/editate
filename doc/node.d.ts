@@ -1,4 +1,4 @@
-import { InferVoidNode } from './types-infer.js';
+import { InferInlineNode, InferVoidNode } from './types-infer.js';
 import { BlockNode, DocNode, InlineNode, Node, Path, DomPosition } from './types.js';
 export declare const getNodeSize: (node: Node) => number;
 export declare const getChildAt: <T extends BlockNode>({ children }: T, offset: number) => [node: T["children"][number], offset: number, index: number] | null;
@@ -6,5 +6,5 @@ export declare const getBlockAt: (node: DocNode | BlockNode, offset: number) => 
 export declare const getLeafAt: (node: DocNode | BlockNode, offset: number) => [node: InlineNode, offset: number] | null;
 export declare const offsetToPosition: (node: DocNode | BlockNode, offset: number) => DomPosition;
 export declare function iterChilds<T extends Node>(node: T, start: number, end: number): Generator<[node: Node, offset: number], void, void>;
-export declare function iterLeafs<T extends Node>(node: T, start: number, end: number): Generator<[node: InlineNode, offset: number], void, void>;
+export declare function iterLeafs<T extends Node>(node: T, start: number, end: number): Generator<[node: InferInlineNode<T>, offset: number], void, void>;
 export declare const sliceText: <T extends Node>(node: T, start?: number, end?: number, voidToString?: (node: InferVoidNode<T>) => string) => string;
