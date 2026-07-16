@@ -24,6 +24,7 @@ export {
   SetBlockAttr,
   ToggleBlockAttr,
 } from "./commands.js";
+export { LeafsInRange } from "./queries.js";
 export { createEditor } from "./editor.js";
 export type { EditorOptions, Editor, EditorContext } from "./editor.js";
 export * from "./presets/index.js";
