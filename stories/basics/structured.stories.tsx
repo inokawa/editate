@@ -239,32 +239,38 @@ export const RichText: StoryObj = {
 
     return (
       <div>
-        <div>
-          <button
-            style={{ fontWeight: bold ? "bold" : undefined }}
-            onClick={toggleBold}
-          >
-            bold
-          </button>
-          <button
-            style={{ fontWeight: italic ? "bold" : undefined }}
-            onClick={toggleItalic}
-          >
-            italic
-          </button>
-          <button
-            style={{ fontWeight: underline ? "bold" : undefined }}
-            onClick={toggleUnderline}
-          >
-            underline
-          </button>
-          <button
-            style={{ fontWeight: strike ? "bold" : undefined }}
-            onClick={toggleStrike}
-          >
-            strike
-          </button>
-          <button onClick={toggleAlign}>align</button>
+        <div
+          style={{ display: "flex", alignItems: "center", gap: 4, padding: 4 }}
+        >
+          <div>
+            <button
+              style={{ fontWeight: bold ? "bold" : undefined }}
+              onClick={toggleBold}
+            >
+              bold
+            </button>
+            <button
+              style={{ fontWeight: italic ? "bold" : undefined }}
+              onClick={toggleItalic}
+            >
+              italic
+            </button>
+            <button
+              style={{ fontWeight: underline ? "bold" : undefined }}
+              onClick={toggleUnderline}
+            >
+              underline
+            </button>
+            <button
+              style={{ fontWeight: strike ? "bold" : undefined }}
+              onClick={toggleStrike}
+            >
+              strike
+            </button>
+          </div>
+          <div>
+            <button onClick={toggleAlign}>align</button>
+          </div>
         </div>
         <div
           ref={ref}
@@ -315,7 +321,6 @@ export const RichText: StoryObj = {
             >
               strike
             </button>
-            <button onClick={toggleAlign}>align</button>
           </div>
         ) : null}
       </div>
