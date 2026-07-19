@@ -1400,6 +1400,8 @@ test.describe("Copy", () => {
     await editable.focus();
 
     expect(await getSelection(editable)).toEqual([0, 0]);
+    expect(await readClipboard(page, "text/plain")).toEqual(null);
+    expect(await readClipboard(page, "text/html")).toEqual(null);
 
     await page.keyboard.press("ControlOrMeta+A");
     await page.keyboard.press("ControlOrMeta+C");
