@@ -21,6 +21,7 @@
 - [ToggleFormat](functions/ToggleFormat.md)
 - [SetBlockAttr](functions/SetBlockAttr.md)
 - [ToggleBlockAttr](functions/ToggleBlockAttr.md)
+- [LeafsInRange](functions/LeafsInRange.md)
 - [createEditor](functions/createEditor.md)
 - [createPlainEditor](functions/createPlainEditor.md)
 - [debugPlugin](functions/debugPlugin.md)

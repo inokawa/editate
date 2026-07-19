@@ -4,9 +4,9 @@
 
 # Function: iterLeafs()
 
-> **iterLeafs**\<`T`\>(`node`, `start`, `end`): `Generator`\<\[`InlineNode`, `number`\], `void`, `void`\>
+> **iterLeafs**\<`T`\>(`node`, `start`, `end`): `Generator`\<\[[`InferInlineNode`](../type-aliases/InferInlineNode.md)\<`T`\>, `number`\], `void`, `void`\>
 
-Defined in: [doc/node.ts:246](https://github.com/inokawa/editate/blob/6a0e7ca0cc82d503067f82e18382f88be718955f/src/doc/node.ts#L246)
+Defined in: [doc/node.ts:246](https://github.com/inokawa/editate/blob/c802675da5f7d5a5af48a45db146a7af662f2701/src/doc/node.ts#L246)
 
 ## Type Parameters
 
@@ -30,4 +30,4 @@ Defined in: [doc/node.ts:246](https://github.com/inokawa/editate/blob/6a0e7ca0cc
 
 ## Returns
 
-`Generator`\<\[`InlineNode`, `number`\], `void`, `void`\>
+`Generator`\<\[[`InferInlineNode`](../type-aliases/InferInlineNode.md)\<`T`\>, `number`\], `void`, `void`\>

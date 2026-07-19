@@ -6,7 +6,7 @@
 
 > **ToggleBlockAttr**\<`T`, `N`, `K`\>(`editor`, `key`, `onValue`, `offValue`, `offset?`): `void`
 
-Defined in: [commands.ts:165](https://github.com/inokawa/editate/blob/6a0e7ca0cc82d503067f82e18382f88be718955f/src/commands.ts#L165)
+Defined in: [commands.ts:150](https://github.com/inokawa/editate/blob/c802675da5f7d5a5af48a45db146a7af662f2701/src/commands.ts#L150)
 
 Toggle attr of block node at the caret or specified position.
 

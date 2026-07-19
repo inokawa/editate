@@ -4,9 +4,9 @@
 
 # Function: InsertText()
 
-> **InsertText**(`editor`, `text`, `position?`): `void`
+> **InsertText**(`editor`, `text`, `at?`): `void`
 
-Defined in: [commands.ts:31](https://github.com/inokawa/editate/blob/6a0e7ca0cc82d503067f82e18382f88be718955f/src/commands.ts#L31)
+Defined in: [commands.ts:26](https://github.com/inokawa/editate/blob/c802675da5f7d5a5af48a45db146a7af662f2701/src/commands.ts#L26)
 
 Insert text at the caret or specified position.
 
@@ -20,7 +20,7 @@ Insert text at the caret or specified position.
 
 `string`
 
-### position?
+### at?
 
 `number` = `...`
 
