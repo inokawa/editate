@@ -4,6 +4,28 @@ import { createEditor } from "../editor.js";
 import { Redo, Undo } from "./history.js";
 import { getNodeSize } from "../doc/node.js";
 
+it("empty history", () => {
+  const doc: DocNode = {
+    children: [
+      { children: [{ text: "abcde" }] },
+      { children: [{ text: "fghij" }] },
+    ],
+  };
+  const selection: Selection = [1, 1];
+  const editor = createEditor({ doc });
+  editor.selection = selection;
+  expect(editor.doc).toEqual(doc);
+  expect(editor.selection).toEqual(selection);
+
+  editor.exec(Undo);
+  expect(editor.doc).toEqual(doc);
+  expect(editor.selection).toEqual(selection);
+
+  editor.exec(Redo);
+  expect(editor.doc).toEqual(doc);
+  expect(editor.selection).toEqual(selection);
+});
+
 it("undo insert text", () => {
   const doc: DocNode = {
     children: [
