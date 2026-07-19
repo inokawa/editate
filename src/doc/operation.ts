@@ -1,4 +1,4 @@
-import { is, keys } from "../utils.js";
+import { is, keys, max, min } from "../utils.js";
 import {
   getBlockAt,
   getChildAt,
@@ -6,6 +6,7 @@ import {
   hasBlockChildren,
   isBlockNode,
   isTextNode,
+  iterLeafs,
   sliceFragment,
   splitBlock,
 } from "./node.js";
@@ -47,7 +48,7 @@ type FormatOperation = Readonly<{
   type: typeof OP_FORMAT;
   range: Range;
   key: string;
-  value: unknown;
+  value?: unknown;
 }>;
 
 const OP_PATCH_NODE = "patch_node";
@@ -365,6 +366,16 @@ export const applyOperation = <T extends DocNode>(
         isValidPosition(doc, end) &&
         start <= end
       ) {
+        const shouldDelete = !("value" in op);
+        const updateNode = (n: TextNode): TextNode => {
+          if (shouldDelete) {
+            // TODO improve type
+            const { [key]: _, ...rest } = n as any;
+            return rest;
+          } else {
+            return { ...n, [key]: value };
+          }
+        };
         if (start === end) {
           const [{ children }, , path] = getBlockAt(doc, start);
           if (children.length === 1) {
@@ -373,19 +384,19 @@ export const applyOperation = <T extends DocNode>(
               doc = replaceNodeAt(
                 doc,
                 [...path, 0], // TODO imporve
-                { ...maybeText, [key]: value },
+                updateNode(maybeText),
               );
             }
           }
         } else {
-          const mapNode = <T extends Node>(node: T): T => {
+          const mapNode = <T extends Node>(node: T): Node => {
             if (isBlockNode(node)) {
               return {
                 ...node,
                 children: node.children.map(mapNode),
               };
             } else if (isTextNode(node)) {
-              return { ...node, [key]: value };
+              return updateNode(node);
             }
             return node;
           };
@@ -415,3 +426,78 @@ export const applyOperation = <T extends DocNode>(
 
   return [doc, selection];
 };
+
+/**
+ * @internal
+ */
+export function* invertOperation(
+  op: Operation,
+  beforeDoc: DocNode,
+): Generator<Operation> {
+  switch (op.type) {
+    case OP_DELETE: {
+      const { range } = op;
+      yield {
+        type: OP_INSERT_NODE,
+        at: range[0],
+        fragment: sliceFragment(beforeDoc, ...range),
+      };
+      break;
+    }
+    case OP_INSERT_TEXT: {
+      const { at, text } = op;
+      yield {
+        type: OP_DELETE,
+        range: [at, at + text.length],
+      };
+      break;
+    }
+    case OP_INSERT_NODE: {
+      const { at, fragment } = op;
+      yield {
+        type: OP_DELETE,
+        range: [at, at + getNodeSize({ children: fragment })],
+      };
+      break;
+    }
+    case OP_FORMAT: {
+      const { range, key } = op;
+      for (const [n, offset] of iterLeafs(beforeDoc, ...range)) {
+        const leafRange: Range = [
+          max(range[0], offset),
+          min(range[1], offset + getNodeSize(n)),
+        ];
+        if (key in n) {
+          yield {
+            type: OP_FORMAT,
+            range: leafRange,
+            key,
+            value: n[key as keyof typeof n],
+          };
+        } else {
+          yield {
+            type: OP_FORMAT,
+            range: leafRange,
+            key,
+          };
+        }
+      }
+      break;
+    }
+    case OP_PATCH_NODE: {
+      const { path, key } = op;
+      const n = getNodeAtPath(beforeDoc, path);
+      yield {
+        type: OP_PATCH_NODE,
+        path,
+        key,
+        value: n[key as keyof typeof n],
+      };
+      break;
+    }
+
+    default: {
+      return op satisfies never;
+    }
+  }
+}
