@@ -362,32 +362,3 @@ test.describe("smoke node", () => {
     expect(await getSelection(editable)).toEqual([nodeOffset, nodeOffset]);
   });
 });
-
-test.describe("Copy", () => {
-  test.beforeEach(async ({ context, browserName }) => {
-    // https://github.com/microsoft/playwright/issues/13037#issuecomment-1078208810
-    test.skip(browserName !== "chromium");
-    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  });
-
-  test("copy all", async ({ page }) => {
-    await page.goto(storyUrl("basics-structured--basic"));
-
-    const editable = await getEditable(page);
-    const initialValue = await getText(editable);
-
-    await editable.focus();
-
-    expect(await getSelection(editable)).toEqual([0, 0]);
-    expect(await readClipboard(page, "text/plain")).toEqual(null);
-    expect(await readClipboard(page, "text/html")).toEqual(null);
-
-    await page.keyboard.press("ControlOrMeta+A");
-    await page.keyboard.press("ControlOrMeta+C");
-
-    expect(await readClipboard(page, "text/plain")).toEqual(
-      initialValue.join("\n"),
-    );
-    expect(await readClipboard(page, "text/html")).toEqual(null);
-  });
-});

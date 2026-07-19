@@ -42,17 +42,13 @@ const basicSchema = v.strictObject({
   ),
 });
 
-export const Basic: StoryObj = {
+export const Empty: StoryObj = {
   render: () => {
     const ref = useRef<HTMLDivElement>(null);
 
     type Doc = v.InferOutput<typeof basicSchema>;
     const [doc, setDoc] = useState<Doc>({
-      children: [
-        { children: [{ text: "Hello world." }] },
-        { children: [{ text: "こんにちは。" }] },
-        { children: [{ text: "👍❤️🧑‍🧑‍🧒" }] },
-      ],
+      children: [{ children: [{ text: "" }] }],
     });
 
     const editor = useMemo(() => {

@@ -14,36 +14,6 @@ export default {
   component: createPlainEditor,
 };
 
-export const Empty: StoryObj = {
-  render: () => {
-    const ref = useRef<HTMLDivElement>(null);
-    const [text, setText] = useState("");
-
-    useEffect(() => {
-      if (!ref.current) return;
-      return createPlainEditor({
-        text: text,
-        onChange: setText,
-      }).input(ref.current);
-    }, []);
-
-    return (
-      <div
-        ref={ref}
-        style={{
-          backgroundColor: "white",
-          border: "solid 1px darkgray",
-          padding: 8,
-        }}
-      >
-        {text.split("\n").map((r, i) => (
-          <div key={i}>{r ? r : <br />}</div>
-        ))}
-      </div>
-    );
-  },
-};
-
 export const Multiline: StoryObj = {
   render: () => {
     const ref = useRef<HTMLDivElement>(null);
