@@ -735,6 +735,9 @@ export const createEditor = <
             updateSelection(afterSelection);
           }
         }
+
+        // dragend event may not fire when the drop target node is re-rendered
+        isDragging = false;
       };
       const onDragStart = (e: DragEvent) => {
         isDragging = true;
