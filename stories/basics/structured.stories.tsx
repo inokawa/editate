@@ -9,6 +9,7 @@ import React, {
 import type { StoryObj } from "@storybook/react-vite";
 import {
   createEditor,
+  Format,
   ToggleFormat,
   singlelinePlugin,
   InsertNode,
@@ -22,6 +23,8 @@ import {
   selectionRectPlugin,
   sliceText,
   Delete,
+  type Editor,
+  getBlockAt,
 } from "../../src";
 import * as v from "valibot";
 import { createPortal } from "react-dom";
@@ -92,24 +95,60 @@ export const Empty: StoryObj = {
 
 const richTextSchema = v.strictObject({
   text: v.string(),
+  fontSize: v.optional(v.number()),
   bold: v.optional(v.boolean()),
   italic: v.optional(v.boolean()),
   underline: v.optional(v.boolean()),
   strike: v.optional(v.boolean()),
 });
 
-const richSchema = v.strictObject({
-  children: v.array(
-    v.strictObject({
-      align: v.optional(v.picklist(["left", "right"])),
-      children: v.array(richTextSchema),
-    }),
-  ),
+const richBlockSchema = v.strictObject({
+  align: v.optional(v.picklist(["left", "right"])),
+  indent: v.optional(v.number()),
+  children: v.array(richTextSchema),
 });
+
+const richSchema = v.strictObject({
+  children: v.array(richBlockSchema),
+});
+
+type RichDoc = v.InferOutput<typeof richSchema>;
+
+function Indent(editor: Editor<RichDoc>, offset: number = editor.selection[0]) {
+  const [block, , path] = getBlockAt(editor.doc, offset);
+  editor.apply({
+    type: "patch_node",
+    path,
+    // TODO improve type
+    key: "indent",
+    value: ((block as v.InferOutput<typeof richBlockSchema>).indent ?? 0) + 1,
+  });
+}
+
+function Outdent(
+  editor: Editor<RichDoc>,
+  offset: number = editor.selection[0],
+) {
+  const [block, , path] = getBlockAt(editor.doc, offset);
+  editor.apply({
+    type: "patch_node",
+    path,
+    // TODO improve type
+    key: "indent",
+    value: Math.max(
+      ((block as v.InferOutput<typeof richBlockSchema>).indent ?? 0) - 1,
+      0,
+    ),
+  });
+}
+
+const defaultFontSize = 10;
 
 const Text = ({ node }: { node: v.InferOutput<typeof richTextSchema> }) => {
   const Element = node.bold ? "strong" : "span";
-  const style: CSSProperties = {};
+  const style: CSSProperties = {
+    fontSize: `${node.fontSize ?? defaultFontSize}pt`,
+  };
   if (node.italic) {
     style.fontStyle = "italic";
   }
@@ -128,8 +167,7 @@ export const RichText: StoryObj = {
   render: () => {
     const ref = useRef<HTMLDivElement>(null);
 
-    type Doc = v.InferOutput<typeof richSchema>;
-    const [doc, setDoc] = useState<Doc>({
+    const [doc, setDoc] = useState<RichDoc>({
       children: [
         {
           children: [
@@ -144,14 +182,21 @@ export const RichText: StoryObj = {
       ],
     });
 
-    const [rect, setRect] = useState<{ top: number; left: number } | null>(
-      null,
-    );
-    const [bold, setBold] = useState(false);
-    const [italic, setItalic] = useState(false);
-    const [underline, setUnderline] = useState(false);
-    const [strike, setStrike] = useState(false);
+    const [menuRect, setMenuRect] = useState<{
+      top: number;
+      left: number;
+    } | null>(null);
+    const [currentFontSize, setCurrentFontSize] = useState<
+      number | undefined
+    >();
+    const [currentBold, setCurrentBold] = useState(false);
+    const [currentItalic, setCurrentItalic] = useState(false);
+    const [currentUnderline, setCurrentUnderline] = useState(false);
+    const [currentStrike, setCurrentStrike] = useState(false);
 
+    const setFontSize = (value: number) => {
+      editor.exec(Format, "fontSize", value);
+    };
     const toggleBold = () => {
       editor.exec(ToggleFormat, "bold");
     };
@@ -164,17 +209,20 @@ export const RichText: StoryObj = {
     const toggleStrike = () => {
       editor.exec(ToggleFormat, "strike");
     };
-    const toggleAlign = () => {
-      editor.exec(ToggleBlockAttr, "align", "right", undefined);
-    };
 
     const editor = useMemo(() => {
       const updateMenu = () => {
+        let fontSizes = new Set<number>();
         let hasBold = false;
         let hasItalic = false;
         let hasUnderline = false;
         let hasStrike = false;
         for (const leaf of editor.exec(LeafsInRange)) {
+          if (leaf.fontSize) {
+            fontSizes.add(leaf.fontSize);
+          } else {
+            fontSizes.add(defaultFontSize);
+          }
           if (leaf.bold) {
             hasBold = true;
           }
@@ -188,10 +236,13 @@ export const RichText: StoryObj = {
             hasStrike = true;
           }
         }
-        setBold(hasBold);
-        setItalic(hasItalic);
-        setUnderline(hasUnderline);
-        setStrike(hasStrike);
+        setCurrentFontSize(
+          fontSizes.size === 1 ? fontSizes.values().next().value : undefined,
+        );
+        setCurrentBold(hasBold);
+        setCurrentItalic(hasItalic);
+        setCurrentUnderline(hasUnderline);
+        setCurrentStrike(hasStrike);
       };
       const e = createEditor({
         doc: doc,
@@ -205,7 +256,7 @@ export const RichText: StoryObj = {
         })
         .exec(selectionRectPlugin, (getRect) => {
           if (editor.selection[0] !== editor.selection[1]) {
-            setRect((prev) => {
+            setMenuRect((prev) => {
               const rect = getRect();
               if (prev && prev.top === rect.top && prev.left === rect.left) {
                 return prev;
@@ -214,7 +265,7 @@ export const RichText: StoryObj = {
               }
             });
           } else {
-            setRect(null);
+            setMenuRect(null);
           }
         })
         .exec(internalTranferPlugin)
@@ -240,33 +291,71 @@ export const RichText: StoryObj = {
           style={{ display: "flex", alignItems: "center", gap: 4, padding: 4 }}
         >
           <div>
+            <select
+              value={currentFontSize ?? "--"}
+              onChange={(e) => {
+                e.preventDefault();
+                const value = Number(e.target.value);
+                if (Number.isNaN(value)) return;
+                setFontSize(value);
+              }}
+            >
+              <option value="--">--</option>
+              <option value="8">8</option>
+              <option value="10">10</option>
+              <option value="12">12</option>
+              <option value="14">14</option>
+              <option value="16">16</option>
+              <option value="18">18</option>
+              <option value="20">20</option>
+            </select>
             <button
-              style={{ fontWeight: bold ? "bold" : undefined }}
+              style={{ fontWeight: currentBold ? "bold" : undefined }}
               onClick={toggleBold}
             >
               bold
             </button>
             <button
-              style={{ fontWeight: italic ? "bold" : undefined }}
+              style={{ fontWeight: currentItalic ? "bold" : undefined }}
               onClick={toggleItalic}
             >
               italic
             </button>
             <button
-              style={{ fontWeight: underline ? "bold" : undefined }}
+              style={{ fontWeight: currentUnderline ? "bold" : undefined }}
               onClick={toggleUnderline}
             >
               underline
             </button>
             <button
-              style={{ fontWeight: strike ? "bold" : undefined }}
+              style={{ fontWeight: currentStrike ? "bold" : undefined }}
               onClick={toggleStrike}
             >
               strike
             </button>
           </div>
           <div>
-            <button onClick={toggleAlign}>align</button>
+            <button
+              onClick={() => {
+                editor.exec(ToggleBlockAttr, "align", "right", undefined);
+              }}
+            >
+              align
+            </button>
+            <button
+              onClick={() => {
+                editor.exec(Indent);
+              }}
+            >
+              indent
+            </button>
+            <button
+              onClick={() => {
+                editor.exec(Outdent);
+              }}
+            >
+              outdent
+            </button>
           </div>
         </div>
         <div
@@ -278,42 +367,48 @@ export const RichText: StoryObj = {
           }}
         >
           {doc.children.map((b, i) => (
-            <div key={i} style={{ textAlign: b.align }}>
+            <div
+              key={i}
+              style={{
+                textAlign: b.align,
+                textIndent: b.indent ? `${b.indent}em` : undefined,
+              }}
+            >
               {b.children.map((n, j) => (
                 <Text key={j} node={n} />
               ))}
             </div>
           ))}
         </div>
-        {rect ? (
+        {menuRect ? (
           <div
             style={{
               position: "fixed",
-              top: rect.top - 30,
-              left: rect.left,
+              top: menuRect.top - 30,
+              left: menuRect.left,
               whiteSpace: "nowrap",
             }}
           >
             <button
-              style={{ fontWeight: bold ? "bold" : undefined }}
+              style={{ fontWeight: currentBold ? "bold" : undefined }}
               onClick={toggleBold}
             >
               bold
             </button>
             <button
-              style={{ fontWeight: italic ? "bold" : undefined }}
+              style={{ fontWeight: currentItalic ? "bold" : undefined }}
               onClick={toggleItalic}
             >
               italic
             </button>
             <button
-              style={{ fontWeight: underline ? "bold" : undefined }}
+              style={{ fontWeight: currentUnderline ? "bold" : undefined }}
               onClick={toggleUnderline}
             >
               underline
             </button>
             <button
-              style={{ fontWeight: strike ? "bold" : undefined }}
+              style={{ fontWeight: currentStrike ? "bold" : undefined }}
               onClick={toggleStrike}
             >
               strike
