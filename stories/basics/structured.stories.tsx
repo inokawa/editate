@@ -57,9 +57,6 @@ export const Basic: StoryObj = {
         schema: basicSchema,
       })
         .exec(internalTranferPlugin)
-        .exec(htmlTransferPlugin, {
-          serializers: { text: (text) => ({ text }) },
-        })
         .exec(plainTransferPlugin);
       e.on("change", () => {
         setDoc(e.doc);
