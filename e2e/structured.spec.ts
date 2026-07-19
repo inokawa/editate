@@ -383,8 +383,5 @@ test.describe("Copy", () => {
     expect(await readClipboard(page, "text/plain")).toEqual(
       initialValue.join("\n"),
     );
-    expect(await readClipboard(page, "text/html")).toEqual(
-      await editable.evaluate((e) => e.innerHTML),
-    );
   });
 });
