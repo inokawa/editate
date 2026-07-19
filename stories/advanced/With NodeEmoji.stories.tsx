@@ -71,7 +71,7 @@ const Menu = ({
   );
 };
 
-export const Emoji: StoryObj = {
+export const WithNodeEmoji: StoryObj = {
   render: () => {
     const ref = useRef<HTMLDivElement>(null);
     const [text, setText] = useState(`Type : to show suggestions 💪\n`);
