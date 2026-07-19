@@ -26,6 +26,16 @@ export default {
   component: createEditor,
 };
 
+let i = 0;
+const nodeIdMap = new WeakMap<object, string>();
+const nodeId = (node: object): string => {
+  let id = nodeIdMap.get(node);
+  if (id == null) {
+    nodeIdMap.set(node, (id = String(++i)));
+  }
+  return id;
+};
+
 const basicSchema = v.strictObject({
   children: v.array(
     v.strictObject({
@@ -78,10 +88,10 @@ export const Basic: StoryObj = {
           padding: 8,
         }}
       >
-        {doc.children.map((b, i) => (
-          <div key={i}>
-            {b.children.map((n, j) => (
-              <span key={j}>{n.text || <br />}</span>
+        {doc.children.map((b) => (
+          <div key={nodeId(b)}>
+            {b.children.map((n) => (
+              <span key={nodeId(b)}>{n.text || <br />}</span>
             ))}
           </div>
         ))}
@@ -277,10 +287,10 @@ export const RichText: StoryObj = {
             padding: 8,
           }}
         >
-          {doc.children.map((b, i) => (
-            <div key={i} style={{ textAlign: b.align }}>
-              {b.children.map((n, j) => (
-                <Text key={j} node={n} />
+          {doc.children.map((b) => (
+            <div key={nodeId(b)} style={{ textAlign: b.align }}>
+              {b.children.map((n) => (
+                <Text key={nodeId(n)} node={n} />
               ))}
             </div>
           ))}
@@ -407,12 +417,12 @@ export const Tag: StoryObj = {
             padding: 8,
           }}
         >
-          {doc.children.map((t, j) =>
+          {doc.children.map((t) =>
             "text" in t ? (
               t.text || <br />
             ) : (
               <span
-                key={j}
+                key={nodeId(t)}
                 contentEditable={false}
                 style={{
                   background: "slategray",
@@ -521,13 +531,13 @@ export const Image: StoryObj = {
           padding: 8,
         }}
       >
-        {doc.children.map((b, i) => (
-          <div key={i}>
-            {b.children.map((t, j) =>
+        {doc.children.map((b) => (
+          <div key={nodeId(b)}>
+            {b.children.map((t) =>
               "text" in t ? (
                 t.text || <br />
               ) : (
-                <img key={j} src={t.src} style={{ maxWidth: 200 }} />
+                <img key={nodeId(t)} src={t.src} style={{ maxWidth: 200 }} />
               ),
             )}
           </div>
@@ -616,15 +626,15 @@ export const Video: StoryObj = {
           padding: 8,
         }}
       >
-        {doc.children.map((b, i) => (
-          <div key={i}>
-            {b.children.map((t, j) =>
+        {doc.children.map((b) => (
+          <div key={nodeId(b)}>
+            {b.children.map((t) =>
               "text" in t ? (
                 t.text || <br />
               ) : (
                 // safari needs contentEditable="false"
                 <video
-                  key={j}
+                  key={nodeId(t)}
                   width={400}
                   controls
                   contentEditable="false"
@@ -734,10 +744,14 @@ export const Iframe: StoryObj = {
             padding: 8,
           }}
         >
-          {doc.children.map((b, i) => (
-            <div key={i}>
-              {b.children.map((t, j) =>
-                "text" in t ? t.text || <br /> : <Youtube key={j} id={t.id} />,
+          {doc.children.map((b) => (
+            <div key={nodeId(b)}>
+              {b.children.map((t) =>
+                "text" in t ? (
+                  t.text || <br />
+                ) : (
+                  <Youtube key={nodeId(t)} id={t.id} />
+                ),
               )}
             </div>
           ))}
@@ -826,13 +840,13 @@ export const Ruby: StoryObj = {
             padding: 8,
           }}
         >
-          {doc.children.map((b, i) => (
-            <div key={i}>
-              {b.children.map((t, j) =>
+          {doc.children.map((b) => (
+            <div key={nodeId(b)}>
+              {b.children.map((t) =>
                 "text" in t ? (
                   t.text || <br />
                 ) : (
-                  <ruby key={j} contentEditable={false}>
+                  <ruby key={nodeId(t)} contentEditable={false}>
                     {t.value}
                     <rp>(</rp>
                     <rt>{t.ruby}</rt>

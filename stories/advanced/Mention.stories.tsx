@@ -21,6 +21,16 @@ export default {
   component: createEditor,
 };
 
+let i = 0;
+const nodeIdMap = new WeakMap<object, string>();
+const nodeId = (node: object): string => {
+  let id = nodeIdMap.get(node);
+  if (id == null) {
+    nodeIdMap.set(node, (id = String(++i)));
+  }
+  return id;
+};
+
 const CHARACTERS = [
   "Aayla Secura",
   "Adi Gallia",
@@ -429,10 +439,6 @@ const CHARACTERS = [
 
 const MAX_LIST_LENGTH = 8;
 const MENTION_REG = /\B@([\-+\w]*)$/;
-const MENTION_HIGHLIGHT_REG = new RegExp(
-  `(${CHARACTERS.map((c) => `@${c}`).join("|")})`,
-  "g",
-);
 
 const Menu = ({
   chars,
@@ -609,14 +615,14 @@ export const Mention: StoryObj = {
             padding: 8,
           }}
         >
-          {doc.children.map((r, i) => (
-            <div key={i}>
-              {r.children.map((n, j) =>
+          {doc.children.map((r) => (
+            <div key={nodeId(r)}>
+              {r.children.map((n) =>
                 "text" in n ? (
                   n.text || <br />
                 ) : (
                   <span
-                    key={j}
+                    key={nodeId(n)}
                     contentEditable={false}
                     style={{
                       background: "#EAF5F9",

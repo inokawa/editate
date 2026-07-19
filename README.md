@@ -106,6 +106,17 @@ import {
 } from "editate";
 import * as z from "zod";
 
+let i = 0;
+const nodeIdMap = new WeakMap<object, string>();
+const nodeId = (node: object): string => {
+  let id = nodeIdMap.get(node);
+  if (id == null) {
+    nodeIdMap.set(node, (id = String(++i)));
+  }
+  return id;
+};
+
+
 const schema = z.strictObject({
   children: z.array(
     z.strictObject({
@@ -186,11 +197,11 @@ export const App = () => {
           padding: 8,
         }}
       >
-        {doc.children.map((b, i) => (
-          <div key={i} style={{ textAlign: b.align }}>
-            {b.children.map((n, j) => (
+        {doc.children.map((b) => (
+          <div key={nodeId(b)} style={{ textAlign: b.align }}>
+            {b.children.map((n) => (
               <span
-                key={j}
+                key={nodeId(n)}
                 style={{
                   fontWeight: n.bold ? "bold" : undefined,
                   fontStyle: n.italic ? "italic" : undefined,
