@@ -3,7 +3,6 @@ import { rebase, type Operation } from "../doc/operation.js";
 import type { DocNode, Selection } from "../doc/types.js";
 import type { Editor } from "../editor.js";
 import { keymap } from "../keyboard.js";
-import { is } from "../utils.js";
 
 const MAX_HISTORY_LENGTH = 500;
 const BATCH_HISTORY_TIME = 500;
@@ -44,7 +43,7 @@ export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
       undoOrRedoing = true;
       editor.exec(ReplaceDoc, get()[0].children);
       undoOrRedoing = false;
-      if (!is(currentDoc, editor.doc)) {
+      if (currentDoc !== editor.doc) {
         editor.selection = sel;
       }
     }
@@ -57,7 +56,7 @@ export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
       undoOrRedoing = true;
       editor.exec(ReplaceDoc, doc.children);
       undoOrRedoing = false;
-      if (!is(currentDoc, editor.doc)) {
+      if (currentDoc !== editor.doc) {
         editor.selection = [rebase(sel[0], ops), rebase(sel[1], ops)];
       }
     }
@@ -70,7 +69,7 @@ export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
     next(op);
     const newDoc = editor.doc;
 
-    if (!is(doc, newDoc)) {
+    if (doc !== newDoc) {
       const time = now();
       if (index === 0 || time - prevTime >= BATCH_HISTORY_TIME) {
         index++;

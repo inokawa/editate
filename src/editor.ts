@@ -9,7 +9,7 @@ import {
 } from "./dom/index.js";
 import { createMutationObserver } from "./dom/mutation.js";
 import type { DocNode, Fragment, Selection } from "./doc/types.js";
-import { is, isFunction, isString, microtask } from "./utils.js";
+import { isFunction, isString, microtask } from "./utils.js";
 import { domSelectionToSelection, positionToOffset } from "./doc/node.js";
 import {
   applyOperation,
@@ -354,7 +354,7 @@ export const createEditor = <
 
     dispatch();
 
-    if (!is(currentDoc, doc)) {
+    if (currentDoc !== doc) {
       publish("change");
     }
   };

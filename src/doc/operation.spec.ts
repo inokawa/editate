@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyOperation, isValidSelection } from "./operation.js";
 import { type Selection } from "./types.js";
-import { is } from "../utils.js";
 import { getNodeSize } from "./node.js";
 
 type Doc = {
@@ -55,7 +54,7 @@ describe("insert text", () => {
         text: "test",
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
 
@@ -75,7 +74,7 @@ describe("insert text", () => {
         text: "test",
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
 
@@ -95,7 +94,7 @@ describe("insert text", () => {
         text: "",
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
   });
@@ -808,7 +807,7 @@ describe("insert node", () => {
         fragment: [{ children: [{ text: "test" }] }],
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
 
@@ -828,7 +827,7 @@ describe("insert node", () => {
         fragment: [{ children: [{ text: "test" }] }],
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
 
@@ -848,7 +847,7 @@ describe("insert node", () => {
         fragment: [],
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
   });
@@ -1781,7 +1780,7 @@ describe("delete", () => {
         range: [-1, 1],
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
 
@@ -1796,7 +1795,7 @@ describe("delete", () => {
         range: [0, 100],
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
 
@@ -1811,7 +1810,7 @@ describe("delete", () => {
         range: [1, 1],
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
 
@@ -1826,7 +1825,7 @@ describe("delete", () => {
         range: [2, 1],
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
   });
@@ -2671,7 +2670,7 @@ describe("format", () => {
         value: "bar",
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
 
@@ -2688,7 +2687,7 @@ describe("format", () => {
         value: "bar",
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
 
@@ -2705,7 +2704,7 @@ describe("format", () => {
         value: "bar",
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
 
@@ -2722,7 +2721,7 @@ describe("format", () => {
         value: "bar",
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
   });
@@ -3126,7 +3125,7 @@ describe("patch node", () => {
         value: "bar",
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
 
@@ -3143,7 +3142,7 @@ describe("patch node", () => {
         value: "bar",
       });
 
-      expect(is(res[0], doc)).toBe(true);
+      expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
   });
