@@ -18,6 +18,7 @@ export type InferTextNode<T extends Node> = Extract<
   InferInlineNode<T>,
   TextNode
 >;
+
 type FlattenAllNodes<T extends Node> = T extends any
   ?
       | T
@@ -25,7 +26,6 @@ type FlattenAllNodes<T extends Node> = T extends any
           ? FlattenAllNodes<N>
           : never)
   : never;
-
 export type ExtractAttrValue<N extends Node, K extends PropertyKey> =
   FlattenAllNodes<N> extends infer AllNodes extends Node
     ? AllNodes extends any
