@@ -4,9 +4,9 @@
 
 # Function: getLeafAt()
 
-> **getLeafAt**(`node`, `offset`): \[`InlineNode`, `number`\] \| `null`
+> **getLeafAt**(`node`, `offset`, `isBackwardAffinity?`): \[`InlineNode`, `number`, `Path`\] \| `null`
 
-Defined in: [doc/node.ts:108](https://github.com/inokawa/editate/blob/c802675da5f7d5a5af48a45db146a7af662f2701/src/doc/node.ts#L108)
+Defined in: [doc/node.ts:115](https://github.com/inokawa/editate/blob/a7f675be7afb0d57e1b64b4f27cdfc3905458d01/src/doc/node.ts#L115)
 
 ## Parameters
 
@@ -18,6 +18,10 @@ Defined in: [doc/node.ts:108](https://github.com/inokawa/editate/blob/c802675da5
 
 `number`
 
+### isBackwardAffinity?
+
+`boolean`
+
 ## Returns
 
-\[`InlineNode`, `number`\] \| `null`
+\[`InlineNode`, `number`, `Path`\] \| `null`

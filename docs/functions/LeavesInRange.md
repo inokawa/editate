@@ -2,11 +2,11 @@
 
 ***
 
-# Function: LeafsInRange()
+# Function: LeavesInRange()
 
-> **LeafsInRange**\<`T`\>(`editor`, `range?`): `Generator`\<[`InferInlineNode`](../type-aliases/InferInlineNode.md)\<`T`\>, `void`, `void`\>
+> **LeavesInRange**\<`T`\>(`editor`, `range?`): `Generator`\<[`InferInlineNode`](../type-aliases/InferInlineNode.md)\<`T`\>, `void`, `void`\>
 
-Defined in: [queries.ts:10](https://github.com/inokawa/editate/blob/c802675da5f7d5a5af48a45db146a7af662f2701/src/queries.ts#L10)
+Defined in: [queries.ts:10](https://github.com/inokawa/editate/blob/a7f675be7afb0d57e1b64b4f27cdfc3905458d01/src/queries.ts#L10)
 
 Get leaf nodes that intersect with the selection or specified range.
 

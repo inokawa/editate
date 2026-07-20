@@ -4,9 +4,9 @@
 
 # Function: getChildAt()
 
-> **getChildAt**\<`T`\>(`__namedParameters`, `offset`): \[`T`\[`"children"`\]\[`number`\], `number`, `number`\] \| `null`
+> **getChildAt**\<`T`\>(`__namedParameters`, `offset`, `isBackwardAffinity?`): \[`T`\[`"children"`\]\[`number`\], `number`, `number`\] \| `null`
 
-Defined in: [doc/node.ts:67](https://github.com/inokawa/editate/blob/c802675da5f7d5a5af48a45db146a7af662f2701/src/doc/node.ts#L67)
+Defined in: [doc/node.ts:68](https://github.com/inokawa/editate/blob/a7f675be7afb0d57e1b64b4f27cdfc3905458d01/src/doc/node.ts#L68)
 
 ## Type Parameters
 
@@ -23,6 +23,10 @@ Defined in: [doc/node.ts:67](https://github.com/inokawa/editate/blob/c802675da5f
 ### offset
 
 `number`
+
+### isBackwardAffinity?
+
+`boolean`
 
 ## Returns
 
