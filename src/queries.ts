@@ -17,7 +17,7 @@ export function* LeafsInRange<T extends DocNode>(
       yield n as InferInlineNode<T>;
     }
   } else {
-    for (const [n, o] of iterLeafs(editor.doc, ...range)) {
+    for (const [n, o] of iterLeafs(editor.doc, range)) {
       if (hasIntersection(range, [o, o + getNodeSize(n)])) {
         yield n;
       }

@@ -11,6 +11,7 @@ import type {
   DomSelection,
   Selection,
   Fragment,
+  Range,
 } from "./types.js";
 
 /**
@@ -213,7 +214,7 @@ export const selectionToDomSelection = (
   return [offsetToPosition(doc, anchor), offsetToPosition(doc, focus)];
 };
 
-export function* iterChilds<T extends Node>(
+function* iterChilds<T extends Node>(
   node: T,
   start: number,
   end: number,
@@ -243,10 +244,21 @@ export function* iterChilds<T extends Node>(
   }
 }
 
+export function* iterNodes<T extends Node>(
+  node: T,
+  [start, end]: Range,
+): Generator<[node: Node, offset: number], void, void> {
+  for (const n of iterChilds(node, start, end)) {
+    yield n;
+    for (const r of iterChilds(n[0], 0, getNodeSize(n[0]))) {
+      yield [r[0], r[1] + n[1]];
+    }
+  }
+}
+
 export function* iterLeafs<T extends Node>(
   node: T,
-  start: number,
-  end: number,
+  [start, end]: Range,
 ): Generator<[node: InferInlineNode<T>, offset: number], void, void> {
   if (!isBlockNode(node)) {
     yield [node as InferInlineNode<T>, 0];
@@ -254,7 +266,7 @@ export function* iterLeafs<T extends Node>(
   }
   for (const n of iterChilds(node, start, end)) {
     if (isBlockNode(n[0])) {
-      for (const r of iterLeafs(n[0], 0, getNodeSize(n[0]))) {
+      for (const r of iterLeafs(n[0], [0, getNodeSize(n[0])])) {
         yield [r[0] as InferInlineNode<T>, r[1] + n[1]];
       }
     } else {
@@ -271,7 +283,7 @@ export const sliceText = <T extends Node>(
 ): string => {
   let str = "";
   let offset = start;
-  for (const [leaf, leafStart] of iterLeafs(node, start, end)) {
+  for (const [leaf, leafStart] of iterLeafs(node, [start, end])) {
     for (let i = leafStart - offset; i > 0; i--) {
       str += "\n";
     }
