@@ -3,7 +3,7 @@ import { BlockNode, DocNode, InlineNode, Node, Path, DomPosition, Range } from '
 export declare const getNodeSize: (node: Node) => number;
 export declare const getChildAt: <T extends BlockNode>({ children }: T, offset: number, isBackwardAffinity?: boolean) => [node: T["children"][number], offset: number, index: number] | null;
 export declare const getBlockAt: (node: DocNode | BlockNode, offset: number) => [node: BlockNode, offset: number, path: Path];
-export declare const getLeafAt: (node: DocNode | BlockNode, offset: number, isBackwardAffinity?: boolean) => [node: InlineNode, offset: number] | null;
+export declare const getLeafAt: (node: DocNode | BlockNode, offset: number, isBackwardAffinity?: boolean) => [node: InlineNode, offset: number, path: Path] | null;
 export declare const offsetToPosition: (node: DocNode | BlockNode, offset: number) => DomPosition;
 export declare function iterLeaves<T extends Node>(node: T, range: Range): Generator<[node: InferInlineNode<T>, offset: number], void, void>;
 export declare const sliceText: <T extends Node>(node: T, start?: number, end?: number, voidToString?: (node: InferVoidNode<T>) => string) => string;
