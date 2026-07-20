@@ -26,7 +26,7 @@ type FlattenAllNodes<T extends Node> = T extends any
           : never)
   : never;
 
-type LookupValue<N extends Node, K extends PropertyKey> =
+export type ExtractAttrValue<N extends Node, K extends PropertyKey> =
   FlattenAllNodes<N> extends infer AllNodes extends Node
     ? AllNodes extends any
       ? K extends keyof AllNodes
@@ -34,6 +34,3 @@ type LookupValue<N extends Node, K extends PropertyKey> =
         : never
       : never
     : never;
-
-export type ExtractAttrValue<N extends Node, K extends PropertyKey> =
-  LookupValue<N, K> extends never ? never : LookupValue<N, K>;
