@@ -288,7 +288,13 @@ export const RichText: StoryObj = {
     return (
       <div>
         <div
-          style={{ display: "flex", alignItems: "center", gap: 4, padding: 4 }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            padding: 4,
+            paddingBottom: 8,
+          }}
         >
           <div>
             <select
