@@ -103,6 +103,34 @@ describe(getChildAt.name, () => {
     });
   });
 
+  describe("inline void", () => {
+    const t0 = "abcd";
+    const t1 = "efghi";
+    const doc: BlockNode = {
+      children: [
+        { foo: "bar" },
+        { text: t0 },
+        { foo: "bar" },
+        { text: t1 },
+        { foo: "bar" },
+      ],
+    };
+    it.each<[number, [number, number] | null]>([
+      [0, [0, 0]],
+      [1, [1, 0]],
+      [1 + 1, [1, 1]],
+      [1 + t0.length - 1, [1, t0.length - 1]],
+      [1 + t0.length, [2, 0]],
+      [1 + t0.length + 1, [3, 0]],
+      [1 + t0.length + 1 + t1.length - 1, [3, t1.length - 1]],
+      [1 + t0.length + 1 + t1.length, [4, 0]],
+      [1 + t0.length + 1 + t1.length + 1, null],
+    ])(`$0`, (offset, res) => {
+      const n = getChildAt(doc, offset);
+      expect(fix(n)).toEqual(res);
+    });
+  });
+
   describe("empty block in children", () => {
     const t0 = "abcd";
     const t1 = "";
