@@ -249,8 +249,10 @@ export function* iterNodes<T extends Node>(
 ): Generator<[node: Node, offset: number], void, void> {
   for (const n of iterChilds(node, range)) {
     yield n;
-    for (const r of iterChilds(n[0], [0, getNodeSize(n[0])])) {
-      yield [r[0], r[1] + n[1]];
+    const [child, offset] = n;
+    for (const r of iterChilds(child, [0, getNodeSize(child)])) {
+      r[1] += offset;
+      yield r;
     }
   }
 }
