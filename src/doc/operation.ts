@@ -327,7 +327,7 @@ export const applyOperation = <T extends DocNode>(
       if (isValidPosition(doc, at) && text) {
         // inherit style from previous block/text node
         const [block, offset] = getBlockAt(doc, at);
-        const res = getChildAt(block, offset - 1);
+        const res = getChildAt(block, offset, true);
         let anchorNode: TextNode | undefined;
         if (res) {
           const node = res[0];

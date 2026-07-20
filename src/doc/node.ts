@@ -68,16 +68,23 @@ export const getNodeSize = (node: Node): number => {
 export const getChildAt = <T extends BlockNode>(
   { children }: T,
   offset: number,
+  isBackwardAffinity?: boolean,
 ): [node: T["children"][number], offset: number, index: number] | null => {
   // TODO optimize
   const length = children.length;
   for (let i = 0; i < length; i++) {
     const node = children[i]!;
+    const isBlock = isBlockNode(node);
     let size = getNodeSize(node);
-    if (isBlockNode(node)) {
+    if (isBlock) {
       size++;
     }
-    if (size > offset || (size === offset && isTextNode(node) && !node.text)) {
+    if (
+      size > offset ||
+      (size === offset &&
+        !isBlock &&
+        (isBackwardAffinity || (isTextNode(node) && !node.text)))
+    ) {
       return [node, offset, i];
     }
     offset -= size;
@@ -109,9 +116,10 @@ export const getBlockAt = (
 export const getLeafAt = (
   node: DocNode | BlockNode,
   offset: number,
+  isBackwardAffinity?: boolean,
 ): [node: InlineNode, offset: number] | null => {
   const [blockNode, blockOffset] = getBlockAt(node, offset);
-  const inline = getChildAt(blockNode, blockOffset);
+  const inline = getChildAt(blockNode, blockOffset, isBackwardAffinity);
   if (inline) {
     return [inline[0], inline[1]];
   }

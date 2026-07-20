@@ -81,6 +81,40 @@ describe(getChildAt.name, () => {
     });
   });
 
+  describe("block backward", () => {
+    const t0 = "abcd";
+    const t1 = "efghi";
+    const t2 = "jklmno";
+    const doc: DocNode = {
+      children: [
+        { children: [{ text: t0 }] },
+        { children: [{ text: t1 }] },
+        { children: [{ text: t2 }] },
+      ],
+    };
+    const b0 = doc.children[0]!;
+    const b1 = doc.children[1]!;
+    const b2 = doc.children[2]!;
+    const t0s = t0.length;
+    const t1s = t1.length;
+    const t2s = t2.length;
+    it.each<[number, [Node, number] | null]>([
+      [0, [b0, 0]],
+      [1, [b0, 1]],
+      [t0s, [b0, t0s]],
+      [t0s + 1, [b1, 0]],
+      [t0s + 2, [b1, 1]],
+      [t0s + 1 + t1s, [b1, t1s]],
+      [t0s + 1 + t1s + 1, [b2, 0]],
+      [t0s + 1 + t1s + 2, [b2, 1]],
+      [t0s + 1 + t1s + 1 + t2s, [b2, t2s]],
+      [t0s + 1 + t1s + 1 + t2s + 1, null],
+    ])(`$0`, (offset, res) => {
+      const n = getChildAt(doc, offset, true);
+      expect(n && [n[0], n[1]]).toEqual(res);
+    });
+  });
+
   describe("inline", () => {
     const t0 = "abcd";
     const t1 = "efghi";
@@ -107,6 +141,37 @@ describe(getChildAt.name, () => {
       [t0s + t1s + t2s, null],
     ])(`$0`, (offset, res) => {
       const n = getChildAt(doc, offset);
+      expect(n && [n[0], n[1]]).toEqual(res);
+    });
+  });
+
+  describe("inline backward", () => {
+    const t0 = "abcd";
+    const t1 = "efghi";
+    const t2 = "jklmno";
+    const doc: BlockNode = {
+      children: [{ text: t0 }, { text: t1 }, { text: t2 }],
+    };
+    const i0 = doc.children[0]!;
+    const i1 = doc.children[1]!;
+    const i2 = doc.children[2]!;
+    const t0s = t0.length;
+    const t1s = t1.length;
+    const t2s = t2.length;
+    it.each<[number, [Node, number] | null]>([
+      [0, [i0, 0]],
+      [1, [i0, 1]],
+      [t0s - 1, [i0, t0s - 1]],
+      [t0s, [i0, t0s]],
+      [t0s + 1, [i1, 1]],
+      [t0s + t1s - 1, [i1, t1s - 1]],
+      [t0s + t1s, [i1, t1s]],
+      [t0s + t1s + 1, [i2, 1]],
+      [t0s + t1s + t2s - 1, [i2, t2s - 1]],
+      [t0s + t1s + t2s, [i2, t2s]],
+      [t0s + t1s + t2s + 1, null],
+    ])(`$0`, (offset, res) => {
+      const n = getChildAt(doc, offset, true);
       expect(n && [n[0], n[1]]).toEqual(res);
     });
   });
@@ -142,6 +207,42 @@ describe(getChildAt.name, () => {
       [1 + t0s + 1 + t1s + 1, null],
     ])(`$0`, (offset, res) => {
       const n = getChildAt(doc, offset);
+      expect(n && [n[0], n[1]]).toEqual(res);
+    });
+  });
+
+  describe("inline void backward", () => {
+    const t0 = "abcd";
+    const t1 = "efghi";
+    const doc: BlockNode = {
+      children: [
+        { foo: "bar" },
+        { text: t0 },
+        { foo: "bar" },
+        { text: t1 },
+        { foo: "bar" },
+      ],
+    };
+    const i0 = doc.children[0]!;
+    const i1 = doc.children[1]!;
+    const i2 = doc.children[2]!;
+    const i3 = doc.children[3]!;
+    const i4 = doc.children[4]!;
+    const t0s = t0.length;
+    const t1s = t1.length;
+    it.each<[number, [Node, number] | null]>([
+      [0, [i0, 0]],
+      [1, [i0, 1]],
+      [1 + 1, [i1, 1]],
+      [1 + t0s - 1, [i1, t0s - 1]],
+      [1 + t0s, [i1, t0s]],
+      [1 + t0s + 1, [i2, 1]],
+      [1 + t0s + 1 + t1s - 1, [i3, t1s - 1]],
+      [1 + t0s + 1 + t1s, [i3, t1s]],
+      [1 + t0s + 1 + t1s + 1, [i4, 1]],
+      [1 + t0s + 1 + t1s + 1 + 1, null],
+    ])(`$0`, (offset, res) => {
+      const n = getChildAt(doc, offset, true);
       expect(n && [n[0], n[1]]).toEqual(res);
     });
   });
