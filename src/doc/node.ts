@@ -250,6 +250,9 @@ function* iterChildren<T extends Node>(
   }
 }
 
+/**
+ * @internal
+ */
 export function* iterNodes<T extends Node>(
   node: T,
   range: Range,
