@@ -8,7 +8,7 @@ import type {
   InferTextNode,
   InferVoidNode,
 } from "./doc/types-infer.js";
-import { LeafsInRange } from "./queries.js";
+import { LeavesInRange } from "./queries.js";
 
 /**
  * Delete content in the selection or specified range.
@@ -105,7 +105,7 @@ export function ToggleFormat<T extends DocNode>(
 ) {
   let shouldFormat = false;
   let hasText = false;
-  for (const n of editor.exec(LeafsInRange, range)) {
+  for (const n of editor.exec(LeavesInRange, range)) {
     if (isTextNode(n)) {
       hasText = true;
       if (!n[key as keyof typeof n]) {

@@ -5,7 +5,7 @@ import {
   getLeafAt,
   getNodeSize,
   iterNodes,
-  iterLeafs,
+  iterLeaves,
   sliceFragment,
   sliceText,
 } from "./node.js";
@@ -349,7 +349,7 @@ describe(iterNodes.name, () => {
   });
 });
 
-describe(iterLeafs.name, () => {
+describe(iterLeaves.name, () => {
   const t0 = "abcd";
   const t1 = "efghi";
   const t2 = "jklmno";
@@ -446,7 +446,7 @@ describe(iterLeafs.name, () => {
       ],
     ],
   ])(`$0`, (range, res) => {
-    expect([...iterLeafs(doc, range)]).toEqual(res);
+    expect([...iterLeaves(doc, range)]).toEqual(res);
   });
 });
 

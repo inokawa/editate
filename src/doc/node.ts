@@ -257,7 +257,7 @@ export function* iterNodes<T extends Node>(
   }
 }
 
-export function* iterLeafs<T extends Node>(
+export function* iterLeaves<T extends Node>(
   node: T,
   range: Range,
 ): Generator<[node: InferInlineNode<T>, offset: number], void, void> {
@@ -266,7 +266,7 @@ export function* iterLeafs<T extends Node>(
     return;
   }
   for (const [child, offset] of iterChilds(node, range)) {
-    for (const leaf of iterLeafs(child, [0, getNodeSize(child)])) {
+    for (const leaf of iterLeaves(child, [0, getNodeSize(child)])) {
       leaf[1] += offset;
       yield leaf as [InferInlineNode<T>, number];
     }
@@ -281,7 +281,7 @@ export const sliceText = <T extends Node>(
 ): string => {
   let str = "";
   let offset = start;
-  for (const [leaf, leafStart] of iterLeafs(node, [start, end])) {
+  for (const [leaf, leafStart] of iterLeaves(node, [start, end])) {
     for (let i = leafStart - offset; i > 0; i--) {
       str += "\n";
     }

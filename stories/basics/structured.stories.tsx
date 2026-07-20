@@ -19,12 +19,12 @@ import {
   htmlTransferPlugin,
   plainTransferPlugin,
   fileTransferPlugin,
-  LeafsInRange,
   selectionRectPlugin,
   sliceText,
   Delete,
   type Editor,
   getBlockAt,
+  LeavesInRange,
 } from "../../src";
 import * as v from "valibot";
 import { createPortal } from "react-dom";
@@ -217,7 +217,7 @@ export const RichText: StoryObj = {
         let hasItalic = false;
         let hasUnderline = false;
         let hasStrike = false;
-        for (const leaf of editor.exec(LeafsInRange)) {
+        for (const leaf of editor.exec(LeavesInRange)) {
           if (leaf.fontSize) {
             fontSizes.add(leaf.fontSize);
           } else {

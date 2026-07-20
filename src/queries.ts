@@ -1,4 +1,4 @@
-import { getLeafAt, getNodeSize, iterLeafs } from "./doc/node.js";
+import { getLeafAt, getNodeSize, iterLeaves } from "./doc/node.js";
 import { hasIntersection, isCollapsed, toRange } from "./doc/position.js";
 import type { InferInlineNode } from "./doc/types-infer.js";
 import type { DocNode, Range } from "./doc/types.js";
@@ -7,7 +7,7 @@ import type { Editor } from "./editor.js";
 /**
  * Get leaf nodes that intersect with the selection or specified range.
  */
-export function* LeafsInRange<T extends DocNode>(
+export function* LeavesInRange<T extends DocNode>(
   editor: Editor<T>,
   range: Range = toRange(editor.selection),
 ): Generator<InferInlineNode<T>, void, void> {
@@ -17,7 +17,7 @@ export function* LeafsInRange<T extends DocNode>(
       yield n as InferInlineNode<T>;
     }
   } else {
-    for (const [n, o] of iterLeafs(editor.doc, range)) {
+    for (const [n, o] of iterLeaves(editor.doc, range)) {
       if (hasIntersection(range, [o, o + getNodeSize(n)])) {
         yield n;
       }
