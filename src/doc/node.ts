@@ -214,7 +214,7 @@ export const selectionToDomSelection = (
   return [offsetToPosition(doc, anchor), offsetToPosition(doc, focus)];
 };
 
-function* iterChilds<T extends Node>(
+function* iterChildren<T extends Node>(
   node: T,
   [start, end]: Range,
 ): Generator<[node: Node, offset: number], void, void> {
@@ -247,10 +247,10 @@ export function* iterNodes<T extends Node>(
   node: T,
   range: Range,
 ): Generator<[node: Node, offset: number], void, void> {
-  for (const n of iterChilds(node, range)) {
+  for (const n of iterChildren(node, range)) {
     yield n;
     const [child, offset] = n;
-    for (const r of iterChilds(child, [0, getNodeSize(child)])) {
+    for (const r of iterChildren(child, [0, getNodeSize(child)])) {
       r[1] += offset;
       yield r;
     }
@@ -265,7 +265,7 @@ export function* iterLeaves<T extends Node>(
     yield [node as InferInlineNode<T>, 0];
     return;
   }
-  for (const [child, offset] of iterChilds(node, range)) {
+  for (const [child, offset] of iterChildren(node, range)) {
     for (const leaf of iterLeaves(child, [0, getNodeSize(child)])) {
       leaf[1] += offset;
       yield leaf as [InferInlineNode<T>, number];
