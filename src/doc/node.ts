@@ -263,9 +263,10 @@ export function* iterLeafs<T extends Node>(
     yield [node as InferInlineNode<T>, 0];
     return;
   }
-  for (const [c, cOffset] of iterChilds(node, range)) {
-    for (const [l, lOffset] of iterLeafs(c, [0, getNodeSize(c)])) {
-      yield [l as InferInlineNode<T>, lOffset + cOffset];
+  for (const [child, offset] of iterChilds(node, range)) {
+    for (const leaf of iterLeafs(child, [0, getNodeSize(child)])) {
+      leaf[1] += offset;
+      yield leaf as [InferInlineNode<T>, number];
     }
   }
 }
