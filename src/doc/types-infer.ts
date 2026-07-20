@@ -35,8 +35,5 @@ type LookupValue<N extends Node, K extends PropertyKey> =
       : never
     : never;
 
-export type ExtractAttrValue<N extends Node, K extends PropertyKey> = [
-  LookupValue<N, K>,
-] extends [never]
-  ? never
-  : LookupValue<N, K>;
+export type ExtractAttrValue<N extends Node, K extends PropertyKey> =
+  LookupValue<N, K> extends never ? never : LookupValue<N, K>;
