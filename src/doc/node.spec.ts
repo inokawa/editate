@@ -47,10 +47,6 @@ describe(getNodeSize.name, () => {
 });
 
 describe(getChildAt.name, () => {
-  const fix = (r: ReturnType<typeof getChildAt>): [number, number] | null => {
-    return r ? [r[2], r[1]] : r;
-  };
-
   describe("block", () => {
     const t0 = "abcd";
     const t1 = "efghi";
@@ -62,20 +58,23 @@ describe(getChildAt.name, () => {
         { children: [{ text: t2 }] },
       ],
     };
-    it.each<[number, [number, number] | null]>([
-      [0, [0, 0]],
-      [1, [0, 1]],
-      [t0.length, [0, t0.length]],
-      [t0.length + 1, [1, 0]],
-      [t0.length + 2, [1, 1]],
-      [t0.length + 1 + t1.length, [1, t1.length]],
-      [t0.length + 1 + t1.length + 1, [2, 0]],
-      [t0.length + 1 + t1.length + 2, [2, 1]],
-      [t0.length + 1 + t1.length + 1 + t2.length, [2, t2.length]],
+    const b0 = doc.children[0]!;
+    const b1 = doc.children[1]!;
+    const b2 = doc.children[2]!;
+    it.each<[number, [Node, number] | null]>([
+      [0, [b0, 0]],
+      [1, [b0, 1]],
+      [t0.length, [b0, t0.length]],
+      [t0.length + 1, [b1, 0]],
+      [t0.length + 2, [b1, 1]],
+      [t0.length + 1 + t1.length, [b1, t1.length]],
+      [t0.length + 1 + t1.length + 1, [b2, 0]],
+      [t0.length + 1 + t1.length + 2, [b2, 1]],
+      [t0.length + 1 + t1.length + 1 + t2.length, [b2, t2.length]],
       [t0.length + 1 + t1.length + 1 + t2.length + 1, null],
     ])(`$0`, (offset, res) => {
       const n = getChildAt(doc, offset);
-      expect(fix(n)).toEqual(res);
+      expect(n && [n[0], n[1]]).toEqual(res);
     });
   });
 
@@ -86,20 +85,23 @@ describe(getChildAt.name, () => {
     const doc: BlockNode = {
       children: [{ text: t0 }, { text: t1 }, { text: t2 }],
     };
-    it.each<[number, [number, number] | null]>([
-      [0, [0, 0]],
-      [1, [0, 1]],
-      [t0.length - 1, [0, t0.length - 1]],
-      [t0.length, [1, 0]],
-      [t0.length + 1, [1, 1]],
-      [t0.length + t1.length - 1, [1, t1.length - 1]],
-      [t0.length + t1.length, [2, 0]],
-      [t0.length + t1.length + 1, [2, 1]],
-      [t0.length + t1.length + t2.length - 1, [2, t2.length - 1]],
+    const i0 = doc.children[0]!;
+    const i1 = doc.children[1]!;
+    const i2 = doc.children[2]!;
+    it.each<[number, [Node, number] | null]>([
+      [0, [i0, 0]],
+      [1, [i0, 1]],
+      [t0.length - 1, [i0, t0.length - 1]],
+      [t0.length, [i1, 0]],
+      [t0.length + 1, [i1, 1]],
+      [t0.length + t1.length - 1, [i1, t1.length - 1]],
+      [t0.length + t1.length, [i2, 0]],
+      [t0.length + t1.length + 1, [i2, 1]],
+      [t0.length + t1.length + t2.length - 1, [i2, t2.length - 1]],
       [t0.length + t1.length + t2.length, null],
     ])(`$0`, (offset, res) => {
       const n = getChildAt(doc, offset);
-      expect(fix(n)).toEqual(res);
+      expect(n && [n[0], n[1]]).toEqual(res);
     });
   });
 
@@ -115,19 +117,24 @@ describe(getChildAt.name, () => {
         { foo: "bar" },
       ],
     };
-    it.each<[number, [number, number] | null]>([
-      [0, [0, 0]],
-      [1, [1, 0]],
-      [1 + 1, [1, 1]],
-      [1 + t0.length - 1, [1, t0.length - 1]],
-      [1 + t0.length, [2, 0]],
-      [1 + t0.length + 1, [3, 0]],
-      [1 + t0.length + 1 + t1.length - 1, [3, t1.length - 1]],
-      [1 + t0.length + 1 + t1.length, [4, 0]],
+    const i0 = doc.children[0]!;
+    const i1 = doc.children[1]!;
+    const i2 = doc.children[2]!;
+    const i3 = doc.children[3]!;
+    const i4 = doc.children[4]!;
+    it.each<[number, [Node, number] | null]>([
+      [0, [i0, 0]],
+      [1, [i1, 0]],
+      [1 + 1, [i1, 1]],
+      [1 + t0.length - 1, [i1, t0.length - 1]],
+      [1 + t0.length, [i2, 0]],
+      [1 + t0.length + 1, [i3, 0]],
+      [1 + t0.length + 1 + t1.length - 1, [i3, t1.length - 1]],
+      [1 + t0.length + 1 + t1.length, [i4, 0]],
       [1 + t0.length + 1 + t1.length + 1, null],
     ])(`$0`, (offset, res) => {
       const n = getChildAt(doc, offset);
-      expect(fix(n)).toEqual(res);
+      expect(n && [n[0], n[1]]).toEqual(res);
     });
   });
 
@@ -142,13 +149,16 @@ describe(getChildAt.name, () => {
         { children: [{ text: t2 }] },
       ],
     };
-    it.each<[number, [number, number] | null]>([
-      [t0.length, [0, t0.length]],
-      [t0.length + 1, [1, 0]],
-      [t0.length + 2, [2, 0]],
+    const b0 = doc.children[0]!;
+    const b1 = doc.children[1]!;
+    const b2 = doc.children[2]!;
+    it.each<[number, [Node, number] | null]>([
+      [t0.length, [b0, t0.length]],
+      [t0.length + 1, [b1, 0]],
+      [t0.length + 2, [b2, 0]],
     ])(`$0`, (offset, res) => {
       const n = getChildAt(doc, offset);
-      expect(fix(n)).toEqual(res);
+      expect(n && [n[0], n[1]]).toEqual(res);
     });
   });
 
@@ -156,12 +166,13 @@ describe(getChildAt.name, () => {
     const doc = {
       children: [{ text: "" }],
     };
-    it.each<[number, [number, number] | null]>([
-      [0, [0, 0]],
+    const i0 = doc.children[0]!;
+    it.each<[number, [Node, number] | null]>([
+      [0, [i0, 0]],
       [1, null],
     ])(`$0`, (offset, res) => {
       const n = getChildAt(doc, offset);
-      expect(fix(n)).toEqual(res);
+      expect(n && [n[0], n[1]]).toEqual(res);
     });
   });
 });
