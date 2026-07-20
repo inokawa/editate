@@ -1,6 +1,6 @@
 import { Editor } from './editor.js';
 import { DocNode, Range } from './doc/types.js';
-import { ExtractAttrValue, InferBlockNode, InferInlineNode, InferTextNode, InferVoidNode } from './doc/types-infer.js';
+import { ExtractAttrValue, InferBlockNode, InferTextNode, InferVoidNode } from './doc/types-infer.js';
 /**
  * Delete content in the selection or specified range.
  */
@@ -43,5 +43,5 @@ export declare function ToggleBlockAttr<T extends DocNode, N extends InferBlockN
 /**
  * Set attr to a void node at the caret or specified position.
  */
-export declare function SetVoidAttr<T extends DocNode, N extends InferInlineNode<T>, K extends string>(editor: Editor<T>, key: K, value: ExtractAttrValue<N, K>, offset?: number): void;
+export declare function SetVoidAttr<T extends DocNode, N extends InferVoidNode<T>, K extends string>(editor: Editor<T>, key: K, value: ExtractAttrValue<N, K>, offset?: number): void;
 export {};
