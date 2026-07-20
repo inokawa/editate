@@ -277,13 +277,13 @@ export function* iterLeafs<T extends Node>(
 
 export const sliceText = <T extends Node>(
   node: T,
-  range: Range = [0, Infinity],
+  start: number = 0,
+  end: number = Infinity,
   voidToString?: (node: InferVoidNode<T>) => string,
 ): string => {
-  const [start, end] = range;
   let str = "";
   let offset = start;
-  for (const [leaf, leafStart] of iterLeafs(node, range)) {
+  for (const [leaf, leafStart] of iterLeafs(node, [start, end])) {
     for (let i = leafStart - offset; i > 0; i--) {
       str += "\n";
     }

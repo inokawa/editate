@@ -17,7 +17,7 @@ export function plainTransferPlugin<T extends DocNode>(
   editor.hook("copy", (dataTransfer) => {
     dataTransfer.setData(
       "text/plain",
-      sliceText(editor.doc, toRange(editor.selection), voidToString),
+      sliceText(editor.doc, ...toRange(editor.selection), voidToString),
     );
   });
   editor.hook("paste", (dataTransfer) => {

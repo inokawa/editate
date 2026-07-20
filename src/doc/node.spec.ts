@@ -628,7 +628,7 @@ describe(sliceText.name, () => {
       ],
       [[t0.length, t0.length + 1], "\n"],
     ])(`$0`, (range, str) => {
-      expect(sliceText(doc, range)).toEqual(str);
+      expect(sliceText(doc, ...range)).toEqual(str);
     });
   });
 
@@ -643,7 +643,7 @@ describe(sliceText.name, () => {
       ],
     };
     expect(
-      sliceText(doc, [1, t0.length + 1 + 1 + 1 + t1.length - 1], (n) => n.foo),
+      sliceText(doc, 1, t0.length + 1 + 1 + 1 + t1.length - 1, (n) => n.foo),
     ).toEqual(t0.slice(1) + "\n" + "bar" + "\n" + t1.slice(0, -1));
   });
 });
