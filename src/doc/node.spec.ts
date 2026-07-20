@@ -61,17 +61,20 @@ describe(getChildAt.name, () => {
     const b0 = doc.children[0]!;
     const b1 = doc.children[1]!;
     const b2 = doc.children[2]!;
+    const t0s = t0.length;
+    const t1s = t1.length;
+    const t2s = t2.length;
     it.each<[number, [Node, number] | null]>([
       [0, [b0, 0]],
       [1, [b0, 1]],
-      [t0.length, [b0, t0.length]],
-      [t0.length + 1, [b1, 0]],
-      [t0.length + 2, [b1, 1]],
-      [t0.length + 1 + t1.length, [b1, t1.length]],
-      [t0.length + 1 + t1.length + 1, [b2, 0]],
-      [t0.length + 1 + t1.length + 2, [b2, 1]],
-      [t0.length + 1 + t1.length + 1 + t2.length, [b2, t2.length]],
-      [t0.length + 1 + t1.length + 1 + t2.length + 1, null],
+      [t0s, [b0, t0s]],
+      [t0s + 1, [b1, 0]],
+      [t0s + 2, [b1, 1]],
+      [t0s + 1 + t1s, [b1, t1s]],
+      [t0s + 1 + t1s + 1, [b2, 0]],
+      [t0s + 1 + t1s + 2, [b2, 1]],
+      [t0s + 1 + t1s + 1 + t2s, [b2, t2s]],
+      [t0s + 1 + t1s + 1 + t2s + 1, null],
     ])(`$0`, (offset, res) => {
       const n = getChildAt(doc, offset);
       expect(n && [n[0], n[1]]).toEqual(res);
@@ -88,17 +91,20 @@ describe(getChildAt.name, () => {
     const i0 = doc.children[0]!;
     const i1 = doc.children[1]!;
     const i2 = doc.children[2]!;
+    const t0s = t0.length;
+    const t1s = t1.length;
+    const t2s = t2.length;
     it.each<[number, [Node, number] | null]>([
       [0, [i0, 0]],
       [1, [i0, 1]],
-      [t0.length - 1, [i0, t0.length - 1]],
-      [t0.length, [i1, 0]],
-      [t0.length + 1, [i1, 1]],
-      [t0.length + t1.length - 1, [i1, t1.length - 1]],
-      [t0.length + t1.length, [i2, 0]],
-      [t0.length + t1.length + 1, [i2, 1]],
-      [t0.length + t1.length + t2.length - 1, [i2, t2.length - 1]],
-      [t0.length + t1.length + t2.length, null],
+      [t0s - 1, [i0, t0s - 1]],
+      [t0s, [i1, 0]],
+      [t0s + 1, [i1, 1]],
+      [t0s + t1s - 1, [i1, t1s - 1]],
+      [t0s + t1s, [i2, 0]],
+      [t0s + t1s + 1, [i2, 1]],
+      [t0s + t1s + t2s - 1, [i2, t2s - 1]],
+      [t0s + t1s + t2s, null],
     ])(`$0`, (offset, res) => {
       const n = getChildAt(doc, offset);
       expect(n && [n[0], n[1]]).toEqual(res);
@@ -122,16 +128,18 @@ describe(getChildAt.name, () => {
     const i2 = doc.children[2]!;
     const i3 = doc.children[3]!;
     const i4 = doc.children[4]!;
+    const t0s = t0.length;
+    const t1s = t1.length;
     it.each<[number, [Node, number] | null]>([
       [0, [i0, 0]],
       [1, [i1, 0]],
       [1 + 1, [i1, 1]],
-      [1 + t0.length - 1, [i1, t0.length - 1]],
-      [1 + t0.length, [i2, 0]],
-      [1 + t0.length + 1, [i3, 0]],
-      [1 + t0.length + 1 + t1.length - 1, [i3, t1.length - 1]],
-      [1 + t0.length + 1 + t1.length, [i4, 0]],
-      [1 + t0.length + 1 + t1.length + 1, null],
+      [1 + t0s - 1, [i1, t0s - 1]],
+      [1 + t0s, [i2, 0]],
+      [1 + t0s + 1, [i3, 0]],
+      [1 + t0s + 1 + t1s - 1, [i3, t1s - 1]],
+      [1 + t0s + 1 + t1s, [i4, 0]],
+      [1 + t0s + 1 + t1s + 1, null],
     ])(`$0`, (offset, res) => {
       const n = getChildAt(doc, offset);
       expect(n && [n[0], n[1]]).toEqual(res);
@@ -152,10 +160,11 @@ describe(getChildAt.name, () => {
     const b0 = doc.children[0]!;
     const b1 = doc.children[1]!;
     const b2 = doc.children[2]!;
+    const t0s = t0.length;
     it.each<[number, [Node, number] | null]>([
-      [t0.length, [b0, t0.length]],
-      [t0.length + 1, [b1, 0]],
-      [t0.length + 2, [b2, 0]],
+      [t0s, [b0, t0s]],
+      [t0s + 1, [b1, 0]],
+      [t0s + 2, [b2, 0]],
     ])(`$0`, (offset, res) => {
       const n = getChildAt(doc, offset);
       expect(n && [n[0], n[1]]).toEqual(res);
@@ -191,23 +200,23 @@ describe(getBlockAt.name, () => {
   const n0 = nodeAtPath(doc, [0]);
   const n1 = nodeAtPath(doc, [1]);
   const n2 = nodeAtPath(doc, [2]);
+  const t0s = t0.length;
+  const t1s = t1.length;
+  const t2s = t2.length;
   it.each<[number, [Node, number]]>([
     [0, [n0, 0]],
     [1, [n0, 1]],
-    [t0.length - 1, [n0, t0.length - 1]],
-    [t0.length, [n0, t0.length]],
-    [t0.length + 1, [n1, 0]],
-    [t0.length + 2, [n1, 1]],
-    [t0.length + 1 + t1.length - 1, [n1, t1.length - 1]],
-    [t0.length + 1 + t1.length, [n1, t1.length]],
-    [t0.length + 1 + t1.length + 1, [n2, 0]],
-    [t0.length + 1 + t1.length + 2, [n2, 1]],
-    [t0.length + 1 + t1.length + 1 + t2.length - 1, [n2, t2.length - 1]],
-    [t0.length + 1 + t1.length + 1 + t2.length, [n2, t2.length]],
-    [
-      t0.length + 1 + t1.length + 1 + t2.length + 1,
-      [doc, t0.length + 1 + t1.length + 1 + t2.length + 1],
-    ],
+    [t0s - 1, [n0, t0s - 1]],
+    [t0s, [n0, t0s]],
+    [t0s + 1, [n1, 0]],
+    [t0s + 2, [n1, 1]],
+    [t0s + 1 + t1s - 1, [n1, t1s - 1]],
+    [t0s + 1 + t1s, [n1, t1s]],
+    [t0s + 1 + t1s + 1, [n2, 0]],
+    [t0s + 1 + t1s + 2, [n2, 1]],
+    [t0s + 1 + t1s + 1 + t2s - 1, [n2, t2s - 1]],
+    [t0s + 1 + t1s + 1 + t2s, [n2, t2s]],
+    [t0s + 1 + t1s + 1 + t2s + 1, [doc, t0s + 1 + t1s + 1 + t2s + 1]],
   ])(`$0`, (offset, res) => {
     const n = getBlockAt(doc, offset);
     expect([n[0], n[1]]).toEqual(res);
@@ -228,20 +237,23 @@ describe(getLeafAt.name, () => {
   const n0 = nodeAtPath(doc, [0, 0]);
   const n1 = nodeAtPath(doc, [1, 0]);
   const n2 = nodeAtPath(doc, [2, 0]);
+  const t0s = t0.length;
+  const t1s = t1.length;
+  const t2s = t2.length;
   it.each<[number, ReturnType<typeof getLeafAt>]>([
     [0, [n0, 0]],
     [1, [n0, 1]],
-    [t0.length - 1, [n0, t0.length - 1]],
-    [t0.length, null],
-    [t0.length + 1, [n1, 0]],
-    [t0.length + 2, [n1, 1]],
-    [t0.length + 1 + t1.length - 1, [n1, t1.length - 1]],
-    [t0.length + 1 + t1.length, null],
-    [t0.length + 1 + t1.length + 1, [n2, 0]],
-    [t0.length + 1 + t1.length + 2, [n2, 1]],
-    [t0.length + 1 + t1.length + 1 + t2.length - 1, [n2, t2.length - 1]],
-    [t0.length + 1 + t1.length + 1 + t2.length, null],
-    [t0.length + 1 + t1.length + 1 + t2.length + 1, null],
+    [t0s - 1, [n0, t0s - 1]],
+    [t0s, null],
+    [t0s + 1, [n1, 0]],
+    [t0s + 2, [n1, 1]],
+    [t0s + 1 + t1s - 1, [n1, t1s - 1]],
+    [t0s + 1 + t1s, null],
+    [t0s + 1 + t1s + 1, [n2, 0]],
+    [t0s + 1 + t1s + 2, [n2, 1]],
+    [t0s + 1 + t1s + 1 + t2s - 1, [n2, t2s - 1]],
+    [t0s + 1 + t1s + 1 + t2s, null],
+    [t0s + 1 + t1s + 1 + t2s + 1, null],
   ])(`$0`, (offset, res) => {
     const n = getLeafAt(doc, offset);
     expect(n).toEqual(res);
@@ -265,6 +277,9 @@ describe(iterNodes.name, () => {
   const n10 = nodeAtPath(doc, [1, 0]);
   const n2 = nodeAtPath(doc, [2]);
   const n20 = nodeAtPath(doc, [2, 0]);
+  const t0s = t0.length;
+  const t1s = t1.length;
+  const t2s = t2.length;
 
   it.each<[Range, [Node, number][]]>([
     [[1, 0], []],
@@ -278,70 +293,70 @@ describe(iterNodes.name, () => {
       ],
     ],
     [
-      [0, t0.length],
+      [0, t0s],
       [
         [n0, 0],
         [n00, 0],
       ],
     ],
     [
-      [0, t0.length + 1],
+      [0, t0s + 1],
       [
         [n0, 0],
         [n00, 0],
-        [n1, t0.length + 1],
-        [n10, t0.length + 1],
+        [n1, t0s + 1],
+        [n10, t0s + 1],
       ],
     ],
     [
-      [0, t0.length + 2],
+      [0, t0s + 2],
       [
         [n0, 0],
         [n00, 0],
-        [n1, t0.length + 1],
-        [n10, t0.length + 1],
+        [n1, t0s + 1],
+        [n10, t0s + 1],
       ],
     ],
     [
-      [0, t0.length + 1 + t1.length],
+      [0, t0s + 1 + t1s],
       [
         [n0, 0],
         [n00, 0],
-        [n1, t0.length + 1],
-        [n10, t0.length + 1],
+        [n1, t0s + 1],
+        [n10, t0s + 1],
       ],
     ],
     [
-      [0, t0.length + 1 + t1.length + 1],
+      [0, t0s + 1 + t1s + 1],
       [
         [n0, 0],
         [n00, 0],
-        [n1, t0.length + 1],
-        [n10, t0.length + 1],
-        [n2, t0.length + 1 + t1.length + 1],
-        [n20, t0.length + 1 + t1.length + 1],
+        [n1, t0s + 1],
+        [n10, t0s + 1],
+        [n2, t0s + 1 + t1s + 1],
+        [n20, t0s + 1 + t1s + 1],
       ],
     ],
     [
-      [0, t0.length + 1 + t1.length + 2],
+      [0, t0s + 1 + t1s + 2],
       [
         [n0, 0],
         [n00, 0],
-        [n1, t0.length + 1],
-        [n10, t0.length + 1],
-        [n2, t0.length + 1 + t1.length + 1],
-        [n20, t0.length + 1 + t1.length + 1],
+        [n1, t0s + 1],
+        [n10, t0s + 1],
+        [n2, t0s + 1 + t1s + 1],
+        [n20, t0s + 1 + t1s + 1],
       ],
     ],
     [
-      [0, t0.length + 1 + t1.length + 1 + t2.length],
+      [0, t0s + 1 + t1s + 1 + t2s],
       [
         [n0, 0],
         [n00, 0],
-        [n1, t0.length + 1],
-        [n10, t0.length + 1],
-        [n2, t0.length + 1 + t1.length + 1],
-        [n20, t0.length + 1 + t1.length + 1],
+        [n1, t0s + 1],
+        [n10, t0s + 1],
+        [n2, t0s + 1 + t1s + 1],
+        [n20, t0s + 1 + t1s + 1],
       ],
     ],
     [
@@ -349,10 +364,10 @@ describe(iterNodes.name, () => {
       [
         [n0, 0],
         [n00, 0],
-        [n1, t0.length + 1],
-        [n10, t0.length + 1],
-        [n2, t0.length + 1 + t1.length + 1],
-        [n20, t0.length + 1 + t1.length + 1],
+        [n1, t0s + 1],
+        [n10, t0s + 1],
+        [n2, t0s + 1 + t1s + 1],
+        [n20, t0s + 1 + t1s + 1],
       ],
     ],
   ])(`$0`, (range, res) => {
@@ -374,86 +389,89 @@ describe(iterLeaves.name, () => {
   const n0 = nodeAtPath(doc, [0, 0]);
   const n1 = nodeAtPath(doc, [1, 0]);
   const n2 = nodeAtPath(doc, [2, 0]);
+  const t0s = t0.length;
+  const t1s = t1.length;
+  const t2s = t2.length;
 
   it.each<[Range, [Node, number][]]>([
     [[1, 0], []],
     [[1, 1], []],
     [[0, 0], []],
     [[0, 1], [[n0, 0]]],
-    [[0, t0.length], [[n0, 0]]],
+    [[0, t0s], [[n0, 0]]],
     [
-      [0, t0.length + 1],
+      [0, t0s + 1],
       [
         [n0, 0],
-        [n1, t0.length + 1],
+        [n1, t0s + 1],
       ],
     ],
     [
-      [0, t0.length + 2],
+      [0, t0s + 2],
       [
         [n0, 0],
-        [n1, t0.length + 1],
+        [n1, t0s + 1],
       ],
     ],
     [
-      [0, t0.length + 1 + t1.length],
+      [0, t0s + 1 + t1s],
       [
         [n0, 0],
-        [n1, t0.length + 1],
+        [n1, t0s + 1],
       ],
     ],
     [
-      [0, t0.length + 1 + t1.length + 1],
+      [0, t0s + 1 + t1s + 1],
       [
         [n0, 0],
-        [n1, t0.length + 1],
-        [n2, t0.length + 1 + t1.length + 1],
+        [n1, t0s + 1],
+        [n2, t0s + 1 + t1s + 1],
       ],
     ],
     [
-      [0, t0.length + 1 + t1.length + 2],
+      [0, t0s + 1 + t1s + 2],
       [
         [n0, 0],
-        [n1, t0.length + 1],
-        [n2, t0.length + 1 + t1.length + 1],
+        [n1, t0s + 1],
+        [n2, t0s + 1 + t1s + 1],
       ],
     ],
     [
-      [0, t0.length + 1 + t1.length + 1 + t2.length],
+      [0, t0s + 1 + t1s + 1 + t2s],
       [
         [n0, 0],
-        [n1, t0.length + 1],
-        [n2, t0.length + 1 + t1.length + 1],
+        [n1, t0s + 1],
+        [n2, t0s + 1 + t1s + 1],
       ],
     ],
     [
       [0, Infinity],
       [
         [n0, 0],
-        [n1, t0.length + 1],
-        [n2, t0.length + 1 + t1.length + 1],
+        [n1, t0s + 1],
+        [n2, t0s + 1 + t1s + 1],
       ],
     ],
     [
-      [3, t0.length + 2],
+      [3, t0s + 2],
       [
         [n0, 0],
-        [n1, t0.length + 1],
+        [n1, t0s + 1],
       ],
     ],
     [
-      [3, t0.length + 1 + t1.length + 2],
+      [3, t0s + 1 + t1s + 2],
       [
         [n0, 0],
-        [n1, t0.length + 1],
-        [n2, t0.length + 1 + t1.length + 1],
+        [n1, t0s + 1],
+        [n2, t0s + 1 + t1s + 1],
       ],
     ],
     [
-      [t0.length, t0.length + 1],
+      [t0s, t0s + 1],
       [
         [n0, 0],
-        [n1, t0.length + 1],
+        [n1, t0s + 1],
       ],
     ],
   ])(`$0`, (range, res) => {
@@ -472,26 +490,29 @@ describe(sliceFragment.name, () => {
       { children: [{ text: t2 }] },
     ],
   };
+  const t0s = t0.length;
+  const t1s = t1.length;
+  const t2s = t2.length;
   it.each<[Range, Fragment]>([
     [[1, 0], []],
     [[1, 1], []],
     [[0, 0], []],
     [[0, 1], [{ children: [{ text: t0.slice(0, 1) }] }]],
-    [[0, t0.length], [{ children: [{ text: t0 }] }]],
+    [[0, t0s], [{ children: [{ text: t0 }] }]],
     [
-      [0, t0.length + 1],
+      [0, t0s + 1],
       [{ children: [{ text: t0 }] }, { children: [{ text: "" }] }],
     ],
     [
-      [0, t0.length + 2],
+      [0, t0s + 2],
       [{ children: [{ text: t0 }] }, { children: [{ text: t1.slice(0, 1) }] }],
     ],
     [
-      [0, t0.length + 1 + t1.length],
+      [0, t0s + 1 + t1s],
       [{ children: [{ text: t0 }] }, { children: [{ text: t1 }] }],
     ],
     [
-      [0, t0.length + 1 + t1.length + 1],
+      [0, t0s + 1 + t1s + 1],
       [
         { children: [{ text: t0 }] },
         { children: [{ text: t1 }] },
@@ -499,24 +520,24 @@ describe(sliceFragment.name, () => {
       ],
     ],
     [
-      [0, t0.length + 1 + t1.length + 2],
+      [0, t0s + 1 + t1s + 2],
       [
         { children: [{ text: t0 }] },
         { children: [{ text: t1 }] },
         { children: [{ text: t2.slice(0, 1) }] },
       ],
     ],
-    [[0, t0.length + 1 + t1.length + 1 + t2.length], doc.children],
+    [[0, t0s + 1 + t1s + 1 + t2s], doc.children],
     [[0, Infinity], doc.children],
     [
-      [3, t0.length + 2],
+      [3, t0s + 2],
       [
         { children: [{ text: t0.slice(3) }] },
         { children: [{ text: t1.slice(0, 1) }] },
       ],
     ],
     [
-      [3, t0.length + 1 + t1.length + 2],
+      [3, t0s + 1 + t1s + 2],
       [
         { children: [{ text: t0.slice(3) }] },
         { children: [{ text: t1 }] },
@@ -524,7 +545,7 @@ describe(sliceFragment.name, () => {
       ],
     ],
     [
-      [t0.length, t0.length + 1],
+      [t0s, t0s + 1],
       [{ children: [{ text: "" }] }, { children: [{ text: "" }] }],
     ],
   ])(`$0`, (range, res) => {
@@ -613,31 +634,25 @@ describe(sliceText.name, () => {
         { children: [{ text: t2 }] },
       ],
     };
+    const t0s = t0.length;
+    const t1s = t1.length;
+    const t2s = t2.length;
     it.each<[Range, string]>([
       [[1, 0], ""],
       [[1, 1], ""],
       [[0, 0], ""],
       [[0, 1], t0.slice(0, 1)],
-      [[0, t0.length], t0],
-      [[0, t0.length + 1], t0 + "\n"],
-      [[0, t0.length + 2], t0 + "\n" + t1.slice(0, 1)],
-      [[0, t0.length + 1 + t1.length], t0 + "\n" + t1],
-      [[0, t0.length + 1 + t1.length + 1], t0 + "\n" + t1 + "\n"],
-      [
-        [0, t0.length + 1 + t1.length + 2],
-        t0 + "\n" + t1 + "\n" + t2.slice(0, 1),
-      ],
-      [
-        [0, t0.length + 1 + t1.length + 1 + t2.length],
-        t0 + "\n" + t1 + "\n" + t2,
-      ],
+      [[0, t0s], t0],
+      [[0, t0s + 1], t0 + "\n"],
+      [[0, t0s + 2], t0 + "\n" + t1.slice(0, 1)],
+      [[0, t0s + 1 + t1s], t0 + "\n" + t1],
+      [[0, t0s + 1 + t1s + 1], t0 + "\n" + t1 + "\n"],
+      [[0, t0s + 1 + t1s + 2], t0 + "\n" + t1 + "\n" + t2.slice(0, 1)],
+      [[0, t0s + 1 + t1s + 1 + t2s], t0 + "\n" + t1 + "\n" + t2],
       [[0, Infinity], t0 + "\n" + t1 + "\n" + t2],
-      [[3, t0.length + 2], t0.slice(3) + "\n" + t1.slice(0, 1)],
-      [
-        [3, t0.length + 1 + t1.length + 2],
-        t0.slice(3) + "\n" + t1 + "\n" + t2.slice(0, 1),
-      ],
-      [[t0.length, t0.length + 1], "\n"],
+      [[3, t0s + 2], t0.slice(3) + "\n" + t1.slice(0, 1)],
+      [[3, t0s + 1 + t1s + 2], t0.slice(3) + "\n" + t1 + "\n" + t2.slice(0, 1)],
+      [[t0s, t0s + 1], "\n"],
     ])(`$0`, (range, str) => {
       expect(sliceText(doc, ...range)).toEqual(str);
     });
@@ -653,8 +668,10 @@ describe(sliceText.name, () => {
         { children: [{ text: t1 }] },
       ],
     };
-    expect(
-      sliceText(doc, 1, t0.length + 1 + 1 + 1 + t1.length - 1, (n) => n.foo),
-    ).toEqual(t0.slice(1) + "\n" + "bar" + "\n" + t1.slice(0, -1));
+    const t0s = t0.length;
+    const t1s = t1.length;
+    expect(sliceText(doc, 1, t0s + 1 + 1 + 1 + t1s - 1, (n) => n.foo)).toEqual(
+      t0.slice(1) + "\n" + "bar" + "\n" + t1.slice(0, -1),
+    );
   });
 });
