@@ -263,13 +263,9 @@ export function* iterLeafs<T extends Node>(
     yield [node as InferInlineNode<T>, 0];
     return;
   }
-  for (const n of iterChilds(node, range)) {
-    if (isBlockNode(n[0])) {
-      for (const r of iterLeafs(n[0], [0, getNodeSize(n[0])])) {
-        yield [r[0] as InferInlineNode<T>, r[1] + n[1]];
-      }
-    } else {
-      yield n as [InferInlineNode<T>, number];
+  for (const [c, cOffset] of iterChilds(node, range)) {
+    for (const [l, lOffset] of iterLeafs(c, [0, getNodeSize(c)])) {
+      yield [l as InferInlineNode<T>, lOffset + cOffset];
     }
   }
 }
