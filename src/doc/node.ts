@@ -316,7 +316,8 @@ export const sliceText = <T extends Node>(
  */
 export const sliceFragment = <T extends DocNode>(
   doc: T,
-  [start, end]: Range,
+  start: number,
+  end: number,
 ): T["children"] => {
   if (start >= end) {
     return [];

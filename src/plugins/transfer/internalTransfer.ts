@@ -11,7 +11,7 @@ export function internalTranferPlugin(editor: Editor) {
   editor.hook("copy", (dataTransfer) => {
     dataTransfer.setData(
       INTERNAL_COPY_KEY,
-      JSON.stringify(sliceFragment(editor.doc, toRange(editor.selection))),
+      JSON.stringify(sliceFragment(editor.doc, ...toRange(editor.selection))),
     );
   });
   editor.hook("paste", (dataTransfer) => {
