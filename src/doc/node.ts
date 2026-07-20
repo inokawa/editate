@@ -76,14 +76,13 @@ export const getChildAt = <T extends BlockNode>(
     const node = children[i]!;
     const isBlock = isBlockNode(node);
     let size = getNodeSize(node);
+    const isEmptyNode = size === 0;
     if (isBlock) {
       size++;
     }
     if (
       size > offset ||
-      (size === offset &&
-        !isBlock &&
-        (isBackwardAffinity || (isTextNode(node) && !node.text)))
+      (size === offset && !isBlock && (isBackwardAffinity || isEmptyNode))
     ) {
       return [node, offset, i];
     }
