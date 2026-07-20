@@ -521,7 +521,7 @@ export const Tag: StoryObj = {
                   e.preventDefault();
                   const tagIndex = doc.children.indexOf(t);
                   if (tagIndex === -1) return;
-                  const value = window.prompt("new label:");
+                  const value = window.prompt("label:", t.label);
                   if (!value) return;
                   const offset = doc.children
                     .slice(0, tagIndex + 1)
