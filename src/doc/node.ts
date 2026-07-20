@@ -216,8 +216,7 @@ export const selectionToDomSelection = (
 
 function* iterChilds<T extends Node>(
   node: T,
-  start: number,
-  end: number,
+  [start, end]: Range,
 ): Generator<[node: Node, offset: number], void, void> {
   if (start >= end) {
     return;
@@ -246,11 +245,11 @@ function* iterChilds<T extends Node>(
 
 export function* iterNodes<T extends Node>(
   node: T,
-  [start, end]: Range,
+  range: Range,
 ): Generator<[node: Node, offset: number], void, void> {
-  for (const n of iterChilds(node, start, end)) {
+  for (const n of iterChilds(node, range)) {
     yield n;
-    for (const r of iterChilds(n[0], 0, getNodeSize(n[0]))) {
+    for (const r of iterChilds(n[0], [0, getNodeSize(n[0])])) {
       yield [r[0], r[1] + n[1]];
     }
   }
@@ -258,13 +257,13 @@ export function* iterNodes<T extends Node>(
 
 export function* iterLeafs<T extends Node>(
   node: T,
-  [start, end]: Range,
+  range: Range,
 ): Generator<[node: InferInlineNode<T>, offset: number], void, void> {
   if (!isBlockNode(node)) {
     yield [node as InferInlineNode<T>, 0];
     return;
   }
-  for (const n of iterChilds(node, start, end)) {
+  for (const n of iterChilds(node, range)) {
     if (isBlockNode(n[0])) {
       for (const r of iterLeafs(n[0], [0, getNodeSize(n[0])])) {
         yield [r[0] as InferInlineNode<T>, r[1] + n[1]];
