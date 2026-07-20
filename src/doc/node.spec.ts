@@ -517,7 +517,7 @@ describe(sliceFragment.name, () => {
       [{ children: [{ text: "" }] }, { children: [{ text: "" }] }],
     ],
   ])(`$0`, (range, res) => {
-    expect(sliceFragment(doc, ...range)).toEqual(res);
+    expect(sliceFragment(doc, range)).toEqual(res);
   });
 });
 

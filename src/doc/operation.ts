@@ -355,11 +355,8 @@ export const applyOperation = <T extends DocNode>(
       break;
     }
     case OP_FORMAT: {
-      const {
-        range: [start, end],
-        key,
-        value,
-      } = op;
+      const { range, key, value } = op;
+      const [start, end] = range;
       if (
         isValidPosition(doc, start) &&
         isValidPosition(doc, end) &&
@@ -394,7 +391,7 @@ export const applyOperation = <T extends DocNode>(
             doc,
             start,
             end,
-            sliceFragment(doc, start, end).map(mapNode),
+            sliceFragment(doc, range).map(mapNode),
           );
         }
       }
