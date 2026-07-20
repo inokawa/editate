@@ -5,7 +5,6 @@ import type { DocNode, Range } from "./doc/types.js";
 import type {
   ExtractAttrValue,
   InferBlockNode,
-  InferInlineNode,
   InferTextNode,
   InferVoidNode,
 } from "./doc/types-infer.js";
@@ -173,7 +172,7 @@ export function ToggleBlockAttr<
  */
 export function SetVoidAttr<
   T extends DocNode,
-  N extends InferInlineNode<T>,
+  N extends InferVoidNode<T>,
   K extends string,
 >(
   editor: Editor<T>,
