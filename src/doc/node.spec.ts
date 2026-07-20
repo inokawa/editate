@@ -345,7 +345,7 @@ describe(iterNodes.name, () => {
       ],
     ],
   ])(`$0`, (range, res) => {
-    expect([...iterNodes(doc, ...range)]).toEqual(res);
+    expect([...iterNodes(doc, range)]).toEqual(res);
   });
 });
 
@@ -446,7 +446,7 @@ describe(iterLeafs.name, () => {
       ],
     ],
   ])(`$0`, (range, res) => {
-    expect([...iterLeafs(doc, ...range)]).toEqual(res);
+    expect([...iterLeafs(doc, range)]).toEqual(res);
   });
 });
 
