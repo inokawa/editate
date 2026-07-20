@@ -25,6 +25,8 @@ import {
   type Editor,
   getBlockAt,
   LeavesInRange,
+  SetVoidAttr,
+  getNodeSize,
 } from "../../src";
 import * as v from "valibot";
 import { createPortal } from "react-dom";
@@ -515,9 +517,21 @@ export const Tag: StoryObj = {
               <span
                 key={j}
                 contentEditable={false}
+                onClick={(e) => {
+                  e.preventDefault();
+                  const tagIndex = doc.children.indexOf(t);
+                  if (tagIndex === -1) return;
+                  const value = window.prompt("new label:");
+                  if (!value) return;
+                  const offset = doc.children
+                    .slice(0, tagIndex + 1)
+                    .reduce((acc, n) => acc + getNodeSize(n), 0);
+                  editor.exec(SetVoidAttr, "label", value, offset);
+                }}
                 style={{
                   background: "slategray",
                   color: "white",
+                  cursor: "pointer",
                   fontSize: 12,
                   padding: 4,
                   borderRadius: 8,

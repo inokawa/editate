@@ -1,10 +1,11 @@
 import { toRange } from "./doc/position.js";
-import { getBlockAt, isTextNode } from "./doc/node.js";
+import { getBlockAt, getLeafAt, isTextNode } from "./doc/node.js";
 import type { Editor } from "./editor.js";
 import type { DocNode, Range } from "./doc/types.js";
 import type {
   ExtractAttrValue,
   InferBlockNode,
+  InferInlineNode,
   InferTextNode,
   InferVoidNode,
 } from "./doc/types-infer.js";
@@ -165,4 +166,23 @@ export function ToggleBlockAttr<
     key,
     value: block[key as keyof typeof block] === onValue ? offValue : onValue,
   });
+}
+
+/**
+ * Set attr to a void node at the caret or specified position.
+ */
+export function SetVoidAttr<
+  T extends DocNode,
+  N extends InferInlineNode<T>,
+  K extends string,
+>(
+  editor: Editor<T>,
+  key: K,
+  value: ExtractAttrValue<N, K>,
+  offset: number = editor.selection[0],
+) {
+  const leaf = getLeafAt(editor.doc, offset, true);
+  if (leaf && !isTextNode(leaf[0])) {
+    editor.apply({ type: "patch_node", path: leaf[2], key, value });
+  }
 }

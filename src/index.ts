@@ -23,6 +23,7 @@ export {
   ToggleFormat,
   SetBlockAttr,
   ToggleBlockAttr,
+  SetVoidAttr,
 } from "./commands.js";
 export { LeavesInRange } from "./queries.js";
 export { createEditor } from "./editor.js";
