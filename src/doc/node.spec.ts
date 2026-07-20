@@ -4,7 +4,7 @@ import {
   getChildAt,
   getLeafAt,
   getNodeSize,
-  iterChilds,
+  iterNodes,
   iterLeafs,
   sliceFragment,
   sliceText,
@@ -237,7 +237,7 @@ describe(getLeafAt.name, () => {
   });
 });
 
-describe(iterChilds.name, () => {
+describe(iterNodes.name, () => {
   const t0 = "abcd";
   const t1 = "efghi";
   const t2 = "jklmno";
@@ -254,19 +254,6 @@ describe(iterChilds.name, () => {
   const n10 = nodeAtPath(doc, [1, 0]);
   const n2 = nodeAtPath(doc, [2]);
   const n20 = nodeAtPath(doc, [2, 0]);
-
-  function* iterNodes<T extends Node>(
-    node: T,
-    start: number,
-    end: number,
-  ): Generator<[node: Node, offset: number], void, void> {
-    for (const n of iterChilds(node, start, end)) {
-      yield n;
-      for (const r of iterChilds(n[0], 0, getNodeSize(n[0]))) {
-        yield [r[0], r[1] + n[1]];
-      }
-    }
-  }
 
   it.each<[Range, [Node, number][]]>([
     [[1, 0], []],

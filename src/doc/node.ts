@@ -213,7 +213,7 @@ export const selectionToDomSelection = (
   return [offsetToPosition(doc, anchor), offsetToPosition(doc, focus)];
 };
 
-export function* iterChilds<T extends Node>(
+function* iterChilds<T extends Node>(
   node: T,
   start: number,
   end: number,
@@ -239,6 +239,19 @@ export function* iterChilds<T extends Node>(
       if (isBlockNode(targetNode)) {
         offset++;
       }
+    }
+  }
+}
+
+export function* iterNodes<T extends Node>(
+  node: T,
+  start: number,
+  end: number,
+): Generator<[node: Node, offset: number], void, void> {
+  for (const n of iterChilds(node, start, end)) {
+    yield n;
+    for (const r of iterChilds(n[0], 0, getNodeSize(n[0]))) {
+      yield [r[0], r[1] + n[1]];
     }
   }
 }
