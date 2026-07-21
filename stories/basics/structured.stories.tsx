@@ -23,7 +23,7 @@ import {
   sliceText,
   Delete,
   type Editor,
-  getBlockAt,
+  getLeafBlockAt,
   LeavesInRange,
   SetVoidAttr,
   getNodeSize,
@@ -104,26 +104,25 @@ const richTextSchema = v.strictObject({
   strike: v.optional(v.boolean()),
 });
 
-const richBlockSchema = v.strictObject({
-  align: v.optional(v.picklist(["left", "right"])),
-  indent: v.optional(v.number()),
-  children: v.array(richTextSchema),
-});
-
 const richSchema = v.strictObject({
-  children: v.array(richBlockSchema),
+  children: v.array(
+    v.strictObject({
+      align: v.optional(v.picklist(["left", "right"])),
+      indent: v.optional(v.number()),
+      children: v.array(richTextSchema),
+    }),
+  ),
 });
 
 type RichDoc = v.InferOutput<typeof richSchema>;
 
 function Indent(editor: Editor<RichDoc>, offset: number = editor.selection[0]) {
-  const [block, , path] = getBlockAt(editor.doc, offset);
+  const [block, , path] = getLeafBlockAt(editor.doc, offset);
   editor.apply({
     type: "patch_node",
     path,
-    // TODO improve type
     key: "indent",
-    value: ((block as v.InferOutput<typeof richBlockSchema>).indent ?? 0) + 1,
+    value: (block.indent ?? 0) + 1,
   });
 }
 
@@ -131,16 +130,12 @@ function Outdent(
   editor: Editor<RichDoc>,
   offset: number = editor.selection[0],
 ) {
-  const [block, , path] = getBlockAt(editor.doc, offset);
+  const [block, , path] = getLeafBlockAt(editor.doc, offset);
   editor.apply({
     type: "patch_node",
     path,
-    // TODO improve type
     key: "indent",
-    value: Math.max(
-      ((block as v.InferOutput<typeof richBlockSchema>).indent ?? 0) - 1,
-      0,
-    ),
+    value: Math.max((block.indent ?? 0) - 1, 0),
   });
 }
 

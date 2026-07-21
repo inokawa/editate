@@ -1,8 +1,9 @@
 export {
   getChildAt,
-  getBlockAt,
+  getLeafBlockAt,
   getLeafAt,
   getNodeSize,
+  iterLeafBlocks,
   iterLeaves,
   sliceText,
 } from "./doc/node.js";

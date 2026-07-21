@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  getBlockAt,
+  getLeafBlockAt,
   getChildAt,
   getLeafAt,
   getNodeSize,
-  iterNodes,
+  iterLeafBlocks,
   iterLeaves,
   sliceFragment,
   sliceText,
@@ -287,7 +287,7 @@ describe(getChildAt.name, () => {
   });
 });
 
-describe(getBlockAt.name, () => {
+describe(getLeafBlockAt.name, () => {
   const t0 = "abcd";
   const t1 = "efghi";
   const t2 = "jklmno";
@@ -319,7 +319,7 @@ describe(getBlockAt.name, () => {
     [t0s + 1 + t1s + 1 + t2s, [n2, t2s]],
     [t0s + 1 + t1s + 1 + t2s + 1, [doc, t0s + 1 + t1s + 1 + t2s + 1]],
   ])(`$0`, (offset, res) => {
-    const n = getBlockAt(doc, offset);
+    const n = getLeafBlockAt(doc, offset);
     expect([n[0], n[1]]).toEqual(res);
   });
 });
@@ -361,7 +361,7 @@ describe(getLeafAt.name, () => {
   });
 });
 
-describe(iterNodes.name, () => {
+describe(iterLeafBlocks.name, () => {
   const t0 = "abcd";
   const t1 = "efghi";
   const t2 = "jklmno";
@@ -373,11 +373,8 @@ describe(iterNodes.name, () => {
     ],
   };
   const n0 = nodeAtPath(doc, [0]);
-  const n00 = nodeAtPath(doc, [0, 0]);
   const n1 = nodeAtPath(doc, [1]);
-  const n10 = nodeAtPath(doc, [1, 0]);
   const n2 = nodeAtPath(doc, [2]);
-  const n20 = nodeAtPath(doc, [2, 0]);
   const t0s = t0.length;
   const t1s = t1.length;
   const t2s = t2.length;
@@ -386,93 +383,63 @@ describe(iterNodes.name, () => {
     [[1, 0], []],
     [[1, 1], []],
     [[0, 0], []],
-    [
-      [0, 1],
-      [
-        [n0, 0],
-        [n00, 0],
-      ],
-    ],
-    [
-      [0, t0s],
-      [
-        [n0, 0],
-        [n00, 0],
-      ],
-    ],
+    [[0, 1], [[n0, 0]]],
+    [[0, t0s], [[n0, 0]]],
     [
       [0, t0s + 1],
       [
         [n0, 0],
-        [n00, 0],
         [n1, t0s + 1],
-        [n10, t0s + 1],
       ],
     ],
     [
       [0, t0s + 2],
       [
         [n0, 0],
-        [n00, 0],
         [n1, t0s + 1],
-        [n10, t0s + 1],
       ],
     ],
     [
       [0, t0s + 1 + t1s],
       [
         [n0, 0],
-        [n00, 0],
         [n1, t0s + 1],
-        [n10, t0s + 1],
       ],
     ],
     [
       [0, t0s + 1 + t1s + 1],
       [
         [n0, 0],
-        [n00, 0],
         [n1, t0s + 1],
-        [n10, t0s + 1],
         [n2, t0s + 1 + t1s + 1],
-        [n20, t0s + 1 + t1s + 1],
       ],
     ],
     [
       [0, t0s + 1 + t1s + 2],
       [
         [n0, 0],
-        [n00, 0],
         [n1, t0s + 1],
-        [n10, t0s + 1],
         [n2, t0s + 1 + t1s + 1],
-        [n20, t0s + 1 + t1s + 1],
       ],
     ],
     [
       [0, t0s + 1 + t1s + 1 + t2s],
       [
         [n0, 0],
-        [n00, 0],
         [n1, t0s + 1],
-        [n10, t0s + 1],
         [n2, t0s + 1 + t1s + 1],
-        [n20, t0s + 1 + t1s + 1],
       ],
     ],
     [
       [0, Infinity],
       [
         [n0, 0],
-        [n00, 0],
         [n1, t0s + 1],
-        [n10, t0s + 1],
         [n2, t0s + 1 + t1s + 1],
-        [n20, t0s + 1 + t1s + 1],
       ],
     ],
   ])(`$0`, (range, res) => {
-    expect([...iterNodes(doc, range)]).toEqual(res);
+    expect([...iterLeafBlocks(doc, range)]).toEqual(res);
   });
 });
 

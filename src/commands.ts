@@ -1,5 +1,5 @@
 import { toRange } from "./doc/position.js";
-import { getBlockAt, getLeafAt, isTextNode } from "./doc/node.js";
+import { getLeafBlockAt, getLeafAt, isTextNode } from "./doc/node.js";
 import type { Editor } from "./editor.js";
 import type { DocNode, Range } from "./doc/types.js";
 import type {
@@ -140,7 +140,7 @@ export function SetBlockAttr<
   value: ExtractAttrValue<N, K>,
   offset: number = editor.selection[0],
 ) {
-  const path = getBlockAt(editor.doc, offset)[2];
+  const path = getLeafBlockAt(editor.doc, offset)[2];
   editor.apply({ type: "patch_node", path, key, value });
 }
 
@@ -158,7 +158,7 @@ export function ToggleBlockAttr<
   offValue: ExtractAttrValue<N, K>,
   offset: number = editor.selection[0],
 ) {
-  const [block, , path] = getBlockAt(editor.doc, offset);
+  const [block, , path] = getLeafBlockAt(editor.doc, offset);
   editor.apply({
     type: "patch_node",
     path,

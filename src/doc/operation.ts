@@ -1,6 +1,6 @@
 import { is, keys } from "../utils.js";
 import {
-  getBlockAt,
+  getLeafBlockAt,
   getChildAt,
   getNodeSize,
   hasBlockChildren,
@@ -326,7 +326,7 @@ export const applyOperation = <T extends DocNode>(
       const { at, text } = op;
       if (isValidPosition(doc, at) && text) {
         // inherit style from previous block/text node
-        const [block, offset] = getBlockAt(doc, at);
+        const [block, offset] = getLeafBlockAt(doc, at);
         const res = getChildAt(block, offset, true);
         let anchorNode: TextNode | undefined;
         if (res) {
@@ -366,7 +366,7 @@ export const applyOperation = <T extends DocNode>(
         start <= end
       ) {
         if (start === end) {
-          const [{ children }, , path] = getBlockAt(doc, start);
+          const [{ children }, , path] = getLeafBlockAt(doc, start);
           if (children.length === 1) {
             const maybeText = children[0]!;
             if (isTextNode(maybeText) && !maybeText.text) {
