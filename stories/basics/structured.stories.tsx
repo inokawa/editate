@@ -1021,13 +1021,9 @@ export const Mention: StoryObj = {
       children: [
         {
           children: [
-            {
-              text: "Hi, ",
-            },
+            { text: "Hi, " },
             { type: "mention", name: "Captain Gregor" },
-            {
-              text: " and ",
-            },
+            { text: " and " },
             { type: "mention", name: "Jaxxon" },
             { text: " . Please enter @ to show suggestions." },
           ],
