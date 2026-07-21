@@ -7,7 +7,6 @@ import type {
 import type {
   BlockNode,
   DocNode,
-  InlineNode,
   Node,
   Path,
   TextNode,
@@ -116,16 +115,16 @@ export const getLeafBlockAt = <T extends DocNode | BlockNode>(
   return [node as InferLeafBlockNode<T>, offset, path];
 };
 
-export const getLeafAt = (
-  node: DocNode | BlockNode,
+export const getLeafAt = <T extends DocNode | BlockNode>(
+  node: T,
   offset: number,
   isBackwardAffinity?: boolean,
-): [node: InlineNode, offset: number, path: Path] | null => {
+): [node: InferInlineNode<T>, offset: number, path: Path] | null => {
   const [blockNode, blockOffset, path] = getLeafBlockAt(node, offset);
   const inline = getChildAt(blockNode, blockOffset, isBackwardAffinity);
   if (inline) {
     (path as number[]).push(inline[2]);
-    return [inline[0], inline[1], path];
+    return [inline[0] as InferInlineNode<T>, inline[1], path];
   }
   return null;
 };

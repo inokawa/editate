@@ -14,7 +14,7 @@ export function* LeavesInRange<T extends DocNode>(
   if (isCollapsed(range)) {
     const n = getLeafAt(editor.doc, range[0])?.[0];
     if (n) {
-      yield n as InferInlineNode<T>;
+      yield n;
     }
   } else {
     for (const [n, o] of iterLeaves(editor.doc, range)) {
