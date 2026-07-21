@@ -27,6 +27,7 @@ import {
   LeavesInRange,
   SetVoidAttr,
   getNodeSize,
+  InsertText,
 } from "../../src";
 import * as v from "valibot";
 import { createPortal } from "react-dom";
@@ -1057,7 +1058,8 @@ export const Mention: StoryObj = {
       const end = pos.caret;
       editor
         .exec(Delete, [start, end])
-        .exec(InsertNode, { type: "mention", name: selected }, start);
+        .exec(InsertNode, { type: "mention", name: selected }, start)
+        .exec(InsertText, " ");
       setPos(null);
       setIndex(0);
     };
@@ -1085,6 +1087,7 @@ export const Mention: StoryObj = {
         doc,
         schema: mentionSchema,
       })
+        .exec(plainTransferPlugin, { voidToString: (n) => `@${n.name}` })
         .exec(keymapPlugin, {
           ArrowUp: onUp,
           ArrowDown: onDown,
