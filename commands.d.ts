@@ -1,6 +1,6 @@
 import { Editor } from './editor.js';
 import { DocNode, Range } from './doc/types.js';
-import { ExtractAttrValue, InferBlockNode, InferTextNode, InferVoidNode } from './doc/types-infer.js';
+import { ExtractAttrValue, InferLeafBlockNode, InferTextNode, InferVoidNode } from './doc/types-infer.js';
 /**
  * Delete content in the selection or specified range.
  */
@@ -35,11 +35,11 @@ export declare function ToggleFormat<T extends DocNode>(editor: Editor<T>, key: 
 /**
  * Set attr to a block node at the caret or specified position.
  */
-export declare function SetBlockAttr<T extends DocNode, N extends InferBlockNode<T>, K extends string>(editor: Editor<T>, key: K, value: ExtractAttrValue<N, K>, offset?: number): void;
+export declare function SetBlockAttr<T extends DocNode, N extends InferLeafBlockNode<T>, K extends string>(editor: Editor<T>, key: K, value: ExtractAttrValue<N, K>, offset?: number): void;
 /**
  * Toggle attr of block node at the caret or specified position.
  */
-export declare function ToggleBlockAttr<T extends DocNode, N extends InferBlockNode<T>, K extends string>(editor: Editor<T>, key: K, onValue: ExtractAttrValue<N, K>, offValue: ExtractAttrValue<N, K>, offset?: number): void;
+export declare function ToggleBlockAttr<T extends DocNode, N extends InferLeafBlockNode<T>, K extends string>(editor: Editor<T>, key: K, onValue: ExtractAttrValue<N, K>, offValue: ExtractAttrValue<N, K>, offset?: number): void;
 /**
  * Set attr to a void node at the caret or specified position.
  */
