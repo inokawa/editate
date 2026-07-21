@@ -1,9 +1,16 @@
-import type { Node, TextNode } from "./types.js";
+import type { BlockNode, Node, TextNode } from "./types.js";
 
 export type InferBlockNode<T extends Node> = T extends {
   children: readonly (infer N extends Node)[];
 }
   ? T | InferBlockNode<N>
+  : never;
+export type InferLeafBlockNode<T extends Node> = T extends {
+  children: readonly (infer N extends Node)[];
+}
+  ? N extends BlockNode
+    ? InferLeafBlockNode<N>
+    : T
   : never;
 export type InferInlineNode<T extends Node> = T extends {
   children: readonly (infer N extends Node)[];
