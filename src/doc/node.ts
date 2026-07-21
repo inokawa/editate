@@ -1,5 +1,9 @@
 import { max, min } from "../utils.js";
-import type { InferInlineNode, InferVoidNode } from "./types-infer.js";
+import type {
+  InferInlineNode,
+  InferLeafBlockNode,
+  InferVoidNode,
+} from "./types-infer.js";
 import type {
   BlockNode,
   DocNode,
@@ -91,10 +95,10 @@ export const getChildAt = <T extends BlockNode>(
   return null;
 };
 
-export const getBlockAt = (
-  node: DocNode | BlockNode,
+export const getLeafBlockAt = <T extends DocNode | BlockNode>(
+  node: T,
   offset: number,
-): [node: BlockNode, offset: number, path: Path] => {
+): [node: InferLeafBlockNode<T>, offset: number, path: Path] => {
   const path: number[] = [];
   while (node) {
     const found = getChildAt(node, offset);
@@ -106,10 +110,10 @@ export const getBlockAt = (
       break;
     }
     offset = found[1];
-    node = nextNode;
+    node = nextNode as T;
     path.push(found[2]);
   }
-  return [node, offset, path];
+  return [node as InferLeafBlockNode<T>, offset, path];
 };
 
 export const getLeafAt = (
@@ -117,7 +121,7 @@ export const getLeafAt = (
   offset: number,
   isBackwardAffinity?: boolean,
 ): [node: InlineNode, offset: number, path: Path] | null => {
-  const [blockNode, blockOffset, path] = getBlockAt(node, offset);
+  const [blockNode, blockOffset, path] = getLeafBlockAt(node, offset);
   const inline = getChildAt(blockNode, blockOffset, isBackwardAffinity);
   if (inline) {
     (path as number[]).push(inline[2]);
@@ -198,7 +202,7 @@ export const offsetToPosition = (
   node: DocNode | BlockNode,
   offset: number,
 ): DomPosition => {
-  const [, blockOffset, path] = getBlockAt(node, offset);
+  const [, blockOffset, path] = getLeafBlockAt(node, offset);
   return [path, blockOffset];
 };
 
@@ -251,19 +255,19 @@ function* iterChildren<T extends Node>(
   }
 }
 
-/**
- * @internal
- */
-export function* iterNodes<T extends Node>(
+export function* iterLeafBlocks<T extends Node>(
   node: T,
   range: Range,
-): Generator<[node: Node, offset: number], void, void> {
+): Generator<[node: InferLeafBlockNode<T>, offset: number], void, void> {
+  if (isBlockNode(node) && !hasBlockChildren(node.children)) {
+    yield [node as InferLeafBlockNode<T>, 0];
+    return;
+  }
   for (const n of iterChildren(node, range)) {
-    yield n;
     const [child, offset] = n;
-    for (const r of iterChildren(child, [0, getNodeSize(child)])) {
+    for (const r of iterLeafBlocks(child, [0, getNodeSize(child)])) {
       r[1] += offset;
-      yield r;
+      yield r as [InferLeafBlockNode<T>, number];
     }
   }
 }
