@@ -6,7 +6,7 @@
 
 > **getNodeSize**(`node`): `number`
 
-Defined in: [doc/node.ts:57](https://github.com/inokawa/editate/blob/a7f675be7afb0d57e1b64b4f27cdfc3905458d01/src/doc/node.ts#L57)
+Defined in: [doc/node.ts:60](https://github.com/inokawa/editate/blob/f728245a4c1d491fa7adf0b75a08dec4c4ce63dd/src/doc/node.ts#L60)
 
 ## Parameters
 

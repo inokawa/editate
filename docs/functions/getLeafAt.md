@@ -4,15 +4,21 @@
 
 # Function: getLeafAt()
 
-> **getLeafAt**(`node`, `offset`, `isBackwardAffinity?`): \[`InlineNode`, `number`, `Path`\] \| `null`
+> **getLeafAt**\<`T`\>(`node`, `offset`, `isBackwardAffinity?`): \[[`InferInlineNode`](../type-aliases/InferInlineNode.md)\<`T`\>, `number`, `Path`\] \| `null`
 
-Defined in: [doc/node.ts:115](https://github.com/inokawa/editate/blob/a7f675be7afb0d57e1b64b4f27cdfc3905458d01/src/doc/node.ts#L115)
+Defined in: [doc/node.ts:118](https://github.com/inokawa/editate/blob/f728245a4c1d491fa7adf0b75a08dec4c4ce63dd/src/doc/node.ts#L118)
+
+## Type Parameters
+
+### T
+
+`T` *extends* `BlockNode` \| `DocNode`
 
 ## Parameters
 
 ### node
 
-`BlockNode` \| `DocNode`
+`T`
 
 ### offset
 
@@ -24,4 +30,4 @@ Defined in: [doc/node.ts:115](https://github.com/inokawa/editate/blob/a7f675be7a
 
 ## Returns
 
-\[`InlineNode`, `number`, `Path`\] \| `null`
+\[[`InferInlineNode`](../type-aliases/InferInlineNode.md)\<`T`\>, `number`, `Path`\] \| `null`

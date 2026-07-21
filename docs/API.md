@@ -7,9 +7,10 @@
 ## Functions
 
 - [getChildAt](functions/getChildAt.md)
-- [getBlockAt](functions/getBlockAt.md)
+- [getLeafBlockAt](functions/getLeafBlockAt.md)
 - [getLeafAt](functions/getLeafAt.md)
 - [getNodeSize](functions/getNodeSize.md)
+- [iterLeafBlocks](functions/iterLeafBlocks.md)
 - [iterLeaves](functions/iterLeaves.md)
 - [sliceText](functions/sliceText.md)
 - [Delete](functions/Delete.md)
@@ -48,6 +49,7 @@
 
 - [Operation](type-aliases/Operation.md)
 - [InferBlockNode](type-aliases/InferBlockNode.md)
+- [InferLeafBlockNode](type-aliases/InferLeafBlockNode.md)
 - [InferInlineNode](type-aliases/InferInlineNode.md)
 - [InferTextNode](type-aliases/InferTextNode.md)
 - [InferVoidNode](type-aliases/InferVoidNode.md)

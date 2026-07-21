@@ -6,7 +6,7 @@
 
 > **SetBlockAttr**\<`T`, `N`, `K`\>(`editor`, `key`, `value`, `offset?`): `void`
 
-Defined in: [commands.ts:134](https://github.com/inokawa/editate/blob/a7f675be7afb0d57e1b64b4f27cdfc3905458d01/src/commands.ts#L134)
+Defined in: [commands.ts:133](https://github.com/inokawa/editate/blob/f728245a4c1d491fa7adf0b75a08dec4c4ce63dd/src/commands.ts#L133)
 
 Set attr to a block node at the caret or specified position.
 
@@ -18,7 +18,7 @@ Set attr to a block node at the caret or specified position.
 
 ### N
 
-`N` *extends* `DocNode`
+`N` *extends* `DocNode` \| `object` & `DocNode`
 
 ### K
 
