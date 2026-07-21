@@ -1,6 +1,7 @@
 import { expectTypeOf, it } from "vitest";
 import type {
   InferBlockNode,
+  InferLeafBlockNode,
   InferInlineNode,
   InferTextNode,
   InferVoidNode,
@@ -13,7 +14,13 @@ it("text", () => {
   expectTypeOf({ children: [{ children: [{ text: "abc" }] }] }).toExtend<
     InferBlockNode<Doc>
   >();
+  expectTypeOf({ children: [{ children: [{ text: "abc" }] }] }).not.toExtend<
+    InferLeafBlockNode<Doc>
+  >();
   expectTypeOf({ children: [{ text: "abc" }] }).toExtend<InferBlockNode<Doc>>();
+  expectTypeOf({ children: [{ text: "abc" }] }).toExtend<
+    InferLeafBlockNode<Doc>
+  >();
   expectTypeOf({ text: "abc" }).toExtend<InferInlineNode<Doc>>();
   expectTypeOf({ text: "abc" }).toExtend<InferTextNode<Doc>>();
   expectTypeOf({ text: "abc" }).not.toExtend<InferVoidNode<Doc>>();
@@ -29,7 +36,13 @@ it("text and void", () => {
   expectTypeOf({ children: [{ children: [{ text: "abc" }] }] }).toExtend<
     InferBlockNode<Doc>
   >();
+  expectTypeOf({ children: [{ children: [{ text: "abc" }] }] }).not.toExtend<
+    InferLeafBlockNode<Doc>
+  >();
   expectTypeOf({ children: [{ text: "abc" }] }).toExtend<InferBlockNode<Doc>>();
+  expectTypeOf({ children: [{ text: "abc" }] }).toExtend<
+    InferLeafBlockNode<Doc>
+  >();
   expectTypeOf({ text: "abc" }).toExtend<InferInlineNode<Doc>>();
   expectTypeOf({ text: "abc" }).toExtend<InferTextNode<Doc>>();
   expectTypeOf({ text: "abc" }).not.toExtend<InferVoidNode<Doc>>();

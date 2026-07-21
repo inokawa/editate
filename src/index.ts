@@ -9,6 +9,7 @@ export {
 export type { Operation } from "./doc/operation.js";
 export type {
   InferBlockNode,
+  InferLeafBlockNode,
   InferInlineNode,
   InferTextNode,
   InferVoidNode,

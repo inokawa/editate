@@ -4,7 +4,7 @@ import type { Editor } from "./editor.js";
 import type { DocNode, Range } from "./doc/types.js";
 import type {
   ExtractAttrValue,
-  InferBlockNode,
+  InferLeafBlockNode,
   InferTextNode,
   InferVoidNode,
 } from "./doc/types-infer.js";
@@ -132,7 +132,7 @@ export function ToggleFormat<T extends DocNode>(
  */
 export function SetBlockAttr<
   T extends DocNode,
-  N extends InferBlockNode<T>,
+  N extends InferLeafBlockNode<T>,
   K extends string,
 >(
   editor: Editor<T>,
@@ -149,7 +149,7 @@ export function SetBlockAttr<
  */
 export function ToggleBlockAttr<
   T extends DocNode,
-  N extends InferBlockNode<T>,
+  N extends InferLeafBlockNode<T>,
   K extends string,
 >(
   editor: Editor<T>,
