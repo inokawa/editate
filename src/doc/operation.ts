@@ -181,17 +181,6 @@ const getNodeAtPath = (
   return node;
 };
 
-const replace = <T extends DocNode | BlockNode>(
-  node: T,
-  start: number,
-  end: number,
-  lines: Fragment,
-): T => {
-  const sliced = node.children.slice();
-  sliced.splice(start, end - start + 1, ...lines);
-  return { ...node, children: sliced };
-};
-
 const replaceNodeAt = <T extends DocNode | BlockNode>(
   node: T,
   path: Path,
@@ -200,9 +189,14 @@ const replaceNodeAt = <T extends DocNode | BlockNode>(
 ): T => {
   if (i < path.length) {
     const index = path[i]!;
-    return replace(node, index, index, [
-      replaceNodeAt(node.children[index]! as T, path, afterNode, i + 1),
-    ]);
+    const children = node.children;
+    const sliced = children.slice();
+    sliced.splice(
+      index,
+      1,
+      replaceNodeAt(children[index]! as T, path, afterNode, i + 1),
+    );
+    return { ...node, children: sliced };
   }
   // TODO improve type
   return afterNode as T;
