@@ -747,20 +747,27 @@ export const createEditor = <
         isDragging = false;
       };
 
-      document.addEventListener("selectionchange", onSelectionChange);
-      element.addEventListener("keydown", onKeyDown);
-      element.addEventListener("input", onInput);
-      element.addEventListener("beforeinput", onBeforeInput);
-      element.addEventListener("compositionstart", onCompositionStart);
-      element.addEventListener("compositionend", onCompositionEnd);
-      element.addEventListener("focus", onFocus);
-      element.addEventListener("blur", onBlur);
-      element.addEventListener("copy", onCopy);
-      element.addEventListener("cut", onCut);
-      element.addEventListener("paste", onPaste);
-      element.addEventListener("drop", onDrop);
-      element.addEventListener("dragstart", onDragStart);
-      element.addEventListener("dragend", onDragEnd);
+      const check = <T extends Event>(cb: (e: T) => void) => {
+        return (e: T) => {
+          if (e.target !== element) return;
+          cb(e);
+        };
+      };
+
+      document.addEventListener("selectionchange", check(onSelectionChange));
+      element.addEventListener("keydown", check(onKeyDown));
+      element.addEventListener("input", check(onInput));
+      element.addEventListener("beforeinput", check(onBeforeInput));
+      element.addEventListener("compositionstart", check(onCompositionStart));
+      element.addEventListener("compositionend", check(onCompositionEnd));
+      element.addEventListener("focus", check(onFocus));
+      element.addEventListener("blur", check(onBlur));
+      element.addEventListener("copy", check(onCopy));
+      element.addEventListener("cut", check(onCut));
+      element.addEventListener("paste", check(onPaste));
+      element.addEventListener("drop", check(onDrop));
+      element.addEventListener("dragstart", check(onDragStart));
+      element.addEventListener("dragend", check(onDragEnd));
 
       const unmountHooks: (() => void)[] = [];
       getHook("mount").forEach((mount) => {
