@@ -133,49 +133,49 @@ export const getLeafAt = <T extends DocNode | BlockNode>(
  * @internal
  */
 export const splitBlock = <T extends DocNode | BlockNode>(
-  block: T,
+  node: T,
   pos: number,
 ): [T, T] => {
-  const children = block.children;
-  const target = getChildAt(block, pos);
+  const children = node.children;
+  const target = getChildAt(node, pos);
   if (target) {
-    const [node, offsetAtNode, i] = target;
-    if (isBlockNode(node)) {
-      const [childBefore, childAfter] = splitBlock(node, offsetAtNode);
+    const [child, offsetAtChild, i] = target;
+    if (isBlockNode(child)) {
+      const [childBefore, childAfter] = splitBlock(child, offsetAtChild);
       const before = children.slice(0, i);
       const after = children.slice(i + 1);
       before.push(childBefore);
       after.unshift(childAfter);
       return [
-        { ...block, children: before },
-        { ...block, children: after },
+        { ...node, children: before },
+        { ...node, children: after },
       ];
     } else {
       const before = children.slice(0, i);
       const after = children.slice(i + 1);
-      if (isTextNode(node)) {
-        const beforeText = node.text.slice(0, offsetAtNode);
-        const afterText = node.text.slice(offsetAtNode);
+      if (isTextNode(child)) {
+        const beforeText = child.text.slice(0, offsetAtChild);
+        const afterText = child.text.slice(offsetAtChild);
         if (beforeText || !before.length) {
-          before.push({ ...node, text: beforeText });
+          before.push({ ...child, text: beforeText });
         }
         if (afterText || !after.length) {
-          after.unshift({ ...node, text: afterText });
+          after.unshift({ ...child, text: afterText });
         }
       } else {
         // node size must be 1
-        after.unshift(node);
+        after.unshift(child);
       }
       return [
-        { ...block, children: before },
-        { ...block, children: after },
+        { ...node, children: before },
+        { ...node, children: after },
       ];
     }
   }
   const last = children[children.length - 1]!;
   return [
-    block,
-    { ...block, children: isTextNode(last) ? [{ ...last, text: "" }] : [] },
+    node,
+    { ...node, children: isTextNode(last) ? [{ ...last, text: "" }] : [] },
   ];
 };
 
