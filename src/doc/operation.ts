@@ -181,9 +181,7 @@ const getNodeAtPath = (
   return node;
 };
 
-const replace = <
-  T extends { readonly children: readonly BlockNode[] | readonly InlineNode[] },
->(
+const replace = <T extends DocNode | BlockNode>(
   node: T,
   start: number,
   end: number,
@@ -194,9 +192,7 @@ const replace = <
   return { ...node, children: sliced };
 };
 
-const replaceNodeAt = <
-  T extends { readonly children: readonly BlockNode[] | readonly InlineNode[] },
->(
+const replaceNodeAt = <T extends DocNode | BlockNode>(
   node: T,
   path: Path,
   afterNode: Node,
