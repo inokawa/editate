@@ -1,10 +1,9 @@
-import { ReplaceDoc } from "../commands.js";
-import { rebase, type Operation } from "../doc/operation.js";
-import type { DocNode, Selection } from "../doc/types.js";
+import { invertOperation, rebase, type Operation } from "../doc/operation.js";
+import type { Selection } from "../doc/types.js";
 import type { Editor } from "../editor.js";
 import { keymap } from "../keyboard.js";
 
-const MAX_HISTORY_LENGTH = 500;
+const MAX_HISTORY_LENGTH = 100;
 const BATCH_HISTORY_TIME = 500;
 
 interface HistoryContext {
@@ -17,15 +16,13 @@ interface HistoryContext {
 /**
  * @internal
  */
-export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
-  type History = [T, Selection, Operation[]];
+export function historyPlugin(editor: Editor) {
+  type History = [Selection, ops: Operation[], invertedOps: Operation[]];
   let index = 0;
   let prevTime = 0;
   let undoOrRedoing = false;
   const now = Date.now;
-  const histories: History[] = [[editor.doc, editor.selection, []]];
-
-  const get = () => histories[index]!;
+  const histories: History[] = [[editor.selection, [], []]];
 
   const isUndoable = (): boolean => {
     return index > 0;
@@ -37,27 +34,30 @@ export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
 
   const undo = () => {
     if (isUndoable()) {
-      const sel = get()[1];
+      const [selection, , invertedOps] = histories[index]!;
       index--;
       const currentDoc = editor.doc;
       undoOrRedoing = true;
-      editor.exec(ReplaceDoc, get()[0].children);
+      editor.apply(invertedOps.slice().reverse());
       undoOrRedoing = false;
       if (currentDoc !== editor.doc) {
-        editor.selection = sel;
+        editor.selection = selection;
       }
     }
   };
   const redo = () => {
     if (isRedoable()) {
       index++;
-      const [doc, sel, ops] = get();
+      const [selection, ops] = histories[index]!;
       const currentDoc = editor.doc;
       undoOrRedoing = true;
-      editor.exec(ReplaceDoc, doc.children);
+      editor.apply(ops);
       undoOrRedoing = false;
       if (currentDoc !== editor.doc) {
-        editor.selection = [rebase(sel[0], ops), rebase(sel[1], ops)];
+        editor.selection = [
+          rebase(selection[0], ops),
+          rebase(selection[1], ops),
+        ];
       }
     }
   };
@@ -67,13 +67,12 @@ export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
     const doc = editor.doc;
     const selection = editor.selection;
     next(op);
-    const newDoc = editor.doc;
 
-    if (doc !== newDoc) {
+    if (doc !== editor.doc) {
       const time = now();
       if (index === 0 || time - prevTime >= BATCH_HISTORY_TIME) {
         index++;
-        const history: History = [doc, selection, []];
+        const history: History = [selection, [], []];
         if (index >= histories.length) {
           histories.push(history);
         } else {
@@ -81,8 +80,8 @@ export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
         }
       }
       prevTime = time;
-      histories[index]![0] = newDoc;
-      histories[index]![2].push(op);
+      histories[index]![1].push(op);
+      histories[index]![2].push(...invertOperation(op, doc));
       if (histories.length > index + 1) {
         histories.length = index + 1;
       }
