@@ -5,7 +5,6 @@ import {
   initEditateHelpers,
   insertAt,
   insertLineBreakAt,
-  sumLines,
 } from "./editate";
 import { getEditable, type } from "./utils";
 
