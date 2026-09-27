@@ -33,6 +33,8 @@ import {
 import {
   createParser,
   defaultIsBlockNode,
+  getDOMSelection,
+  getSelectionRangeInEditor,
   takeSelectionSnapshot,
   TOKEN_BLOCK,
   TOKEN_SOFT_BREAK,
@@ -41,10 +43,10 @@ import {
 } from "./dom/index.js";
 import type { TokenType } from "./dom/parser.js";
 import type { DomPosition } from "./doc/types.js";
+import type { KeyString } from "./keyboard.js";
 
 declare module "vitest/browser" {
   interface BrowserCommands {
-    press: (key: string) => Promise<void>;
     mouseDrag: (
       from: [x: number, y: number],
       to: [x: number, y: number],
@@ -52,20 +54,42 @@ declare module "vitest/browser" {
   }
 }
 
-// selectionchange is dispatched in a queued task
-const tick = () => new Promise((resolve) => setTimeout(resolve));
-
-// editor events are published in a microtask
 const microtask = () => Promise.resolve();
 
-const press = async (key: string) => {
-  await commands.press(key);
-  await tick();
+// Every action below ends with a task boundary, so the browser settles it (selectionchange etc.) before the next action, like real interaction does
+const settle = () => new Promise((resolve) => setTimeout(resolve));
+
+// Sends keys through user-event, one key per call so that each key settles like real typing
+const send = async (keys: string) => {
+  await userEvent.keyboard(keys);
+  await settle();
+};
+
+// Letters are sent as the lowercase key, so they are typed uppercase only with Shift like a real keyboard
+const press = (key: KeyString) => {
+  const names = key.split("+");
+  const modifiers = names
+    .slice(0, -1)
+    .map((m) => (m === "Mod" ? "ControlOrMeta" : m === "Ctrl" ? "Control" : m));
+  const name = names[names.length - 1]!;
+  return send(
+    modifiers.map((m) => `{${m}>}`).join("") +
+      (name.length > 1
+        ? `{${name}}`
+        : // "[" and "{" open a key descriptor in user-event syntax
+          name === "[" || name === "{"
+          ? name + name
+          : name.toLowerCase()) +
+      modifiers
+        .toReversed()
+        .map((m) => `{/${m}}`)
+        .join(""),
+  );
 };
 
 const type = async (text: string) => {
   for (const t of text.split("")) {
-    await press(t);
+    await send(t);
   }
 };
 
@@ -75,10 +99,35 @@ const loop = async (count: number, fn: () => Promise<void>) => {
   }
 };
 
-const grapheme = (str: string): string[] => {
-  return [
-    ...new Intl.Segmenter("en", { granularity: "grapheme" }).segment(str),
-  ].map((s) => s.segment);
+const click = async (name: string) => {
+  await userEvent.click(page.getByRole("button", { name }));
+  await settle();
+};
+
+const dblClick = async (
+  element: HTMLElement,
+  position: { x: number; y: number },
+) => {
+  await userEvent.dblClick(element, { position });
+  await settle();
+};
+
+// Composition through CDP, so chromium only
+const compose = async (
+  text: string,
+  [selectionStart, selectionEnd]: [number, number] = [0, 0],
+) => {
+  await cdp().send("Input.imeSetComposition", {
+    text,
+    selectionStart,
+    selectionEnd,
+  });
+  await settle();
+};
+
+const commit = async (text: string) => {
+  await cdp().send("Input.insertText", { text });
+  await settle();
 };
 
 const render = (element: ReactElement): HTMLElement => {
@@ -206,7 +255,7 @@ const getSelection = (
     ),
   );
 
-  const tranformPos = ([path, offset]: DomPosition): number => {
+  const transformPos = ([path, offset]: DomPosition): number => {
     const p = path.length ? path[0]! : 0;
     for (let i = 0; i < p; i++) {
       const length = lines[i]!.length;
@@ -217,7 +266,36 @@ const getSelection = (
     }
     return offset;
   };
-  return [tranformPos(selection[0]), tranformPos(selection[1])];
+  return [transformPos(selection[0]), transformPos(selection[1])];
+};
+
+const ANCHOR = "^";
+const FOCUS = "|";
+
+// The rows of getText joined with "\n", with the selection of getSelection marked like assert_selection of Chromium: ANCHOR at the anchor and FOCUS at the focus, or only FOCUS for a caret
+// Nothing is marked when the selection is outside the editable
+// https://chromium.googlesource.com/chromium/src/+/main/third_party/blink/web_tests/editing/assert_selection.js
+const getState = (
+  element: HTMLElement,
+  config: { blockTag?: string } = {},
+): string => {
+  const text = getText(element, config).join("\n");
+  if (text.includes(ANCHOR) || text.includes(FOCUS)) {
+    throw new Error(`text contains a marker: ${text}`);
+  }
+  if (!getSelectionRangeInEditor(getDOMSelection(element), element)) {
+    return text;
+  }
+  const [anchor, focus] = getSelection(element, config);
+  const mark = (t: string, offset: number, marker: string) =>
+    t.slice(0, offset) + marker + t.slice(offset);
+  if (anchor === focus) {
+    return mark(text, focus, FOCUS);
+  }
+  // mark the later offset first so the earlier one stays valid
+  return anchor < focus
+    ? mark(mark(text, focus, FOCUS), anchor, ANCHOR)
+    : mark(mark(text, anchor, ANCHOR), focus, FOCUS);
 };
 
 const getSelectedRect = (element: HTMLElement): DOMRect => {
@@ -225,64 +303,15 @@ const getSelectedRect = (element: HTMLElement): DOMRect => {
   return selection.getRangeAt(0)!.getBoundingClientRect();
 };
 
-const moveSelectionToOrigin = (element: HTMLElement) => {
+const moveSelectionToOrigin = async (element: HTMLElement) => {
   const selection = element.ownerDocument.getSelection()!;
   selection.setBaseAndExtent(element, 0, element, 0);
-};
-
-const deleteAt = (
-  value: readonly string[],
-  length: number,
-  [line, offset]: readonly [line: number, offset: number],
-): string[] => {
-  return value.map((r, i) =>
-    i === line ? r.slice(0, offset) + r.slice(offset + length) : r,
-  );
-};
-
-const insertAt = (
-  value: readonly string[],
-  text: string,
-  [line, offset]: readonly [line: number, offset: number],
-): string[] => {
-  return value.map((r, i) =>
-    i === line ? r.slice(0, offset) + text + r.slice(offset) : r,
-  );
-};
-
-const replaceAt = (
-  value: readonly string[],
-  insertedText: string,
-  deleteLength: number,
-  pos: readonly [line: number, offset: number],
-): string[] => {
-  return insertAt(deleteAt(value, deleteLength, pos), insertedText, pos);
-};
-
-const insertLineBreakAt = (
-  value: readonly string[],
-  [line, offset]: readonly [line: number, offset: number],
-): string[] => {
-  return value.flatMap((r, i) => {
-    if (i === line) {
-      return [r.slice(0, offset), r.slice(offset)];
-    }
-    return r;
-  });
-};
-
-const sumLines = (value: readonly string[], line: number): number => {
-  let offset = 0;
-  for (let i = 0; i <= line; i++) {
-    offset += value[i]!.length;
-    if (i !== value.length - 1) {
-      offset++;
-    }
-  }
-  return offset;
+  await settle();
 };
 
 const browser = server.browser;
+
+type PlainEditor = ReturnType<typeof createPlainEditor>;
 
 const PlainEditor = ({
   initialText,
@@ -339,21 +368,51 @@ const SpanAsBlockEditor = ({ initialText }: { initialText: string }) => {
   );
 };
 
-// Rows are split into spans around a search word, which is edited with an input outside the editable
+// With `async`, the marks are computed in a later task
 const HighlightEditor = ({
   initialText,
   initialSearch,
+  async,
+  ref: editorRef,
 }: {
   initialText: string;
   initialSearch: string;
+  async?: boolean;
+  ref?: Ref<PlainEditor>;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [text, setText] = useState(initialText);
   const [searchText, setSearchText] = useState(initialSearch);
+  const editor = useMemo(
+    () => createPlainEditor({ text, onChange: setText }),
+    [],
+  );
+  useImperativeHandle(editorRef, () => editor, []);
   useEffect(() => {
-    return createPlainEditor({ text, onChange: setText }).input(ref.current!);
+    return editor.input(ref.current!);
   }, []);
-  const reg = searchText ? new RegExp(`(${searchText})`) : null;
+
+  const [markedText, setMarkedText] = useState(async ? "" : text);
+  useEffect(() => {
+    if (!async) return;
+    const timer = setTimeout(() => setMarkedText(text));
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [async, text]);
+  const marks = (async ? markedText : text)
+    .split("\n")
+    .map((l) =>
+      searchText
+        ? [...l.matchAll(new RegExp(searchText, "g"))].map(
+            (m): [start: number, end: number] => [
+              m.index,
+              m.index + m[0].length,
+            ],
+          )
+        : [],
+    );
+
   return (
     <div>
       <label>
@@ -364,73 +423,32 @@ const HighlightEditor = ({
         />
       </label>
       <div ref={ref}>
-        {text.split("\n").map((r, i) => (
-          <div key={i}>
-            {r ? (
-              (reg ? r.split(reg) : [r]).map((t, j) =>
-                t === searchText ? (
-                  <mark key={j}>{t}</mark>
-                ) : (
-                  <span key={j}>{t}</span>
-                ),
-              )
-            ) : (
-              <br />
-            )}
-          </div>
-        ))}
+        {text.split("\n").map((l, i) => {
+          if (!l)
+            return (
+              <div key={i}>
+                <br />
+              </div>
+            );
+          const segments: ReactElement[] = [];
+          let prev = 0;
+          for (const [start, end] of marks[i] ?? []) {
+            segments.push(
+              <span key={segments.length}>{l.slice(prev, start)}</span>,
+            );
+            segments.push(
+              <mark key={segments.length}>{l.slice(start, end)}</mark>,
+            );
+            prev = end;
+          }
+          segments.push(<span key={segments.length}>{l.slice(prev)}</span>);
+          return <div key={i}>{segments}</div>;
+        })}
       </div>
     </div>
   );
 };
 
-// Marks are computed from the text asynchronously like a linter, so they are rendered in a later task than the edit
-const AsyncMarkEditor = ({ initialText }: { initialText: string }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [text, setText] = useState(initialText);
-  useEffect(() => {
-    return createPlainEditor({ text, onChange: setText }).input(ref.current!);
-  }, []);
-
-  const [marks, setMarks] = useState<[line: number, offset: number][]>([]);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setMarks(
-        text
-          .split("\n")
-          .flatMap((l, line) =>
-            [...l.matchAll(/o/g)].map((m): [number, number] => [line, m.index]),
-          ),
-      );
-    });
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [text]);
-
-  return (
-    <div ref={ref}>
-      {text.split("\n").map((l, i) => {
-        const texts: (ReactElement | string)[] = [];
-        let prevEnd = 0;
-        for (const [line, offset] of marks) {
-          if (line !== i) continue;
-          texts.push(l.slice(prevEnd, offset));
-          texts.push(
-            <span key={offset} data-mark>
-              {l.slice(offset, offset + 1)}
-            </span>,
-          );
-          prevEnd = offset + 1;
-        }
-        texts.push(l.slice(prevEnd));
-        return <div key={i}>{l ? texts : <br />}</div>;
-      })}
-    </div>
-  );
-};
-
-// Rows are split into spans like a syntax highlighter, including empty ones at row edges
 const TokenizedEditor = ({ initialText }: { initialText: string }) => {
   const ref = useRef<HTMLPreElement>(null);
   const [text, setText] = useState(initialText);
@@ -452,7 +470,6 @@ const TokenizedEditor = ({ initialText }: { initialText: string }) => {
   );
 };
 
-// Commands are executed with clicks, which move focus out of the editable
 const CommandEditor = ({ initialText }: { initialText: string }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [text, setText] = useState(initialText);
@@ -503,8 +520,6 @@ const CommandEditor = ({ initialText }: { initialText: string }) => {
     </div>
   );
 };
-
-type PlainEditor = ReturnType<typeof createPlainEditor>;
 
 const ReadonlyEditor = ({
   initialText,
@@ -569,7 +584,6 @@ const richSchema = v.strictObject({
 });
 type RichDoc = v.InferOutput<typeof richSchema>;
 
-// Commands are executed with clicks, which move focus out of the editable
 const RichTextEditor = ({ initialDoc }: { initialDoc: RichDoc }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [doc, setDoc] = useState(initialDoc);
@@ -641,7 +655,7 @@ const getQuery = (doc: TagDoc, caret: number): string => {
   return leaf && "text" in leaf[0] ? leaf[0].text.slice(0, leaf[1]) : "";
 };
 
-// Arrow keys and Enter are taken over by the suggestion while it is open
+// The keymap handlers return false while the suggestion is closed, so the keys fall through
 const ComboboxEditor = ({ initialDoc }: { initialDoc: TagDoc }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [doc, setDoc] = useState(initialDoc);
@@ -864,19 +878,15 @@ describe("common", () => {
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
-        expect(getText(editable)).toEqual(initialValue);
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
-
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
         // Input
-        const word = "test";
-        await type(word);
-        expect(getText(editable)).toEqual(insertAt(initialValue, word, [0, 0]));
-        const textLength = word.length;
-        expect(getSelection(editable)).toEqual([textLength, textLength]);
+        await type("test");
+        expect(getState(editable)).toBe(
+          "test|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
       });
 
       it("on 1st row", async () => {
@@ -884,25 +894,19 @@ describe("common", () => {
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Move caret
         await press("ArrowRight");
-        expect(getSelection(editable)).toEqual([1, 1]);
-
+        expect(getState(editable)).toBe("H|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
         // Input
-        const word = "test";
-        await type(word);
-        expect(getText(editable)).toEqual(insertAt(initialValue, word, [0, 1]));
-        const textLength = word.length;
-        expect(getSelection(editable)).toEqual([
-          1 + textLength,
-          1 + textLength,
-        ]);
+        await type("test");
+        expect(getState(editable)).toBe(
+          "Htest|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
       });
 
       it("on 2nd row", async () => {
@@ -910,29 +914,20 @@ describe("common", () => {
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Move caret
         await press("ArrowRight");
         await press("ArrowDown");
-        expect(getSelection(editable)).toEqual([
-          sumLines(initialValue, 0) + 1,
-          sumLines(initialValue, 0) + 1,
-        ]);
-
+        expect(getState(editable)).toBe("Hello world.\nこ|んにちは。\n👍❤️🧑‍🧑‍🧒");
         // Input
-        const word = "test";
-        await type(word);
-        expect(getText(editable)).toEqual(insertAt(initialValue, word, [1, 1]));
-        const textLength = word.length;
-        expect(getSelection(editable)).toEqual([
-          sumLines(initialValue, 0) + 1 + textLength,
-          sumLines(initialValue, 0) + 1 + textLength,
-        ]);
+        await type("test");
+        expect(getState(editable)).toBe(
+          "Hello world.\nこtest|んにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
       });
 
       it.skipIf(browser !== "chromium")("with IME", async () => {
@@ -940,55 +935,35 @@ describe("common", () => {
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
-
-        const client = cdp();
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // insert with IME
         for (const t of ["s", "す", "すs", "すし", "寿司"]) {
-          await client.send("Input.imeSetComposition", {
-            selectionStart: 0,
-            selectionEnd: 0,
-            text: t,
-          });
+          await compose(t);
         }
-        await client.send("Input.insertText", { text: "寿司" });
-        await tick();
-        const value2 = insertAt(initialValue, "寿司", [0, 0]);
-        const selection2 = ["寿司".length, "寿司".length];
-        expect(getText(editable)).toEqual(value2);
-        expect(getSelection(editable)).toEqual(selection2);
+        await commit("寿司");
+        expect(getState(editable)).toBe(
+          "寿司|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
 
         // cancel IME
-        await client.send("Input.imeSetComposition", {
-          selectionStart: 0,
-          selectionEnd: 0,
-          text: "あ",
-        });
-        await client.send("Input.imeSetComposition", {
-          selectionStart: 0,
-          selectionEnd: 0,
-          text: "",
-        });
-        await tick();
-        expect(getText(editable)).toEqual(value2);
+        await compose("あ");
+        await compose("");
+        expect(getState(editable)).toBe(
+          "寿司|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
 
         // compose already inserted texts
         for (const t of ["", "鮨", "🍣"]) {
-          await client.send("Input.imeSetComposition", {
-            selectionStart: -2,
-            selectionEnd: 0,
-            text: t,
-          });
+          await compose(t, [-2, 0]);
         }
-        await client.send("Input.insertText", { text: "🍣" });
-        await tick();
-        expect(getText(editable)).toEqual(insertAt(initialValue, "🍣", [0, 0]));
-        expect(getSelection(editable)).toEqual(["🍣".length, "🍣".length]);
+        await commit("🍣");
+        expect(getState(editable)).toBe(
+          "🍣|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
       });
     });
 
@@ -998,19 +973,13 @@ describe("common", () => {
         const editable = await getEditable(
           render(<SinglelinePlainEditor initialText={text} />),
         );
-        const initialValue = [text];
-        expect(getText(editable)).toEqual(initialValue);
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
-
+        expect(getState(editable)).toBe("|Hello world.");
         // Input
-        const word = "test";
-        await type(word);
-        expect(getText(editable)).toEqual(insertAt(initialValue, word, [0, 0]));
-        const textLength = word.length;
-        expect(getSelection(editable)).toEqual([textLength, textLength]);
+        await type("test");
+        expect(getState(editable)).toBe("test|Hello world.");
       });
 
       it("on 1st row", async () => {
@@ -1018,25 +987,17 @@ describe("common", () => {
         const editable = await getEditable(
           render(<SinglelinePlainEditor initialText={text} />),
         );
-        const initialValue = [text];
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.");
 
         // Move caret
         await press("ArrowRight");
-        expect(getSelection(editable)).toEqual([1, 1]);
-
+        expect(getState(editable)).toBe("H|ello world.");
         // Input
-        const word = "test";
-        await type(word);
-        expect(getText(editable)).toEqual(insertAt(initialValue, word, [0, 1]));
-        const textLength = word.length;
-        expect(getSelection(editable)).toEqual([
-          1 + textLength,
-          1 + textLength,
-        ]);
+        await type("test");
+        expect(getState(editable)).toBe("Htest|ello world.");
       });
 
       it.skipIf(browser !== "chromium")("with IME", async () => {
@@ -1044,55 +1005,29 @@ describe("common", () => {
         const editable = await getEditable(
           render(<SinglelinePlainEditor initialText={text} />),
         );
-        const initialValue = [text];
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
-
-        const client = cdp();
+        expect(getState(editable)).toBe("|Hello world.");
 
         // insert with IME
         for (const t of ["s", "す", "すs", "すし", "寿司"]) {
-          await client.send("Input.imeSetComposition", {
-            selectionStart: 0,
-            selectionEnd: 0,
-            text: t,
-          });
+          await compose(t);
         }
-        await client.send("Input.insertText", { text: "寿司" });
-        await tick();
-        const value2 = insertAt(initialValue, "寿司", [0, 0]);
-        const selection2 = ["寿司".length, "寿司".length];
-        expect(getText(editable)).toEqual(value2);
-        expect(getSelection(editable)).toEqual(selection2);
+        await commit("寿司");
+        expect(getState(editable)).toBe("寿司|Hello world.");
 
         // cancel IME
-        await client.send("Input.imeSetComposition", {
-          selectionStart: 0,
-          selectionEnd: 0,
-          text: "あ",
-        });
-        await client.send("Input.imeSetComposition", {
-          selectionStart: 0,
-          selectionEnd: 0,
-          text: "",
-        });
-        await tick();
-        expect(getText(editable)).toEqual(value2);
+        await compose("あ");
+        await compose("");
+        expect(getState(editable)).toBe("寿司|Hello world.");
 
         // compose already inserted texts
         for (const t of ["", "鮨", "🍣"]) {
-          await client.send("Input.imeSetComposition", {
-            selectionStart: -2,
-            selectionEnd: 0,
-            text: t,
-          });
+          await compose(t, [-2, 0]);
         }
-        await client.send("Input.insertText", { text: "🍣" });
-        await tick();
-        expect(getText(editable)).toEqual(insertAt(initialValue, "🍣", [0, 0]));
-        expect(getSelection(editable)).toEqual(["🍣".length, "🍣".length]);
+        await commit("🍣");
+        expect(getState(editable)).toBe("🍣|Hello world.");
       });
     });
 
@@ -1102,24 +1037,17 @@ describe("common", () => {
         const editable = await getEditable(
           render(<SpanAsBlockEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
-        expect(getText(editable, { blockTag: "span" })).toEqual(initialValue);
 
         editable.focus();
 
-        expect(getSelection(editable, { blockTag: "span" })).toEqual([0, 0]);
-
-        // Input
-        const word = "test";
-        await type(word);
-        expect(getText(editable, { blockTag: "span" })).toEqual(
-          insertAt(initialValue, word, [0, 0]),
+        expect(getState(editable, { blockTag: "span" })).toBe(
+          "|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
         );
-        const textLength = word.length;
-        expect(getSelection(editable, { blockTag: "span" })).toEqual([
-          textLength,
-          textLength,
-        ]);
+        // Input
+        await type("test");
+        expect(getState(editable, { blockTag: "span" })).toBe(
+          "test|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
       });
 
       it("on 1st row", async () => {
@@ -1127,27 +1055,23 @@ describe("common", () => {
         const editable = await getEditable(
           render(<SpanAsBlockEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable, { blockTag: "span" })).toEqual([0, 0]);
+        expect(getState(editable, { blockTag: "span" })).toBe(
+          "|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
 
         // Move caret
         await press("ArrowRight");
-        expect(getSelection(editable, { blockTag: "span" })).toEqual([1, 1]);
-
-        // Input
-        const word = "test";
-        await type(word);
-        expect(getText(editable, { blockTag: "span" })).toEqual(
-          insertAt(initialValue, word, [0, 1]),
+        expect(getState(editable, { blockTag: "span" })).toBe(
+          "H|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
         );
-        const textLength = word.length;
-        expect(getSelection(editable, { blockTag: "span" })).toEqual([
-          1 + textLength,
-          1 + textLength,
-        ]);
+        // Input
+        await type("test");
+        expect(getState(editable, { blockTag: "span" })).toBe(
+          "Htest|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
       });
 
       it("on 2nd row", async () => {
@@ -1155,31 +1079,24 @@ describe("common", () => {
         const editable = await getEditable(
           render(<SpanAsBlockEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable, { blockTag: "span" })).toEqual([0, 0]);
+        expect(getState(editable, { blockTag: "span" })).toBe(
+          "|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
 
         // Move caret
         await press("ArrowRight");
         await press("ArrowDown");
-        expect(getSelection(editable, { blockTag: "span" })).toEqual([
-          sumLines(initialValue, 0) + 1,
-          sumLines(initialValue, 0) + 1,
-        ]);
-
-        // Input
-        const word = "test";
-        await type(word);
-        expect(getText(editable, { blockTag: "span" })).toEqual(
-          insertAt(initialValue, word, [1, 1]),
+        expect(getState(editable, { blockTag: "span" })).toBe(
+          "Hello world.\nこ|んにちは。\n👍❤️🧑‍🧑‍🧒",
         );
-        const textLength = word.length;
-        expect(getSelection(editable, { blockTag: "span" })).toEqual([
-          sumLines(initialValue, 0) + 1 + textLength,
-          sumLines(initialValue, 0) + 1 + textLength,
-        ]);
+        // Input
+        await type("test");
+        expect(getState(editable, { blockTag: "span" })).toBe(
+          "Hello world.\nこtest|んにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
       });
     });
   });
@@ -1190,28 +1107,20 @@ describe("common", () => {
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // Move caret
       await press("ArrowRight");
-      expect(getSelection(editable)).toEqual([1, 1]);
+      expect(getState(editable)).toBe("H|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       // Expand selection
-      const selLength = 3;
-      await loop(selLength, () => press("Shift+ArrowRight"));
-      expect(getSelection(editable)).toEqual([1, 1 + selLength]);
-
+      await loop(3, () => press("Shift+ArrowRight"));
+      expect(getState(editable)).toBe("H^ell|o world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       // Input
-      const char = "a";
-      const charLength = char.length;
-      await type(char);
-      expect(getText(editable)).toEqual(
-        replaceAt(initialValue, char, selLength, [0, 1]),
-      );
-      expect(getSelection(editable)).toEqual([1 + charLength, 1 + charLength]);
+      await type("a");
+      expect(getState(editable)).toBe("Ha|o world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
     });
 
     it("replace linebreak", async () => {
@@ -1219,36 +1128,20 @@ describe("common", () => {
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
-
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       // Move caret
-      const len = 1;
-      await loop(len, () => press("ArrowRight"));
-      expect(getSelection(editable)).toEqual([len, len]);
+      await loop(1, () => press("ArrowRight"));
+      expect(getState(editable)).toBe("H|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       // Expand selection
       await press("Shift+ArrowDown");
-      expect(getSelection(editable)).toEqual([
-        len,
-        sumLines(initialValue, 0) + len,
-      ]);
-
+      expect(getState(editable)).toBe("H^ello world.\nこ|んにちは。\n👍❤️🧑‍🧑‍🧒");
       // Input
-      const char = "a";
-      const charLength = char.length;
-      await type(char);
+      await type("a");
 
-      expect(getText(editable)).toEqual([
-        initialValue[0]!.slice(0, len) + char + initialValue[1]!.slice(len),
-        ...initialValue.slice(2),
-      ]);
-      expect(getSelection(editable)).toEqual([
-        len + charLength,
-        len + charLength,
-      ]);
+      expect(getState(editable)).toBe("Ha|んにちは。\n👍❤️🧑‍🧑‍🧒");
     });
 
     it("replace all", async () => {
@@ -1256,26 +1149,18 @@ describe("common", () => {
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // Select All
-      await press("ControlOrMeta+A");
-      expect(getSelection(editable)).toEqual([
-        0,
-        sumLines(initialValue, initialValue.length - 1),
-      ]);
-
+      await press("Mod+A");
+      expect(getState(editable)).toBe("^Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒|");
       // Input
-      const char = "a";
-      const charLength = char.length;
-      await type(char);
+      await type("a");
 
-      expect(getText(editable)).toEqual([char]);
-      expect(getSelection(editable)).toEqual([charLength, charLength]);
+      expect(getState(editable)).toBe("a|");
     });
 
     it("replace all with linebreak", async () => {
@@ -1283,23 +1168,18 @@ describe("common", () => {
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // Select All
-      await press("ControlOrMeta+A");
-      expect(getSelection(editable)).toEqual([
-        0,
-        sumLines(initialValue, initialValue.length - 1),
-      ]);
+      await press("Mod+A");
+      expect(getState(editable)).toBe("^Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒|");
 
       // Enter
       await press("Enter");
-      expect(getText(editable)).toEqual(["", ""]);
-      expect(getSelection(editable)).toEqual([1, 1]);
+      expect(getState(editable)).toBe("\n|");
     });
 
     it("replace with the same text", async () => {
@@ -1307,23 +1187,24 @@ describe("common", () => {
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // Select text
       await press("ArrowRight");
       await press("Shift+ArrowRight");
-      expect(getSelection(editable)).toEqual([1, 2]);
+      expect(getState(editable)).toBe("H^e|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // replace
-      await type(initialValue[0]!.slice(1, 2));
+      await type("e");
 
-      expect(getText(editable)).toEqual(initialValue);
+      expect(getState(editable)).toBe("H^e|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       // Selection is synchronized to DOM asynchronously
-      await expect.poll(() => getSelection(editable)).toEqual([2, 2]);
+      await expect
+        .poll(() => getState(editable))
+        .toBe("He|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
     });
   });
 
@@ -1334,29 +1215,22 @@ describe("common", () => {
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         await press("ArrowRight");
-        expect(getSelection(editable)).toEqual([1, 1]);
+        expect(getState(editable)).toBe("H|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         await press("ArrowDown");
-        expect(getSelection(editable)).toEqual([
-          sumLines(initialValue, 0) + 1,
-          sumLines(initialValue, 0) + 1,
-        ]);
+        expect(getState(editable)).toBe("Hello world.\nこ|んにちは。\n👍❤️🧑‍🧑‍🧒");
 
         await press("ArrowLeft");
-        expect(getSelection(editable)).toEqual([
-          sumLines(initialValue, 0),
-          sumLines(initialValue, 0),
-        ]);
+        expect(getState(editable)).toBe("Hello world.\n|こんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         await press("ArrowUp");
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       });
 
       it("singleline", async () => {
@@ -1364,26 +1238,22 @@ describe("common", () => {
         const editable = await getEditable(
           render(<SinglelinePlainEditor initialText={text} />),
         );
-        const textLength = text.length;
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.");
 
         await press("ArrowRight");
-        expect(getSelection(editable)).toEqual([1, 1]);
+        expect(getState(editable)).toBe("H|ello world.");
 
         await press("ArrowDown");
-        expect(getSelection(editable)).toEqual([textLength, textLength]);
+        expect(getState(editable)).toBe("Hello world.|");
 
         await press("ArrowLeft");
-        expect(getSelection(editable)).toEqual([
-          textLength - 1,
-          textLength - 1,
-        ]);
+        expect(getState(editable)).toBe("Hello world|.");
 
         await press("ArrowUp");
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.");
       });
     });
 
@@ -1393,52 +1263,49 @@ describe("common", () => {
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
-        const offset = Math.floor(initialValue[0]!.length / 4);
-
-        await loop(offset, () => press("ArrowRight"));
-        expect(getSelection(editable)).toEqual([offset, offset]);
+        await loop(3, () => press("ArrowRight"));
+        expect(getState(editable)).toBe("Hel|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Split
         await press("Enter");
-        const splittedValue = insertLineBreakAt(initialValue, [0, offset]);
-        expect(getText(editable)).toEqual(splittedValue);
-        expect(getSelection(editable)).toEqual([offset + 1, offset + 1]);
+        expect(getState(editable)).toBe(
+          "Hel\n|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
 
         // Split again
         await press("Enter");
-        const splittedSplittedValue = insertLineBreakAt(splittedValue, [1, 0]);
-        expect(getText(editable)).toEqual(splittedSplittedValue);
-        expect(getSelection(editable)).toEqual([offset + 2, offset + 2]);
+        expect(getState(editable)).toBe(
+          "Hel\n\n|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
 
         // Insert empty line
         await press("ArrowUp");
         await press("Enter");
-        expect(getText(editable)).toEqual(
-          insertLineBreakAt(splittedSplittedValue, [1, 0]),
+        expect(getState(editable)).toBe(
+          "Hel\n\n|\nlo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
         );
-        expect(getSelection(editable)).toEqual([offset + 2, offset + 2]);
 
         // Remove empty line
         await press("Backspace");
         await press("ArrowDown");
-        expect(getText(editable)).toEqual(splittedSplittedValue);
-        expect(getSelection(editable)).toEqual([offset + 2, offset + 2]);
+        expect(getState(editable)).toBe(
+          "Hel\n\n|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
 
         // Join
         await press("Backspace");
-        expect(getText(editable)).toEqual(splittedValue);
-        expect(getSelection(editable)).toEqual([offset + 1, offset + 1]);
+        expect(getState(editable)).toBe(
+          "Hel\n|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
 
         // Join again
         await press("Backspace");
-        expect(getText(editable)).toEqual(initialValue);
-        expect(getSelection(editable)).toEqual([offset, offset]);
+        expect(getState(editable)).toBe("Hel|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       });
 
       it("split span", async () => {
@@ -1446,109 +1313,114 @@ describe("common", () => {
         const editable = await getEditable(
           render(<HighlightEditor initialText={text} initialSearch="dolor" />),
         );
-        const initialValue = [text];
-        expect(getText(editable)).toEqual(initialValue);
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe(
+          "|Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        );
 
-        const offset = Math.floor(initialValue[0]!.length / 4);
-
-        await loop(offset, () => press("ArrowRight"));
-        expect(getSelection(editable)).toEqual([offset, offset]);
+        await loop(14, () => press("ArrowRight"));
+        expect(getState(editable)).toBe(
+          "Lorem ipsum do|lor sit amet, consectetur adipiscing elit.",
+        );
 
         // Split
         await press("Enter");
-        const splittedValue = insertLineBreakAt(initialValue, [0, offset]);
-        expect(getText(editable)).toEqual(splittedValue);
-        expect(getSelection(editable)).toEqual([offset + 1, offset + 1]);
+        expect(getState(editable)).toBe(
+          "Lorem ipsum do\n|lor sit amet, consectetur adipiscing elit.",
+        );
 
         // Split again
         await press("Enter");
-        const splittedSplittedValue = insertLineBreakAt(splittedValue, [1, 0]);
-        expect(getText(editable)).toEqual(splittedSplittedValue);
-        expect(getSelection(editable)).toEqual([offset + 2, offset + 2]);
+        expect(getState(editable)).toBe(
+          "Lorem ipsum do\n\n|lor sit amet, consectetur adipiscing elit.",
+        );
 
         // Insert empty line
         await press("ArrowUp");
         await press("Enter");
-        expect(getText(editable)).toEqual(
-          insertLineBreakAt(splittedSplittedValue, [1, 0]),
+        expect(getState(editable)).toBe(
+          "Lorem ipsum do\n\n|\nlor sit amet, consectetur adipiscing elit.",
         );
-        expect(getSelection(editable)).toEqual([offset + 2, offset + 2]);
 
         // Remove empty line
         await press("Backspace");
         await press("ArrowDown");
-        expect(getText(editable)).toEqual(splittedSplittedValue);
-        expect(getSelection(editable)).toEqual([offset + 2, offset + 2]);
+        expect(getState(editable)).toBe(
+          "Lorem ipsum do\n\n|lor sit amet, consectetur adipiscing elit.",
+        );
 
         // Join
         await press("Backspace");
-        expect(getText(editable)).toEqual(splittedValue);
-        expect(getSelection(editable)).toEqual([offset + 1, offset + 1]);
+        expect(getState(editable)).toBe(
+          "Lorem ipsum do\n|lor sit amet, consectetur adipiscing elit.",
+        );
 
         // Join again
         await press("Backspace");
-        expect(getText(editable)).toEqual(initialValue);
-        expect(getSelection(editable)).toEqual([offset, offset]);
+        expect(getState(editable)).toBe(
+          "Lorem ipsum do|lor sit amet, consectetur adipiscing elit.",
+        );
       });
 
       it("handle empty spans", async () => {
+        // The rows are split into spans, including empty ones at row edges
         const text = `import React, { useState } from "react";
 
 function Example() {`;
         const editable = await getEditable(
           render(<TokenizedEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
-        expect(getText(editable)).toEqual(initialValue);
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe(
+          '|import React, { useState } from "react";\n\nfunction Example() {',
+        );
 
-        const offset = Math.floor(initialValue[0]!.length / 4);
-
-        await loop(offset, () => press("ArrowRight"));
-        expect(getSelection(editable)).toEqual([offset, offset]);
+        await loop(10, () => press("ArrowRight"));
+        expect(getState(editable)).toBe(
+          'import Rea|ct, { useState } from "react";\n\nfunction Example() {',
+        );
 
         // Split
         await press("Enter");
-        const splittedValue = insertLineBreakAt(initialValue, [0, offset]);
-        expect(getText(editable)).toEqual(splittedValue);
-        expect(getSelection(editable)).toEqual([offset + 1, offset + 1]);
+        expect(getState(editable)).toBe(
+          'import Rea\n|ct, { useState } from "react";\n\nfunction Example() {',
+        );
 
         // Split again
         await press("Enter");
-        const splittedSplittedValue = insertLineBreakAt(splittedValue, [1, 0]);
-        expect(getText(editable)).toEqual(splittedSplittedValue);
-        expect(getSelection(editable)).toEqual([offset + 2, offset + 2]);
+        expect(getState(editable)).toBe(
+          'import Rea\n\n|ct, { useState } from "react";\n\nfunction Example() {',
+        );
 
         // Insert empty line
         await press("ArrowUp");
         await press("Enter");
-        expect(getText(editable)).toEqual(
-          insertLineBreakAt(splittedSplittedValue, [1, 0]),
+        expect(getState(editable)).toBe(
+          'import Rea\n\n|\nct, { useState } from "react";\n\nfunction Example() {',
         );
-        expect(getSelection(editable)).toEqual([offset + 2, offset + 2]);
 
         // Remove empty line
         await press("Backspace");
         await press("ArrowDown");
-        expect(getText(editable)).toEqual(splittedSplittedValue);
-        expect(getSelection(editable)).toEqual([offset + 2, offset + 2]);
+        expect(getState(editable)).toBe(
+          'import Rea\n\n|ct, { useState } from "react";\n\nfunction Example() {',
+        );
 
         // Join
         await press("Backspace");
-        expect(getText(editable)).toEqual(splittedValue);
-        expect(getSelection(editable)).toEqual([offset + 1, offset + 1]);
+        expect(getState(editable)).toBe(
+          'import Rea\n|ct, { useState } from "react";\n\nfunction Example() {',
+        );
 
         // Join again
         await press("Backspace");
-        expect(getText(editable)).toEqual(initialValue);
-        expect(getSelection(editable)).toEqual([offset, offset]);
+        expect(getState(editable)).toBe(
+          'import Rea|ct, { useState } from "react";\n\nfunction Example() {',
+        );
       });
 
       it("split edge cases", async () => {
@@ -1560,77 +1432,48 @@ function Example() {`;
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Split at first
         await press("Enter");
-        expect(getText(editable)).toEqual(
-          insertLineBreakAt(initialValue, [0, 0]),
+        expect(getState(editable)).toBe(
+          "\n|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
         );
-        expect(getSelection(editable)).toEqual([1, 1]);
 
         // Join
         await press("Backspace");
-        expect(getText(editable)).toEqual(initialValue);
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Move to last
         const lastLineIndex = initialValue.length - 1;
-        const lastLineLength = initialValue[lastLineIndex]!.length;
         for (let i = 0; i <= lastLineIndex + 1; i++) {
           await press("ArrowDown");
         }
-        expect(getSelection(editable)).toEqual([
-          sumLines(initialValue, initialValue.length - 1),
-          sumLines(initialValue, initialValue.length - 1),
-        ]);
+        expect(getState(editable)).toBe("Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒|");
 
         // Split at last
         await press("Enter");
-        expect(getText(editable)).toEqual(
-          insertLineBreakAt(initialValue, [lastLineIndex, lastLineLength]),
+        expect(getState(editable)).toBe(
+          "Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒\n|",
         );
-        expect(getSelection(editable)).toEqual([
-          sumLines(initialValue, initialValue.length - 1) + 1,
-          sumLines(initialValue, initialValue.length - 1) + 1,
-        ]);
 
         // Join
         await press("Backspace");
-        expect(getText(editable)).toEqual(initialValue);
-        expect(getSelection(editable)).toEqual([
-          sumLines(initialValue, initialValue.length - 1),
-          sumLines(initialValue, initialValue.length - 1),
-        ]);
+        expect(getState(editable)).toBe("Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒|");
 
         // Split at line start and delete selected text
         const editableRect = editable.getBoundingClientRect();
         const rowRect = editable.children[1]!.getBoundingClientRect();
-        await userEvent.dblClick(editable, {
-          position: {
-            x: rowRect.left - editableRect.left + 4,
-            y: rowRect.top - editableRect.top + rowRect.height / 2,
-          },
+        await dblClick(editable, {
+          x: rowRect.left - editableRect.left + 4,
+          y: rowRect.top - editableRect.top + rowRect.height / 2,
         });
-        await tick();
         const selectedText = getText(editable, { selected: true });
         const expectedText = "こんにちは";
         expect(selectedText).toEqual([expectedText]);
-        expect(getSelection(editable)).toEqual([
-          sumLines(initialValue, 0),
-          sumLines(initialValue, 0) + expectedText.length,
-        ]);
+        expect(getState(editable)).toBe("Hello world.\n^こんにちは|。\n👍❤️🧑‍🧑‍🧒");
         await press("Enter");
-        expect(getText(editable)).toEqual(
-          insertLineBreakAt(
-            deleteAt(initialValue, expectedText.length, [1, 0]),
-            [1, 0],
-          ),
-        );
-        expect(getSelection(editable)).toEqual([
-          sumLines(initialValue, 0) + 1,
-          sumLines(initialValue, 0) + 1,
-        ]);
+        expect(getState(editable)).toBe("Hello world.\n\n|。\n👍❤️🧑‍🧑‍🧒");
       });
 
       it("treat soft break as hard break", async () => {
@@ -1638,69 +1481,62 @@ function Example() {`;
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
-        const offset = Math.floor(initialValue[0]!.length / 4);
-
-        await loop(offset, () => press("ArrowRight"));
-        expect(getSelection(editable)).toEqual([offset, offset]);
+        await loop(3, () => press("ArrowRight"));
+        expect(getState(editable)).toBe("Hel|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Soft break
         await press("Shift+Enter");
-        const splittedValue = insertLineBreakAt(initialValue, [0, offset]);
-        expect(getText(editable)).toEqual(splittedValue);
-        expect(getSelection(editable)).toEqual([offset + 1, offset + 1]);
+        expect(getState(editable)).toBe(
+          "Hel\n|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
 
         // Soft break again
         await press("Shift+Enter");
-        const splittedSplittedValue = insertLineBreakAt(splittedValue, [1, 0]);
-        expect(getText(editable)).toEqual(splittedSplittedValue);
-        expect(getSelection(editable)).toEqual([offset + 2, offset + 2]);
+        expect(getState(editable)).toBe(
+          "Hel\n\n|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
 
         // Insert empty line
         await press("ArrowUp");
         await press("Enter");
-        expect(getText(editable)).toEqual(
-          insertLineBreakAt(splittedSplittedValue, [1, 0]),
+        expect(getState(editable)).toBe(
+          "Hel\n\n|\nlo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
         );
-        expect(getSelection(editable)).toEqual([offset + 2, offset + 2]);
 
         // Remove empty line
         await press("Backspace");
         await press("ArrowDown");
-        expect(getText(editable)).toEqual(splittedSplittedValue);
-        expect(getSelection(editable)).toEqual([offset + 2, offset + 2]);
+        expect(getState(editable)).toBe(
+          "Hel\n\n|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
 
         // Remove soft break
         await press("Backspace");
-        expect(getText(editable)).toEqual(splittedValue);
-        expect(getSelection(editable)).toEqual([offset + 1, offset + 1]);
+        expect(getState(editable)).toBe(
+          "Hel\n|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
+        );
 
         // Remove soft break again
         await press("Backspace");
-        expect(getText(editable)).toEqual(initialValue);
-        expect(getSelection(editable)).toEqual([offset, offset]);
+        expect(getState(editable)).toBe("Hel|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
-        const endOffset = initialValue[0]!.length;
-
-        await loop(endOffset - offset, () => press("ArrowRight"));
-        expect(getSelection(editable)).toEqual([endOffset, endOffset]);
+        await loop(9, () => press("ArrowRight"));
+        expect(getState(editable)).toBe("Hello world.|\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Soft break at EOL
         await press("Shift+Enter");
-        expect(getText(editable)).toEqual(
-          insertLineBreakAt(initialValue, [0, endOffset]),
+        expect(getState(editable)).toBe(
+          "Hello world.\n|\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
         );
-        expect(getSelection(editable)).toEqual([endOffset + 1, endOffset + 1]);
 
         // Remove soft break
         await press("Backspace");
-        expect(getText(editable)).toEqual(initialValue);
-        expect(getSelection(editable)).toEqual([endOffset, endOffset]);
+        expect(getState(editable)).toBe("Hello world.|\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       });
 
       it("singleline", async () => {
@@ -1708,21 +1544,19 @@ function Example() {`;
         const editable = await getEditable(
           render(<SinglelinePlainEditor initialText={text} />),
         );
-        const initialValue = [text];
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.");
 
         await loop(2, () => press("ArrowRight"));
-        expect(getSelection(editable)).toEqual([2, 2]);
+        expect(getState(editable)).toBe("He|llo world.");
 
         // Press enter
         await press("Enter");
 
         // NOP
-        expect(getText(editable)).toEqual(initialValue);
-        expect(getSelection(editable)).toEqual([2, 2]);
+        expect(getState(editable)).toBe("He|llo world.");
       });
     });
 
@@ -1732,21 +1566,19 @@ function Example() {`;
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Move caret
         await loop(2, () => press("ArrowRight"));
-        expect(getSelection(editable)).toEqual([2, 2]);
+        expect(getState(editable)).toBe("He|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // delete
         await press("Backspace");
 
-        expect(getText(editable)).toEqual(deleteAt(initialValue, 1, [0, 1]));
-        expect(getSelection(editable)).toEqual([1, 1]);
+        expect(getState(editable)).toBe("H|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       });
 
       it("delete chars", async () => {
@@ -1754,27 +1586,22 @@ function Example() {`;
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Move caret
         await press("ArrowRight");
-        expect(getSelection(editable)).toEqual([1, 1]);
+        expect(getState(editable)).toBe("H|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
         // Expand selection
-        const selLength = 3;
-        await loop(selLength, () => press("Shift+ArrowRight"));
-        expect(getSelection(editable)).toEqual([1, 1 + selLength]);
+        await loop(3, () => press("Shift+ArrowRight"));
+        expect(getState(editable)).toBe("H^ell|o world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // delete
         await press("Backspace");
 
-        expect(getText(editable)).toEqual(
-          deleteAt(initialValue, selLength, [0, 1]),
-        );
-        expect(getSelection(editable)).toEqual([1, 1]);
+        expect(getState(editable)).toBe("H|o world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       });
 
       it("delete linebreak", async () => {
@@ -1782,31 +1609,21 @@ function Example() {`;
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
-
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
         // Move caret
-        const len = 1;
-        await loop(len, () => press("ArrowRight"));
-        expect(getSelection(editable)).toEqual([len, len]);
+        await loop(1, () => press("ArrowRight"));
+        expect(getState(editable)).toBe("H|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
         // Expand selection
         await press("Shift+ArrowDown");
-        expect(getSelection(editable)).toEqual([
-          len,
-          sumLines(initialValue, 0) + len,
-        ]);
+        expect(getState(editable)).toBe("H^ello world.\nこ|んにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // delete
         await press("Backspace");
 
-        expect(getText(editable)).toEqual([
-          initialValue[0]!.slice(0, len) + initialValue[1]!.slice(len),
-          ...initialValue.slice(2),
-        ]);
-        expect(getSelection(editable)).toEqual([len, len]);
+        expect(getState(editable)).toBe("H|んにちは。\n👍❤️🧑‍🧑‍🧒");
       });
 
       it("delete all", async () => {
@@ -1814,24 +1631,19 @@ function Example() {`;
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Select All
-        await press("ControlOrMeta+A");
-        expect(getSelection(editable)).toEqual([
-          0,
-          sumLines(initialValue, initialValue.length - 1),
-        ]);
+        await press("Mod+A");
+        expect(getState(editable)).toBe("^Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒|");
 
         // delete
         await press("Backspace");
 
-        expect(getText(editable)).toEqual([""]);
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|");
       });
     });
 
@@ -1841,21 +1653,19 @@ function Example() {`;
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Move caret
         await loop(2, () => press("ArrowRight"));
-        expect(getSelection(editable)).toEqual([2, 2]);
+        expect(getState(editable)).toBe("He|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // delete
         await press("Delete");
 
-        expect(getText(editable)).toEqual(deleteAt(initialValue, 1, [0, 2]));
-        expect(getSelection(editable)).toEqual([2, 2]);
+        expect(getState(editable)).toBe("He|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       });
 
       it("delete chars", async () => {
@@ -1863,27 +1673,22 @@ function Example() {`;
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Move caret
         await press("ArrowRight");
-        expect(getSelection(editable)).toEqual([1, 1]);
+        expect(getState(editable)).toBe("H|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
         // Expand selection
-        const selLength = 3;
-        await loop(selLength, () => press("Shift+ArrowRight"));
-        expect(getSelection(editable)).toEqual([1, 1 + selLength]);
+        await loop(3, () => press("Shift+ArrowRight"));
+        expect(getState(editable)).toBe("H^ell|o world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // delete
         await press("Delete");
 
-        expect(getText(editable)).toEqual(
-          deleteAt(initialValue, selLength, [0, 1]),
-        );
-        expect(getSelection(editable)).toEqual([1, 1]);
+        expect(getState(editable)).toBe("H|o world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       });
 
       it("delete linebreak", async () => {
@@ -1891,31 +1696,21 @@ function Example() {`;
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
-
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
         // Move caret
-        const len = 1;
-        await loop(len, () => press("ArrowRight"));
-        expect(getSelection(editable)).toEqual([len, len]);
+        await loop(1, () => press("ArrowRight"));
+        expect(getState(editable)).toBe("H|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
         // Expand selection
         await press("Shift+ArrowDown");
-        expect(getSelection(editable)).toEqual([
-          len,
-          sumLines(initialValue, 0) + len,
-        ]);
+        expect(getState(editable)).toBe("H^ello world.\nこ|んにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // delete
         await press("Delete");
 
-        expect(getText(editable)).toEqual([
-          initialValue[0]!.slice(0, len) + initialValue[1]!.slice(len),
-          ...initialValue.slice(2),
-        ]);
-        expect(getSelection(editable)).toEqual([len, len]);
+        expect(getState(editable)).toBe("H|んにちは。\n👍❤️🧑‍🧑‍🧒");
       });
 
       it("delete all", async () => {
@@ -1923,29 +1718,25 @@ function Example() {`;
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Select All
-        await press("ControlOrMeta+A");
-        expect(getSelection(editable)).toEqual([
-          0,
-          sumLines(initialValue, initialValue.length - 1),
-        ]);
+        await press("Mod+A");
+        expect(getState(editable)).toBe("^Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒|");
 
         // delete
         await press("Delete");
 
-        expect(getText(editable)).toEqual([""]);
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|");
       });
     });
 
     describe("User defined shortcuts", () => {
       it("combobox", async () => {
+        // Arrow keys and Enter are taken over by the suggestion while it is open
         const editable = await getEditable(
           render(
             <ComboboxEditor
@@ -1961,40 +1752,32 @@ function Example() {`;
             />,
           ),
         );
-        const initialValue = [NON_EDITABLE_PLACEHOLDER];
-        expect(getText(editable)).toEqual(initialValue);
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
-
-        const textA = "a";
-        await type(textA);
+        expect(getState(editable)).toBe("|$");
+        await type("a");
 
         // Enter(but no-op)
         await press("Enter");
-        expect(getText(editable)).toEqual([textA + initialValue[0]]);
+        expect(getState(editable)).toBe("a|$");
 
         // Select item with Enter
         await press("ArrowDown");
         await press("Enter");
         // the query is consumed and the selected item is inserted as a node
-        expect(getText(editable)).toEqual([
-          initialValue[0] + NON_EDITABLE_PLACEHOLDER,
-        ]);
+        expect(getState(editable)).toBe("$|$");
 
         // Delete all
-        await press("ControlOrMeta+A");
+        await press("Mod+A");
         await press("Backspace");
-        expect(getText(editable)).toEqual([""]);
-
-        const textB = "e";
-        await type(textB);
+        expect(getState(editable)).toBe("|");
+        await type("e");
 
         // Select item with Enter
         await press("ArrowUp");
         await press("Enter");
-        expect(getText(editable)).toEqual([NON_EDITABLE_PLACEHOLDER]);
+        expect(getState(editable)).toBe("$|");
       });
     });
   });
@@ -2005,15 +1788,14 @@ function Example() {`;
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // Move caret
       await loop(2, () => press("ArrowRight"));
-      expect(getSelection(editable)).toEqual([2, 2]);
+      expect(getState(editable)).toBe("He|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // The clipboard is shared in this file
       if (browser === "chromium") {
@@ -2021,10 +1803,9 @@ function Example() {`;
       }
 
       // cut
-      await press("ControlOrMeta+X");
+      await press("Mod+X");
 
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([2, 2]);
+      expect(getState(editable)).toBe("He|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // https://github.com/microsoft/playwright/issues/13037#issuecomment-1078208810
       if (browser !== "chromium") return;
@@ -2037,33 +1818,26 @@ function Example() {`;
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // Move caret
       await press("ArrowRight");
-      expect(getSelection(editable)).toEqual([1, 1]);
+      expect(getState(editable)).toBe("H|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       // Expand selection
-      const selLength = 3;
-      await loop(selLength, () => press("Shift+ArrowRight"));
-      expect(getSelection(editable)).toEqual([1, 1 + selLength]);
+      await loop(3, () => press("Shift+ArrowRight"));
+      expect(getState(editable)).toBe("H^ell|o world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // cut
-      await press("ControlOrMeta+X");
+      await press("Mod+X");
 
-      expect(getText(editable)).toEqual(
-        deleteAt(initialValue, selLength, [0, 1]),
-      );
-      expect(getSelection(editable)).toEqual([1, 1]);
+      expect(getState(editable)).toBe("H|o world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // https://github.com/microsoft/playwright/issues/13037#issuecomment-1078208810
       if (browser !== "chromium") return;
-      expect(await readClipboard("text/plain")).toEqual(
-        initialValue[0]!.slice(1, 1 + selLength),
-      );
+      expect(await readClipboard("text/plain")).toEqual("ell");
       expect(await readClipboard("text/html")).toEqual(null);
     });
 
@@ -2072,39 +1846,25 @@ function Example() {`;
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
-
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       // Move caret
-      const len = 1;
-      await loop(len, () => press("ArrowRight"));
-      expect(getSelection(editable)).toEqual([len, len]);
+      await loop(1, () => press("ArrowRight"));
+      expect(getState(editable)).toBe("H|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       // Expand selection
       await press("Shift+ArrowDown");
-      expect(getSelection(editable)).toEqual([
-        len,
-        sumLines(initialValue, 0) + len,
-      ]);
+      expect(getState(editable)).toBe("H^ello world.\nこ|んにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // cut
-      await press("ControlOrMeta+X");
+      await press("Mod+X");
 
-      expect(getText(editable)).toEqual([
-        initialValue[0]!.slice(0, len) + initialValue[1]!.slice(len),
-        ...initialValue.slice(2),
-      ]);
-      expect(getSelection(editable)).toEqual([len, len]);
+      expect(getState(editable)).toBe("H|んにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // https://github.com/microsoft/playwright/issues/13037#issuecomment-1078208810
       if (browser !== "chromium") return;
-      expect(await readClipboard("text/plain")).toEqual(
-        [[initialValue[0]!.slice(len)], initialValue[1]!.slice(0, len)].join(
-          "\n",
-        ),
-      );
+      expect(await readClipboard("text/plain")).toEqual("ello world.\nこ");
       expect(await readClipboard("text/html")).toEqual(null);
     });
 
@@ -2113,29 +1873,24 @@ function Example() {`;
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // Select All
-      await press("ControlOrMeta+A");
-      expect(getSelection(editable)).toEqual([
-        0,
-        sumLines(initialValue, initialValue.length - 1),
-      ]);
+      await press("Mod+A");
+      expect(getState(editable)).toBe("^Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒|");
 
       // cut
-      await press("ControlOrMeta+X");
+      await press("Mod+X");
 
-      expect(getText(editable)).toEqual([""]);
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|");
 
       // https://github.com/microsoft/playwright/issues/13037#issuecomment-1078208810
       if (browser !== "chromium") return;
       expect(await readClipboard("text/plain")).toEqual(
-        initialValue.join("\n"),
+        "Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
       );
       expect(await readClipboard("text/html")).toEqual(null);
     });
@@ -2148,20 +1903,17 @@ function Example() {`;
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       await press("ArrowRight");
       await press("Shift+ArrowRight");
       await press("Shift+ArrowDown");
-      await press("ControlOrMeta+C");
+      await press("Mod+C");
 
-      expect(await readClipboard("text/plain")).toEqual(
-        [[initialValue[0]!.slice(1)], initialValue[1]!.slice(0, 1)].join("\n"),
-      );
+      expect(await readClipboard("text/plain")).toEqual("ello world.\nこ");
       expect(await readClipboard("text/html")).toEqual(null);
     });
 
@@ -2170,21 +1922,20 @@ function Example() {`;
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       // The clipboard is shared in this file
       await navigator.clipboard.writeText("");
       expect(await readClipboard("text/plain")).toEqual(null);
       expect(await readClipboard("text/html")).toEqual(null);
 
-      await press("ControlOrMeta+A");
-      await press("ControlOrMeta+C");
+      await press("Mod+A");
+      await press("Mod+C");
 
       expect(await readClipboard("text/plain")).toEqual(
-        initialValue.join("\n"),
+        "Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
       );
       expect(await readClipboard("text/html")).toEqual(null);
     });
@@ -2198,29 +1949,22 @@ function Example() {`;
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Move caret
         await loop(2, () => press("ArrowRight"));
-        expect(getSelection(editable)).toEqual([2, 2]);
+        expect(getState(editable)).toBe("He|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // paste
         const pastedText = "Paste text.";
         await navigator.clipboard.writeText(pastedText);
-        await press("ControlOrMeta+V");
-
-        const charLength = pastedText.length;
-        expect(getText(editable)).toEqual(
-          insertAt(initialValue, pastedText, [0, 2]),
+        await press("Mod+V");
+        expect(getState(editable)).toBe(
+          "HePaste text.|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
         );
-        expect(getSelection(editable)).toEqual([
-          2 + charLength,
-          2 + charLength,
-        ]);
       });
 
       it("paste linebreak", async () => {
@@ -2228,35 +1972,22 @@ function Example() {`;
         const editable = await getEditable(
           render(<PlainEditor initialText={text} />),
         );
-        const initialValue = text.split("\n");
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Move caret
         await loop(2, () => press("ArrowRight"));
-        expect(getSelection(editable)).toEqual([2, 2]);
+        expect(getState(editable)).toBe("He|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // paste
         const pastedText = "Paste \ntext.";
         await navigator.clipboard.writeText(pastedText);
-        await press("ControlOrMeta+V");
-
-        const [beforeLineBreak, afterLineBreak] = pastedText.split("\n") as [
-          string,
-          string,
-        ];
-        expect(getText(editable)).toEqual(
-          insertLineBreakAt(
-            insertAt(initialValue, beforeLineBreak + afterLineBreak, [0, 2]),
-            [0, 2 + beforeLineBreak.length],
-          ),
+        await press("Mod+V");
+        expect(getState(editable)).toBe(
+          "HePaste \ntext.|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒",
         );
-        expect(getSelection(editable)).toEqual([
-          2 + pastedText.length,
-          2 + pastedText.length,
-        ]);
       });
     });
 
@@ -2266,29 +1997,20 @@ function Example() {`;
         const editable = await getEditable(
           render(<SinglelinePlainEditor initialText={text} />),
         );
-        const initialValue = [text];
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.");
 
         // Move caret
         await loop(2, () => press("ArrowRight"));
-        expect(getSelection(editable)).toEqual([2, 2]);
+        expect(getState(editable)).toBe("He|llo world.");
 
         // paste
         const pastedText = "Paste text.";
         await navigator.clipboard.writeText(pastedText);
-        await press("ControlOrMeta+V");
-
-        const charLength = pastedText.length;
-        expect(getText(editable)).toEqual(
-          insertAt(initialValue, pastedText, [0, 2]),
-        );
-        expect(getSelection(editable)).toEqual([
-          2 + charLength,
-          2 + charLength,
-        ]);
+        await press("Mod+V");
+        expect(getState(editable)).toBe("HePaste text.|llo world.");
       });
 
       it("paste linebreak", async () => {
@@ -2296,30 +2018,20 @@ function Example() {`;
         const editable = await getEditable(
           render(<SinglelinePlainEditor initialText={text} />),
         );
-        const initialValue = [text];
 
         editable.focus();
 
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe("|Hello world.");
 
         // Move caret
         await loop(2, () => press("ArrowRight"));
-        expect(getSelection(editable)).toEqual([2, 2]);
+        expect(getState(editable)).toBe("He|llo world.");
 
         // paste
         const pastedText = "Paste \ntext.";
         await navigator.clipboard.writeText(pastedText);
-        await press("ControlOrMeta+V");
-
-        const pastedTextWithoutLinebreak = pastedText.split("\n").join("");
-        const charLength = pastedTextWithoutLinebreak.length;
-        expect(getText(editable)).toEqual(
-          insertAt(initialValue, pastedTextWithoutLinebreak, [0, 2]),
-        );
-        expect(getSelection(editable)).toEqual([
-          2 + charLength,
-          2 + charLength,
-        ]);
+        await press("Mod+V");
+        expect(getState(editable)).toBe("HePaste text.|llo world.");
       });
     });
   });
@@ -2342,7 +2054,6 @@ function Example() {`;
           y + selected.height * line,
         ],
       );
-      await tick();
     };
 
     it("move chars", async () => {
@@ -2350,40 +2061,27 @@ function Example() {`;
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       {
         // Select [0,1]-[0,4]
         await press("ArrowRight");
         const selLength = 3;
         await loop(selLength, () => press("Shift+ArrowRight"));
-        expect(getSelection(editable)).toEqual([1, 1 + selLength]);
+        expect(getState(editable)).toBe("H^ell|o world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // drop text to next line
-        const [selectedText] = getText(editable, { selected: true });
         await dragSelectionTo(editable, { line: 1 });
-        expect(getText(editable)).toEqual(
-          insertAt(
-            deleteAt(initialValue, selLength, [0, 1]),
-            selectedText!,
-            [1, 1],
-          ),
-        );
-        expect(getSelection(editable)).toEqual([
-          sumLines(initialValue, 0) - selLength + 1,
-          sumLines(initialValue, 0) - selLength + 1 + selLength,
-        ]);
+        expect(getState(editable)).toBe("Ho world.\nこ^ell|んにちは。\n👍❤️🧑‍🧑‍🧒");
       }
 
       // reset
-      await press("ControlOrMeta+z");
-      moveSelectionToOrigin(editable);
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([0, 0]);
+      await press("Mod+Z");
+      await moveSelectionToOrigin(editable);
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       {
         // Select [1,2]-[1,4]
@@ -2392,32 +2090,17 @@ function Example() {`;
         await loop(selStart, () => press("ArrowRight"));
         const selLength = 2;
         await loop(selLength, () => press("Shift+ArrowRight"));
-        expect(getSelection(editable)).toEqual([
-          sumLines(initialValue, 0) + selStart,
-          sumLines(initialValue, 0) + selStart + selLength,
-        ]);
+        expect(getState(editable)).toBe("Hello world.\nこん^にち|は。\n👍❤️🧑‍🧑‍🧒");
 
         // drop text to swap
-        const [selectedText] = getText(editable, { selected: true });
         await dragSelectionTo(editable, { char: -2 });
-        expect(getText(editable)).toEqual(
-          insertAt(
-            deleteAt(initialValue, selLength, [1, selStart]),
-            selectedText!,
-            [1, selStart - 1],
-          ),
-        );
-        expect(getSelection(editable)).toEqual([
-          sumLines(initialValue, 0) + selStart - 1,
-          sumLines(initialValue, 0) + selStart - 1 + selLength,
-        ]);
+        expect(getState(editable)).toBe("Hello world.\nこ^にち|んは。\n👍❤️🧑‍🧑‍🧒");
       }
 
       // reset
-      await press("ControlOrMeta+z");
-      moveSelectionToOrigin(editable);
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([0, 0]);
+      await press("Mod+Z");
+      await moveSelectionToOrigin(editable);
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       {
         // Select [1,1]-[1,3]
@@ -2426,25 +2109,11 @@ function Example() {`;
         await loop(selStart, () => press("ArrowRight"));
         const selLength = 2;
         await loop(selLength, () => press("Shift+ArrowRight"));
-        expect(getSelection(editable)).toEqual([
-          sumLines(initialValue, 0) + selStart,
-          sumLines(initialValue, 0) + selStart + selLength,
-        ]);
+        expect(getState(editable)).toBe("Hello world.\nこ^んに|ちは。\n👍❤️🧑‍🧑‍🧒");
 
         // drop text to swap
-        const [selectedText] = getText(editable, { selected: true });
         await dragSelectionTo(editable, { char: 2 });
-        expect(getText(editable)).toEqual(
-          insertAt(
-            deleteAt(initialValue, selLength, [1, selStart]),
-            selectedText!,
-            [1, selStart + 1],
-          ),
-        );
-        expect(getSelection(editable)).toEqual([
-          sumLines(initialValue, 0) + selStart + 1,
-          sumLines(initialValue, 0) + selStart + 1 + selLength,
-        ]);
+        expect(getState(editable)).toBe("Hello world.\nこち^んに|は。\n👍❤️🧑‍🧑‍🧒");
       }
     });
 
@@ -2457,85 +2126,78 @@ function Example() {`;
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
-
-      const char = "z";
-      await type(char);
-
-      const editedValue = insertAt(initialValue, char, [0, 0]);
-      expect(getText(editable)).toEqual(editedValue);
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
+      await type("z");
+      expect(getState(editable)).toBe("z|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // undo
-      await press("ControlOrMeta+z");
-      expect(getText(editable)).toEqual(initialValue);
+      await press("Mod+Z");
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // redo
-      await press("ControlOrMeta+Shift+z");
-      expect(getText(editable)).toEqual(editedValue);
+      await press("Mod+Shift+Z");
+      expect(getState(editable)).toBe("z|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
     });
   });
 
   describe("keep selection on render", () => {
     it("command", async () => {
+      // Clicking a button moves focus out of the editable before the command runs
       const text = "Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒";
       const editable = await getEditable(
         render(<CommandEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // Move caret
-      await userEvent.click(page.getByRole("button", { name: "move forward" }));
-      await tick();
-      expect(getSelection(editable)).toEqual([1, 1]);
+      await click("move forward");
+      expect(getState(editable)).toBe("H|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // insert
-      await userEvent.click(page.getByRole("button", { name: "insert" }));
-      await tick();
-      const inserted = "text";
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, inserted, [0, 1]),
-      );
-      expect(getSelection(editable)).toEqual([
-        1 + inserted.length,
-        1 + inserted.length,
-      ]);
+      await click("insert");
+      // the editor returns focus to the editable in the next animation frame
+      await expect
+        .poll(() => getState(editable))
+        .toBe("Htext|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // undo
       // TODO undo with button
-      await press("ControlOrMeta+z");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([1, 1]);
+      await press("Mod+Z");
+      expect(getState(editable)).toBe("H|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // delete
-      await userEvent.click(
-        page.getByRole("button", { name: "move focus forward" }),
-      );
-      await tick();
-      await userEvent.click(
-        page.getByRole("button", { name: "delete selection" }),
-      );
-      await tick();
-      expect(getText(editable)).toEqual(deleteAt(initialValue, 1, [0, 1]));
-      expect(getSelection(editable)).toEqual([1, 1]);
+      await click("move focus forward");
+      await click("delete selection");
+      // the editor returns focus to the editable in the next animation frame
+      await expect
+        .poll(() => getState(editable))
+        .toBe("H|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
     });
 
     it("type in input", async () => {
       const text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
+      const editor = createRef<PlainEditor>();
       const editable = await getEditable(
-        render(<HighlightEditor initialText={text} initialSearch="dolor" />),
+        render(
+          <HighlightEditor
+            initialText={text}
+            initialSearch="dolor"
+            ref={editor}
+          />,
+        ),
       );
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe(
+        "|Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      );
 
       const searchInput = page
         .getByRole("textbox", { name: "search word" })
@@ -2549,10 +2211,12 @@ function Example() {`;
       expect(searchInput.value).toEqual(searchValue + word);
 
       // should keep selection on input
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(document.activeElement).toBe(searchInput);
+      expect(editor.current!.selection).toEqual([0, 0]);
     });
 
     it("richtext", async () => {
+      // Clicking a button moves focus out of the editable before the command runs
       const editable = await getEditable(
         render(
           <RichTextEditor
@@ -2573,8 +2237,6 @@ function Example() {`;
           />,
         ),
       );
-      const initialValue = ["Hello World.", "こんにちは。", "👍❤️🧑‍🧑‍🧒"];
-      expect(getText(editable)).toEqual(initialValue);
       const getRow = (i: number) => editable.children[i] as HTMLElement;
       const getItalicTexts = (row: HTMLElement) =>
         Array.from(row.children as HTMLCollectionOf<HTMLElement>)
@@ -2585,26 +2247,27 @@ function Example() {`;
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello World.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       {
         // Set block attr
-        await userEvent.click(page.getByRole("button", { name: "align" }));
-        await tick();
-        expect(getText(editable)).toEqual(initialValue);
-        expect(getSelection(editable)).toEqual([0, 0]);
+        await click("align");
+        // the editor returns focus to the editable in the next animation frame
+        await expect
+          .poll(() => getState(editable))
+          .toBe("|Hello World.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
         expect(getRow(0).style.textAlign).toBe("right");
 
         // Select texts
         await press("Shift+ArrowRight");
-        const movedSelection = [0, 1];
-        expect(getSelection(editable)).toEqual(movedSelection);
+        expect(getState(editable)).toBe("^H|ello World.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Unset block attr
-        await userEvent.click(page.getByRole("button", { name: "align" }));
-        await tick();
-        expect(getText(editable)).toEqual(initialValue);
-        expect(getSelection(editable)).toEqual(movedSelection);
+        await click("align");
+        // the editor returns focus to the editable in the next animation frame
+        await expect
+          .poll(() => getState(editable))
+          .toBe("^H|ello World.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
         expect(getRow(0).style.textAlign).toBe("");
       }
 
@@ -2613,32 +2276,27 @@ function Example() {`;
         await press("ArrowLeft");
         await press("ArrowDown");
         await press("ArrowRight");
-        expect(getSelection(editable)).toEqual([
-          sumLines(initialValue, 0) + 1,
-          sumLines(initialValue, 0) + 1,
-        ]);
+        expect(getState(editable)).toBe("Hello World.\nこ|んにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Select texts
         await press("Shift+ArrowRight");
         await press("Shift+ArrowRight");
-        const selectedSelection = [
-          sumLines(initialValue, 0) + 1,
-          sumLines(initialValue, 0) + 3,
-        ];
-        expect(getSelection(editable)).toEqual(selectedSelection);
+        expect(getState(editable)).toBe("Hello World.\nこ^んに|ちは。\n👍❤️🧑‍🧑‍🧒");
 
         // Set text format
-        await userEvent.click(page.getByRole("button", { name: "italic" }));
-        await tick();
-        expect(getText(editable)).toEqual(initialValue);
-        expect(getSelection(editable)).toEqual(selectedSelection);
+        await click("italic");
+        // the editor returns focus to the editable in the next animation frame
+        await expect
+          .poll(() => getState(editable))
+          .toBe("Hello World.\nこ^んに|ちは。\n👍❤️🧑‍🧑‍🧒");
         expect(getItalicTexts(getRow(1))).toEqual(["んに"]);
 
         // Unset text format
-        await userEvent.click(page.getByRole("button", { name: "italic" }));
-        await tick();
-        expect(getText(editable)).toEqual(initialValue);
-        expect(getSelection(editable)).toEqual(selectedSelection);
+        await click("italic");
+        // the editor returns focus to the editable in the next animation frame
+        await expect
+          .poll(() => getState(editable))
+          .toBe("Hello World.\nこ^んに|ちは。\n👍❤️🧑‍🧑‍🧒");
         expect(getItalicTexts(getRow(1))).toEqual([]);
       }
     });
@@ -2652,47 +2310,49 @@ function Example() {`;
       const editable = await getEditable(
         render(<PlainEditor initialText={text} style={{ direction: "rtl" }} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe(
+        "|היום התחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁלוֹם.",
+      );
 
       {
         // Move caret. ArrowLeft runs forward through the model here, ArrowRight back
         const len = 4;
         await loop(len, () => press("ArrowLeft"));
-        expect(getSelection(editable)).toEqual([len, len]);
+        expect(getState(editable)).toBe(
+          "היום| התחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁלוֹם.",
+        );
 
         await loop(len, () => press("ArrowRight"));
-        expect(getSelection(editable)).toEqual([0, 0]);
+        expect(getState(editable)).toBe(
+          "|היום התחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁלוֹם.",
+        );
       }
-
-      const at = 3;
-      await loop(at, () => press("ArrowLeft"));
-      expect(getSelection(editable)).toEqual([at, at]);
+      await loop(3, () => press("ArrowLeft"));
+      expect(getState(editable)).toBe(
+        "היו|ם התחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁלוֹם.",
+      );
 
       // Delete. the character before the caret in the model sits to its visual right
       await press("Backspace");
-      const backspaced = deleteAt(initialValue, 1, [0, at - 1]);
-      expect(getText(editable)).toEqual(backspaced);
-      expect(getSelection(editable)).toEqual([at - 1, at - 1]);
+      expect(getState(editable)).toBe(
+        "הי|ם התחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁלוֹם.",
+      );
 
       await press("Delete");
-      const deleted = deleteAt(backspaced, 1, [0, at - 1]);
-      expect(getText(editable)).toEqual(deleted);
-      expect(getSelection(editable)).toEqual([at - 1, at - 1]);
+      expect(getState(editable)).toBe(
+        "הי| התחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁלוֹם.",
+      );
 
       {
         // Insert. latin into hebrew, so the caret ends past an opposite-direction run
         const word = "test";
         await type(word);
-        const textLength = word.length;
-        expect(getText(editable)).toEqual(insertAt(deleted, word, [0, at - 1]));
-        expect(getSelection(editable)).toEqual([
-          at - 1 + textLength,
-          at - 1 + textLength,
-        ]);
+        expect(getState(editable)).toBe(
+          "היtest| התחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁלוֹם.",
+        );
       }
     });
 
@@ -2706,12 +2366,15 @@ function Example() {`;
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe(
+        "|היום התחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁלוֹם.",
+      );
 
       const at = 6;
-      const len = 3;
       await loop(at, () => press("ArrowLeft"));
-      expect(getSelection(editable)).toEqual([at, at]);
+      expect(getState(editable)).toBe(
+        "היום ה|תחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁלוֹם.",
+      );
 
       // chromium and webkit extend visually, firefox logically
       await press("Shift+ArrowRight");
@@ -2719,17 +2382,25 @@ function Example() {`;
       const back = probed < at ? "Shift+ArrowRight" : "Shift+ArrowLeft";
       const forth = probed < at ? "Shift+ArrowLeft" : "Shift+ArrowRight";
       await press("Shift+ArrowLeft");
-      expect(getSelection(editable)).toEqual([at, at]);
+      expect(getState(editable)).toBe(
+        "היום ה|תחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁלוֹם.",
+      );
 
       // the anchor stays put, and a focus behind it is reported backward
-      await loop(len, () => press(back));
-      expect(getSelection(editable)).toEqual([at, at - len]);
+      await loop(3, () => press(back));
+      expect(getState(editable)).toBe(
+        "היו|ם ה^תחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁלוֹם.",
+      );
 
-      await loop(len, () => press(forth));
-      expect(getSelection(editable)).toEqual([at, at]);
+      await loop(3, () => press(forth));
+      expect(getState(editable)).toBe(
+        "היום ה|תחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁלוֹם.",
+      );
 
-      await loop(len, () => press(forth));
-      expect(getSelection(editable)).toEqual([at, at + len]);
+      await loop(3, () => press(forth));
+      expect(getState(editable)).toBe(
+        "היום ה^תחל|תי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁלוֹם.",
+      );
     });
 
     // a hebrew letter carrying niqqud is one caret stop spanning several units
@@ -2740,46 +2411,31 @@ function Example() {`;
       const editable = await getEditable(
         render(<PlainEditor initialText={text} style={{ direction: "rtl" }} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
-
-      const line = 2;
-      const clusters = grapheme(initialValue[line]!);
-      const cluster = clusters.find((c) => c.length > 1);
-      expect(cluster).toBeTruthy();
-
-      const clusterIndex = clusters.indexOf(cluster!);
-      // every cluster before it is a single unit, so the index doubles as an offset
-      expect(clusters.slice(0, clusterIndex).every((c) => c.length === 1)).toBe(
-        true,
+      expect(getState(editable)).toBe(
+        "|היום התחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁלוֹם.",
       );
 
-      const lineStart = sumLines(initialValue, line - 1);
-      const offset = clusterIndex + cluster!.length;
-      const afterOffset = lineStart + offset;
-
-      await loop(line, () => press("ArrowDown"));
-      expect(getSelection(editable)).toEqual([lineStart, lineStart]);
-      await loop(clusterIndex + 1, () => press("ArrowLeft"));
-      expect(getSelection(editable)).toEqual([afterOffset, afterOffset]);
-
+      await loop(2, () => press("ArrowDown"));
+      expect(getState(editable)).toBe(
+        "היום התחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\n|המסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁלוֹם.",
+      );
+      await loop(37, () => press("ArrowLeft"));
+      expect(getState(editable)).toBe(
+        "היום התחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁ|לוֹם.",
+      );
       // insert
-      const char = "a";
-      await type(char);
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, char, [line, offset]),
+      await type("a");
+      expect(getState(editable)).toBe(
+        "היום התחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁa|לוֹם.",
       );
-      expect(getSelection(editable)).toEqual([
-        afterOffset + 1,
-        afterOffset + 1,
-      ]);
       // delete
       await press("Backspace");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([afterOffset, afterOffset]);
+      expect(getState(editable)).toBe(
+        "היום התחלתי לכתוב מסמך חדש בעורך הזה.\nעורך הטקסט הזה תומך בכתיבה דו־כיוונית לפי תקן Unicode.\nהמסמך כולל 3 פסקאות, וגם מעט ניקוד: שָׁ|לוֹם.",
+      );
     });
   });
 
@@ -2789,36 +2445,20 @@ function Example() {`;
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
-
-      const char = "a";
-
-      const emoji = "👍";
-      const offset = grapheme(initialValue[2]!).indexOf(emoji);
-      expect(offset).toBeGreaterThan(-1);
-
-      const afterOffset = offset + 1;
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // move to after emoji
-      await loop(afterOffset, () => press("ArrowRight"));
-      expect(getSelection(editable)).toEqual([afterOffset, afterOffset]);
+      await loop(1, () => press("ArrowRight"));
+      expect(getState(editable)).toBe("H|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       // insert
-      await type(char);
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, char, [0, afterOffset]),
-      );
-      expect(getSelection(editable)).toEqual([
-        afterOffset + 1,
-        afterOffset + 1,
-      ]);
+      await type("a");
+      expect(getState(editable)).toBe("Ha|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       // delete
       await press("Backspace");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([afterOffset, afterOffset]);
+      expect(getState(editable)).toBe("H|ello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
     });
 
     it("variation selector", async () => {
@@ -2826,36 +2466,20 @@ function Example() {`;
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
-
-      const char = "a";
-
-      const emoji = "❤️";
-      const offset = grapheme(initialValue[2]!).indexOf(emoji);
-      expect(offset).toBeGreaterThan(-1);
-
-      const afterOffset = offset + 1;
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // move to after emoji
-      await loop(afterOffset, () => press("ArrowRight"));
-      expect(getSelection(editable)).toEqual([afterOffset, afterOffset]);
+      await loop(2, () => press("ArrowRight"));
+      expect(getState(editable)).toBe("He|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       // insert
-      await type(char);
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, char, [0, afterOffset]),
-      );
-      expect(getSelection(editable)).toEqual([
-        afterOffset + 1,
-        afterOffset + 1,
-      ]);
+      await type("a");
+      expect(getState(editable)).toBe("Hea|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       // delete
       await press("Backspace");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([afterOffset, afterOffset]);
+      expect(getState(editable)).toBe("He|llo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
     });
 
     it("zero width joiner", async () => {
@@ -2863,36 +2487,20 @@ function Example() {`;
       const editable = await getEditable(
         render(<PlainEditor initialText={text} />),
       );
-      const initialValue = text.split("\n");
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
-
-      const char = "a";
-
-      const emoji = "🧑‍🧑‍🧒";
-      const offset = grapheme(initialValue[2]!).indexOf(emoji);
-      expect(offset).toBeGreaterThan(-1);
-
-      const afterOffset = offset + 1;
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // move to after emoji
-      await loop(afterOffset, () => press("ArrowRight"));
-      expect(getSelection(editable)).toEqual([afterOffset, afterOffset]);
+      await loop(3, () => press("ArrowRight"));
+      expect(getState(editable)).toBe("Hel|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       // insert
-      await type(char);
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, char, [0, afterOffset]),
-      );
-      expect(getSelection(editable)).toEqual([
-        afterOffset + 1,
-        afterOffset + 1,
-      ]);
+      await type("a");
+      expect(getState(editable)).toBe("Hela|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
       // delete
       await press("Backspace");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([afterOffset, afterOffset]);
+      expect(getState(editable)).toBe("Hel|lo world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
     });
   });
 
@@ -2908,12 +2516,14 @@ function Example() {`;
 
     // Enable readonly mode
     editor.current!.readonly = true;
+    // the readonly event is published in a microtask
     await microtask();
 
     expect(isReadonly()).toEqual("false");
 
     // Disable readonly mode
     editor.current!.readonly = false;
+    // the readonly event is published in a microtask
     await microtask();
 
     expect(isReadonly()).toEqual("true");
@@ -2923,31 +2533,23 @@ function Example() {`;
     const editable = await getEditable(
       render(<PlaceholderEditor initialText={""} />),
     );
-    const initialValue = getText(editable);
-
     // The resolved content differs between browsers, but it's "none" in all of them if not rendered
     const isPlaceholderShown = () =>
       getComputedStyle(editable, "::before").content !== "none";
 
     editable.focus();
 
-    expect(initialValue).toEqual([""]);
-    expect(getSelection(editable)).toEqual([0, 0]);
+    expect(getState(editable)).toBe("|");
     expect(isPlaceholderShown()).toBe(true);
 
     // Input
-    const char = "a";
-    await type(char);
+    await type("a");
 
-    const value1 = getText(editable);
-    expect(value1).toEqual(insertAt(initialValue, char, [0, 0]));
-    expect(getSelection(editable)).toEqual([1, 1]);
+    expect(getState(editable)).toBe("a|");
     expect(isPlaceholderShown()).toBe(false);
 
     await press("Backspace");
-    const value2 = getText(editable);
-    expect(value2).toEqual([""]);
-    expect(getSelection(editable)).toEqual([0, 0]);
+    expect(getState(editable)).toBe("|");
     expect(isPlaceholderShown()).toBe(true);
   });
 
@@ -2958,11 +2560,12 @@ function Example() {`;
         render(<HighlightEditor initialText={text} initialSearch="dolor" />),
       );
       const initialValue = [text];
-      expect(getText(editable)).toEqual(initialValue);
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe(
+        "|Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      );
 
       const searchInput = page
         .getByRole("textbox", { name: "search word" })
@@ -2972,92 +2575,75 @@ function Example() {`;
       expect(searchValueLength).toBeGreaterThan(1);
 
       const markedOffset = initialValue[0]!.indexOf(searchValue);
-      const char = "a";
 
       // type just before node
       await loop(markedOffset, () => press("ArrowRight"));
-      expect(getSelection(editable)).toEqual([markedOffset, markedOffset]);
+      expect(getState(editable)).toBe(
+        "Lorem ipsum |dolor sit amet, consectetur adipiscing elit.",
+      );
 
       // insert
-      await type(char);
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, char, [0, markedOffset]),
+      await type("a");
+      expect(getState(editable)).toBe(
+        "Lorem ipsum a|dolor sit amet, consectetur adipiscing elit.",
       );
-      expect(getSelection(editable)).toEqual([
-        markedOffset + 1,
-        markedOffset + 1,
-      ]);
 
       // delete
       await press("Backspace");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([markedOffset, markedOffset]);
+      expect(getState(editable)).toBe(
+        "Lorem ipsum |dolor sit amet, consectetur adipiscing elit.",
+      );
 
       // type on node
       await press("ArrowRight");
-      expect(getSelection(editable)).toEqual([
-        markedOffset + 1,
-        markedOffset + 1,
-      ]);
+      expect(getState(editable)).toBe(
+        "Lorem ipsum d|olor sit amet, consectetur adipiscing elit.",
+      );
 
       // insert
-      await type(char);
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, char, [0, markedOffset + 1]),
+      await type("a");
+      expect(getState(editable)).toBe(
+        "Lorem ipsum da|olor sit amet, consectetur adipiscing elit.",
       );
-      expect(getSelection(editable)).toEqual([
-        markedOffset + 2,
-        markedOffset + 2,
-      ]);
 
       // delete
       await press("Backspace");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([
-        markedOffset + 1,
-        markedOffset + 1,
-      ]);
+      expect(getState(editable)).toBe(
+        "Lorem ipsum d|olor sit amet, consectetur adipiscing elit.",
+      );
 
       // type just after node
       await loop(searchValueLength - 1, () => press("ArrowRight"));
-      expect(getSelection(editable)).toEqual([
-        markedOffset + searchValueLength,
-        markedOffset + searchValueLength,
-      ]);
+      expect(getState(editable)).toBe(
+        "Lorem ipsum dolor| sit amet, consectetur adipiscing elit.",
+      );
 
       // insert
-      await type(char);
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, char, [0, markedOffset + searchValueLength]),
+      await type("a");
+      expect(getState(editable)).toBe(
+        "Lorem ipsum dolora| sit amet, consectetur adipiscing elit.",
       );
-      expect(getSelection(editable)).toEqual([
-        markedOffset + searchValueLength + 1,
-        markedOffset + searchValueLength + 1,
-      ]);
 
       // delete
       await press("Backspace");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([
-        markedOffset + searchValueLength,
-        markedOffset + searchValueLength,
-      ]);
+      expect(getState(editable)).toBe(
+        "Lorem ipsum dolor| sit amet, consectetur adipiscing elit.",
+      );
     });
 
     it("async", async () => {
+      // The marks are re-rendered in a later task than the edit, like a linter does
       const text = "Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒";
       const editable = await getEditable(
-        render(<AsyncMarkEditor initialText={text} />),
+        render(<HighlightEditor initialText={text} initialSearch="o" async />),
       );
-      const initialValue = text.split("\n");
-      expect(getText(editable)).toEqual(initialValue);
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       const markedOffset = await vi.waitFor(() => {
-        const marks = editable.querySelectorAll("[data-mark]");
+        const marks = editable.querySelectorAll("mark");
         if (marks.length < 2) throw new Error("marks are not rendered");
         const secondMark = marks[1]!;
         if (
@@ -3072,51 +2658,30 @@ function Example() {`;
         }
         return offset;
       });
-      const char = "a";
 
       // type just before node
       await loop(markedOffset, () => press("ArrowRight"));
-      expect(getSelection(editable)).toEqual([markedOffset, markedOffset]);
+      expect(getState(editable)).toBe("Hello w|orld.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // insert
-      await type(char);
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, char, [0, markedOffset]),
-      );
-      expect(getSelection(editable)).toEqual([
-        markedOffset + 1,
-        markedOffset + 1,
-      ]);
+      await type("a");
+      expect(getState(editable)).toBe("Hello wa|orld.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // delete
       await press("Backspace");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([markedOffset, markedOffset]);
+      expect(getState(editable)).toBe("Hello w|orld.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // type just after node
       await press("ArrowRight");
-      expect(getSelection(editable)).toEqual([
-        markedOffset + 1,
-        markedOffset + 1,
-      ]);
+      expect(getState(editable)).toBe("Hello wo|rld.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // insert
-      await type(char);
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, char, [0, markedOffset + 1]),
-      );
-      expect(getSelection(editable)).toEqual([
-        markedOffset + 2,
-        markedOffset + 2,
-      ]);
+      await type("a");
+      expect(getState(editable)).toBe("Hello woa|rld.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
       // delete
       await press("Backspace");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([
-        markedOffset + 1,
-        markedOffset + 1,
-      ]);
+      expect(getState(editable)).toBe("Hello wo|rld.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
     });
   });
 });
@@ -3139,59 +2704,45 @@ describe("structured", () => {
         ),
       );
       const initialValue = ["Hello $ world $"];
-      expect(getText(editable)).toEqual(initialValue);
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello $ world $");
 
       const nodeOffset = initialValue[0]!.indexOf(NON_EDITABLE_PLACEHOLDER);
-      const char = "a";
 
       // type just before node
       await loop(nodeOffset, () => press("ArrowRight"));
-      expect(getSelection(editable)).toEqual([nodeOffset, nodeOffset]);
+      expect(getState(editable)).toBe("Hello |$ world $");
 
       // insert
-      await type(char);
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, char, [0, nodeOffset]),
-      );
-      expect(getSelection(editable)).toEqual([nodeOffset + 1, nodeOffset + 1]);
+      await type("a");
+      expect(getState(editable)).toBe("Hello a|$ world $");
 
       // delete
       await press("Backspace");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([nodeOffset, nodeOffset]);
+      expect(getState(editable)).toBe("Hello |$ world $");
 
       // type just after node
       await press("ArrowRight");
-      expect(getSelection(editable)).toEqual([nodeOffset + 1, nodeOffset + 1]);
+      expect(getState(editable)).toBe("Hello $| world $");
 
       // insert
-      await type(char);
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, char, [0, nodeOffset + 1]),
-      );
-      expect(getSelection(editable)).toEqual([nodeOffset + 2, nodeOffset + 2]);
+      await type("a");
+      expect(getState(editable)).toBe("Hello $a| world $");
 
       // delete
       await press("Backspace");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([nodeOffset + 1, nodeOffset + 1]);
+      expect(getState(editable)).toBe("Hello $| world $");
 
       // delete custom node
       await press("Backspace");
-      expect(getText(editable)).toEqual(
-        deleteAt(initialValue, 1, [0, nodeOffset]),
-      );
-      expect(getSelection(editable)).toEqual([nodeOffset, nodeOffset]);
+      expect(getState(editable)).toBe("Hello | world $");
 
       // undo
-      await press("ControlOrMeta+z");
-      moveSelectionToOrigin(editable);
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([0, 0]);
+      await press("Mod+Z");
+      await moveSelectionToOrigin(editable);
+      expect(getState(editable)).toBe("|Hello $ world $");
 
       // delete selected custom node and texts
       await loop(nodeOffset - 1, () => press("ArrowRight"));
@@ -3199,29 +2750,17 @@ describe("structured", () => {
       await press("Shift+ArrowRight");
       await press("Shift+ArrowRight");
       await press("Backspace");
-      expect(getText(editable)).toEqual(
-        deleteAt(initialValue, 3, [0, nodeOffset - 1]),
-      );
-      expect(getSelection(editable)).toEqual([nodeOffset - 1, nodeOffset - 1]);
+      expect(getState(editable)).toBe("Hello|world $");
 
       // undo
-      await press("ControlOrMeta+z");
-      moveSelectionToOrigin(editable);
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([0, 0]);
-
+      await press("Mod+Z");
+      await moveSelectionToOrigin(editable);
+      expect(getState(editable)).toBe("|Hello $ world $");
       // replace selected custom node
-      const replaceText = "Z";
       await loop(nodeOffset, () => press("ArrowRight"));
       await press("Shift+ArrowRight");
-      await type(replaceText);
-      expect(getText(editable)).toEqual(
-        insertAt(deleteAt(initialValue, 1, [0, nodeOffset]), replaceText, [
-          0,
-          nodeOffset,
-        ]),
-      );
-      expect(getSelection(editable)).toEqual([nodeOffset + 1, nodeOffset + 1]);
+      await type("Z");
+      expect(getState(editable)).toBe("Hello Z| world $");
     });
 
     it("img", async () => {
@@ -3260,59 +2799,45 @@ describe("structured", () => {
         ),
       );
       const initialValue = ["Hello $ world $", "Hello $ world "];
-      expect(getText(editable)).toEqual(initialValue);
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello $ world $\nHello $ world ");
 
       const nodeOffset = initialValue[0]!.indexOf(NON_EDITABLE_PLACEHOLDER);
-      const char = "a";
 
       // type just before node
       await loop(nodeOffset, () => press("ArrowRight"));
-      expect(getSelection(editable)).toEqual([nodeOffset, nodeOffset]);
+      expect(getState(editable)).toBe("Hello |$ world $\nHello $ world ");
 
       // insert
-      await type(char);
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, char, [0, nodeOffset]),
-      );
-      expect(getSelection(editable)).toEqual([nodeOffset + 1, nodeOffset + 1]);
+      await type("a");
+      expect(getState(editable)).toBe("Hello a|$ world $\nHello $ world ");
 
       // delete
       await press("Backspace");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([nodeOffset, nodeOffset]);
+      expect(getState(editable)).toBe("Hello |$ world $\nHello $ world ");
 
       // type just after node
       await press("ArrowRight");
-      expect(getSelection(editable)).toEqual([nodeOffset + 1, nodeOffset + 1]);
+      expect(getState(editable)).toBe("Hello $| world $\nHello $ world ");
 
       // insert
-      await type(char);
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, char, [0, nodeOffset + 1]),
-      );
-      expect(getSelection(editable)).toEqual([nodeOffset + 2, nodeOffset + 2]);
+      await type("a");
+      expect(getState(editable)).toBe("Hello $a| world $\nHello $ world ");
 
       // delete
       await press("Backspace");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([nodeOffset + 1, nodeOffset + 1]);
+      expect(getState(editable)).toBe("Hello $| world $\nHello $ world ");
 
       // delete custom node
       await press("Backspace");
-      expect(getText(editable)).toEqual(
-        deleteAt(initialValue, 1, [0, nodeOffset]),
-      );
-      expect(getSelection(editable)).toEqual([nodeOffset, nodeOffset]);
+      expect(getState(editable)).toBe("Hello | world $\nHello $ world ");
 
       // undo
-      await press("ControlOrMeta+z");
-      moveSelectionToOrigin(editable);
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([0, 0]);
+      await press("Mod+Z");
+      await moveSelectionToOrigin(editable);
+      expect(getState(editable)).toBe("|Hello $ world $\nHello $ world ");
 
       // delete selected custom node and texts
       await loop(nodeOffset - 1, () => press("ArrowRight"));
@@ -3320,29 +2845,17 @@ describe("structured", () => {
       await press("Shift+ArrowRight");
       await press("Shift+ArrowRight");
       await press("Backspace");
-      expect(getText(editable)).toEqual(
-        deleteAt(initialValue, 3, [0, nodeOffset - 1]),
-      );
-      expect(getSelection(editable)).toEqual([nodeOffset - 1, nodeOffset - 1]);
+      expect(getState(editable)).toBe("Hello|world $\nHello $ world ");
 
       // undo
-      await press("ControlOrMeta+z");
-      moveSelectionToOrigin(editable);
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([0, 0]);
-
+      await press("Mod+Z");
+      await moveSelectionToOrigin(editable);
+      expect(getState(editable)).toBe("|Hello $ world $\nHello $ world ");
       // replace selected custom node
-      const replaceText = "Z";
       await loop(nodeOffset, () => press("ArrowRight"));
       await press("Shift+ArrowRight");
-      await type(replaceText);
-      expect(getText(editable)).toEqual(
-        insertAt(deleteAt(initialValue, 1, [0, nodeOffset]), replaceText, [
-          0,
-          nodeOffset,
-        ]),
-      );
-      expect(getSelection(editable)).toEqual([nodeOffset + 1, nodeOffset + 1]);
+      await type("Z");
+      expect(getState(editable)).toBe("Hello Z| world $\nHello $ world ");
     });
 
     it("video", async () => {
@@ -3381,54 +2894,41 @@ describe("structured", () => {
         ),
       );
       const initialValue = ["Hello $ world $", "Hello $ world "];
-      expect(getText(editable)).toEqual(initialValue);
 
       editable.focus();
 
-      expect(getSelection(editable)).toEqual([0, 0]);
+      expect(getState(editable)).toBe("|Hello $ world $\nHello $ world ");
 
       const offsetAtLine = initialValue[1]!.indexOf(NON_EDITABLE_PLACEHOLDER);
       const nodeOffset = initialValue[0]!.length + 1 + offsetAtLine;
-      const char = "a";
 
       // type just before node
       await loop(nodeOffset, () => press("ArrowRight"));
-      expect(getSelection(editable)).toEqual([nodeOffset, nodeOffset]);
+      expect(getState(editable)).toBe("Hello $ world $\nHello |$ world ");
 
       // insert
-      await type(char);
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, char, [1, offsetAtLine]),
-      );
-      expect(getSelection(editable)).toEqual([nodeOffset + 1, nodeOffset + 1]);
+      await type("a");
+      expect(getState(editable)).toBe("Hello $ world $\nHello a|$ world ");
 
       // delete
       await press("Backspace");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([nodeOffset, nodeOffset]);
+      expect(getState(editable)).toBe("Hello $ world $\nHello |$ world ");
 
       // type just after node
       await press("ArrowRight");
-      expect(getSelection(editable)).toEqual([nodeOffset + 1, nodeOffset + 1]);
+      expect(getState(editable)).toBe("Hello $ world $\nHello $| world ");
 
       // insert
-      await type(char);
-      expect(getText(editable)).toEqual(
-        insertAt(initialValue, char, [1, offsetAtLine + 1]),
-      );
-      expect(getSelection(editable)).toEqual([nodeOffset + 2, nodeOffset + 2]);
+      await type("a");
+      expect(getState(editable)).toBe("Hello $ world $\nHello $a| world ");
 
       // delete
       await press("Backspace");
-      expect(getText(editable)).toEqual(initialValue);
-      expect(getSelection(editable)).toEqual([nodeOffset + 1, nodeOffset + 1]);
+      expect(getState(editable)).toBe("Hello $ world $\nHello $| world ");
 
       // delete custom node
       await press("Backspace");
-      expect(getText(editable)).toEqual(
-        deleteAt(initialValue, 1, [1, offsetAtLine]),
-      );
-      expect(getSelection(editable)).toEqual([nodeOffset, nodeOffset]);
+      expect(getState(editable)).toBe("Hello $ world $\nHello | world ");
     });
   });
 });

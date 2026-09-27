@@ -2,12 +2,7 @@ import { defineConfig } from "vitest/config";
 import type { BrowserCommand } from "vitest/node";
 import { playwright } from "@vitest/browser-playwright";
 
-// Commands dispatching trusted events through the playwright page
-const press: BrowserCommand<[key: string]> = async ({ page }, key) => {
-  await page.keyboard.press(key);
-};
-
-// Coordinates are relative to the tester iframe
+// Drags with the playwright mouse. Coordinates are relative to the tester iframe
 const mouseDrag: BrowserCommand<
   [from: [x: number, y: number], to: [x: number, y: number]]
 > = async ({ page }, [fromX, fromY], [toX, toY]) => {
@@ -60,7 +55,7 @@ export default defineConfig({
               { browser: "webkit" },
             ],
             screenshotFailures: false,
-            commands: { press, mouseDrag },
+            commands: { mouseDrag },
           },
         },
       },
