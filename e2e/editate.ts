@@ -27,7 +27,7 @@ export const initEditateHelpers = async (context: BrowserContext) => {
     `);
 };
 
-export const NON_EDITABLE_PLACEHOLDER = "$";
+const NON_EDITABLE_PLACEHOLDER = "$";
 
 export const getText = async (
   editable: Locator,
@@ -119,57 +119,6 @@ export const getText = async (
   );
 };
 
-export const waitForStyleSet = (
-  editable: Locator,
-  key: keyof CSSStyleDeclaration,
-  value: string,
-  unset?: boolean,
-): Promise<boolean> => {
-  return editable.evaluate(
-    (element, [key, value, unset]) => {
-      return new Promise<boolean>((resolve) => {
-        const stringToStyle = (s: string): CSSStyleDeclaration => {
-          const e = document.createElement("div");
-          e.style.cssText = s;
-          return e.style;
-        };
-        const mo = new MutationObserver((records) => {
-          for (const r of records) {
-            if (r.type === "attributes") {
-              if (
-                r.attributeName === "style" &&
-                (unset
-                  ? stringToStyle(r.oldValue!)
-                  : (r.target as HTMLElement).style)[key] === value
-              ) {
-                mo.disconnect();
-                resolve(true);
-              }
-            } else if (r.type === "childList") {
-              if (
-                (unset ? [...r.removedNodes] : [...r.addedNodes]).some(
-                  (e) => (e as HTMLElement).style[key] === value,
-                )
-              ) {
-                mo.disconnect();
-                resolve(true);
-              }
-            }
-          }
-        });
-        mo.observe(element, {
-          subtree: true,
-          attributes: true,
-          attributeFilter: ["style"],
-          attributeOldValue: true,
-          childList: true,
-        });
-      });
-    },
-    [key, value, unset] as const,
-  );
-};
-
 export const getSelection = async (
   editable: Locator,
   config: { blockTag?: string } = {},
@@ -201,30 +150,6 @@ export const getSelection = async (
   return [tranformPos(selection[0]), tranformPos(selection[1])];
 };
 
-export const getSelectedRect = (editable: Locator): Promise<DOMRect> => {
-  return editable.evaluate((element) => {
-    const selection = element.ownerDocument.getSelection()!;
-    return selection.getRangeAt(0)!.getBoundingClientRect();
-  });
-};
-
-export const moveSelectionToOrigin = (editable: Locator) => {
-  return editable.evaluate((element) => {
-    const selection = element.ownerDocument.getSelection()!;
-    selection.setBaseAndExtent(element, 0, element, 0);
-  });
-};
-
-export const deleteAt = (
-  value: readonly string[],
-  length: number,
-  [line, offset]: readonly [line: number, offset: number],
-): string[] => {
-  return value.map((r, i) =>
-    i === line ? r.slice(0, offset) + r.slice(offset + length) : r,
-  );
-};
-
 export const insertAt = (
   value: readonly string[],
   text: string,
@@ -233,15 +158,6 @@ export const insertAt = (
   return value.map((r, i) =>
     i === line ? r.slice(0, offset) + text + r.slice(offset) : r,
   );
-};
-
-export const replaceAt = (
-  value: readonly string[],
-  insertedText: string,
-  deleteLength: number,
-  pos: readonly [line: number, offset: number],
-): string[] => {
-  return insertAt(deleteAt(value, deleteLength, pos), insertedText, pos);
 };
 
 export const insertLineBreakAt = (
@@ -255,77 +171,3 @@ export const insertLineBreakAt = (
     return r;
   });
 };
-
-export const sumLines = (value: readonly string[], line: number): number => {
-  let offset = 0;
-  for (let i = 0; i <= line; i++) {
-    offset += value[i]!.length;
-    if (i !== value.length - 1) {
-      offset++;
-    }
-  }
-  return offset;
-};
-
-// export const logInput = (editable: Locator) =>
-//   editable.evaluate((e) => {
-//     return new Promise<[string, string, any, any, any]>((res) => {
-//       e.addEventListener(
-//         "beforeinput",
-//         (ev: Event) => {
-//           const range = (ev as InputEvent).getTargetRanges()[0];
-//           const serializeRange = (range: AbstractRange) => {
-//             const serializeNode = (node: Node) => {
-//               const nodeName = node.nodeName;
-//               return JSON.stringify([
-//                 nodeName,
-//                 node.nodeType === 3
-//                   ? (node as Text).data
-//                   : [...(node as Element).childNodes].map(serializeNode),
-//               ]);
-//             };
-//             return {
-//               startContainer: serializeNode(range.startContainer),
-//               startOffset: range.startOffset,
-//               endContainer: serializeNode(range.endContainer),
-//               endOffset: range.endOffset,
-//               js: window.editate.serializeRange(
-//                 e,
-//                 {
-//                   _document: e.ownerDocument,
-//                   _isBlock: window.editate.defaultIsBlockNode,
-//                 },
-//                 range
-//               ),
-//             } as const;
-//           };
-
-//           const targetRange = serializeRange(range);
-//           const prevSelection = serializeRange(
-//             e.ownerDocument.getSelection()!.getRangeAt(0)!
-//           );
-
-//           e.addEventListener(
-//             "input",
-//             () => {
-//               res([
-//                 e.innerHTML,
-//                 (ev as InputEvent).inputType,
-//                 targetRange,
-//                 prevSelection,
-//                 serializeRange(e.ownerDocument.getSelection()!.getRangeAt(0)!),
-//               ]);
-//             },
-//             {
-//               once: true,
-//               capture: true,
-//             }
-//           );
-//         },
-//         {
-//           once: true,
-//           capture: true,
-//         }
-//       );
-//     });
-//   });
