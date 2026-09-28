@@ -1,6 +1,6 @@
 import { BrowserContext, Locator } from "@playwright/test";
-import * as esbuild from "esbuild";
 import * as path from "node:path";
+import { build } from "rolldown";
 import { DomPosition } from "../src/doc/types.ts";
 import { TokenType } from "../src/dom/parser.ts";
 
@@ -10,15 +10,11 @@ declare global {
   }
 }
 
-const editateDom = esbuild
-  .build({
-    entryPoints: [path.join(import.meta.dirname, "../src/dom/index.ts")],
-    bundle: true,
-    write: false,
-    format: "iife",
-    globalName: "editate",
-  })
-  .then((r) => r.outputFiles[0].text);
+const editateDom = build({
+  input: path.join(import.meta.dirname, "../src/dom/index.ts"),
+  write: false,
+  output: { format: "iife", name: "editate" },
+}).then((r) => r.output[0].code);
 
 export const initEditateHelpers = async (context: BrowserContext) => {
   await context.addInitScript(`
