@@ -42,30 +42,12 @@ jobs:
       - name: Run browser tests
         run: npm run test:browser
 
-      - run: npm run build && npm link
+      - run: |
+          npm run build && npm link
+          for p in examples/*/package.json; do (cd $(dirname $p) && npm ci && npm link editate); done
 
-      - name: Smoke react
-        run: (cd examples/react && npm ci && npm link editate) && FRAMEWORK_DIR=examples/react npm run e2e
-      - name: Smoke vue
-        run: (cd examples/vue && npm ci && npm link editate) && FRAMEWORK_DIR=examples/vue npm run e2e
-      - name: Smoke svelte
-        run: (cd examples/svelte && npm ci && npm link editate) && FRAMEWORK_DIR=examples/svelte npm run e2e
-      - name: Smoke solid
-        run: (cd examples/solid && npm ci && npm link editate) && FRAMEWORK_DIR=examples/solid npm run e2e
-      - name: Smoke angular
-        run: (cd examples/angular && npm ci && npm link editate) && FRAMEWORK_DIR=examples/angular npm run e2e
-      - name: Smoke preact
-        run: (cd examples/preact && npm ci && npm link editate) && FRAMEWORK_DIR=examples/preact npm run e2e
-      - name: Smoke alpine
-        run: (cd examples/alpine && npm ci && npm link editate) && FRAMEWORK_DIR=examples/alpine npm run e2e
-      - name: Smoke marko
-        run: (cd examples/marko && npm ci && npm link editate) && FRAMEWORK_DIR=examples/marko npm run e2e
-      - name: Smoke octane
-        run: (cd examples/octane && npm ci && npm link editate) && FRAMEWORK_DIR=examples/octane npm run e2e
-      - name: Smoke remix
-        run: (cd examples/remix && npm ci && npm link editate) && FRAMEWORK_DIR=examples/remix npm run e2e
-      - name: Smoke vanilla
-        run: (cd examples/vanilla && npm ci && npm link editate) && FRAMEWORK_DIR=examples/vanilla npm run e2e
+      - name: Run smoke tests
+        run: npm run e2e
       # - uses: actions/upload-artifact@v3
       #   if: always()
       #   with:
