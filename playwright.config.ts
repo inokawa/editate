@@ -1,9 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
+import { existsSync, readdirSync } from "node:fs";
 
-const FRAMEWORK_DIR = process.env.FRAMEWORK_DIR;
-if (!FRAMEWORK_DIR) {
-  throw new Error("FRAMEWORK_DIR is required");
-}
+const examples = readdirSync("examples", { withFileTypes: true })
+  .filter((d) => existsSync(`examples/${d.name}/package.json`))
+  .map((d, i) => ({ name: d.name, port: 6006 + i }));
 
 export default defineConfig({
   testDir: "./e2e",
@@ -14,9 +14,13 @@ export default defineConfig({
     ...devices["Desktop Chrome"],
     trace: "on-first-retry",
   },
-  webServer: {
-    command: `(cd ${FRAMEWORK_DIR} && npm run build && npx http-server dist -p 6006)`,
-    url: "http://127.0.0.1:6006",
+  projects: examples.map(({ name, port }) => ({
+    name,
+    use: { baseURL: `http://127.0.0.1:${port}` },
+  })),
+  webServer: examples.map(({ name, port }) => ({
+    command: `(cd examples/${name} && npm run build && npx http-server dist -p ${port})`,
+    url: `http://127.0.0.1:${port}`,
     reuseExistingServer: !process.env.CI,
-  },
+  })),
 });
