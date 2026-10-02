@@ -1,4 +1,4 @@
-import { ref, type Handle } from "remix/ui";
+import { css, ref, type Handle } from "remix/component";
 import { createEditor, plainTransferPlugin } from "editate";
 import * as z from "zod";
 
@@ -24,27 +24,31 @@ const initialDoc: Doc = {
   ],
 };
 
+const editorStyle = css({
+  backgroundColor: "white",
+  border: "solid 1px darkgray",
+  padding: 8,
+});
+
 export function App(handle: Handle) {
   let doc: Doc = initialDoc;
 
   return () => (
     <div
-      mix={ref((node, signal) => {
-        const editor = createEditor({
-          doc: initialDoc,
-          schema: schema,
-        }).exec(plainTransferPlugin);
-        editor.on("change", () => {
-          doc = editor.doc;
-          handle.update();
-        });
-        signal.addEventListener("abort", editor.input(node));
-      })}
-      style={{
-        backgroundColor: "white",
-        border: "solid 1px darkgray",
-        padding: 8,
-      }}
+      mix={[
+        editorStyle,
+        ref((node, signal) => {
+          const editor = createEditor({
+            doc: initialDoc,
+            schema: schema,
+          }).exec(plainTransferPlugin);
+          editor.on("change", () => {
+            doc = editor.doc;
+            handle.update();
+          });
+          signal.addEventListener("abort", editor.input(node));
+        }),
+      ]}
     >
       {doc.children.map((b, i) => (
         <div key={i}>

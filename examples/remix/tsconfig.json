@@ -14,7 +14,7 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "remix/ui",
+    "jsxImportSource": "remix/component",
 
     /* Linting */
     "strict": true,
