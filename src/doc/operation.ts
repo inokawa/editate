@@ -6,6 +6,7 @@ import {
   hasBlockChildren,
   isBlockNode,
   isTextNode,
+  sliceFragment,
   splitBlock,
   iterChildren,
 } from "./node.js";
@@ -45,6 +46,7 @@ const OP_FORMAT = "format";
 type FormatOperation = Readonly<{
   type: typeof OP_FORMAT;
   range: Range;
+  /** Must not be `text`, nor `children` unless the depth is 0. */
   key: string;
   /** Omit or pass undefined to remove the attr. */
   value?: unknown;
@@ -102,11 +104,10 @@ const concat = <T extends Node>(a: readonly T[], b: readonly T[]): T[] => {
           joinBlocks(array.slice(i, i + 2) as BlockNode[]) as T,
         );
       } else {
-        array.splice(
-          i,
-          2,
-          ...(normalizeInline(array.slice(i, i + 2) as InlineNode[]) as T[]),
-        );
+        // only the seam and the nodes after it are normalized, so that the nodes before it are kept as they are
+        return a
+          .slice(0, i)
+          .concat(normalizeInline(array.slice(i) as InlineNode[]) as T[]);
       }
     }
   }
@@ -128,72 +129,84 @@ export const joinBlocks = <T extends BlockNode>(blocks: readonly T[]): T => {
 
 const LEAF = 1;
 
-const updateRange = <T extends DocNode | BlockNode>(
-  node: T,
-  range: Range,
-  mapNode: (node: Node) => Node,
-  isTarget: (mask: number, level: number) => boolean,
-  level: number,
-  collapsed: boolean,
-): [node: T, mask: number] => {
-  let mask = 0;
-  let changed = false;
-  let endIndex = 0;
-  let nodes: Node[] | undefined;
-  for (const [n, , i, childRange] of iterChildren(node, range)) {
-    if (!nodes) {
-      nodes = node.children.slice(0, i);
-    }
-    const covered = isCovered(childRange, getNodeSize(n));
-    let next = n;
-    if (isBlockNode(n)) {
-      let m: number;
-      [next, m] = updateRange(
-        n,
-        childRange,
-        mapNode,
-        isTarget,
-        level + 1,
-        collapsed,
-      );
-      mask |= m << 1;
-    } else {
-      if (covered || collapsed) {
-        mask |= LEAF << 1;
+const formatRange = <T extends DocNode>(
+  doc: T,
+  { range, depth = -1 }: FormatOperation,
+  mapNode: (node: Node, level: number, range: Range) => Node,
+): T => {
+  const collapsed = isCollapsed(range);
+  const isTarget = (mask: number, level: number): boolean =>
+    depth < 0 ? !!(mask & (1 << (-depth - 1))) : depth === level;
+  const walk = <N extends DocNode | BlockNode>(
+    node: N,
+    range: Range,
+    level: number,
+    offset: number,
+  ): [node: N, mask: number] => {
+    let mask = 0;
+    let changed = false;
+    let startIndex = 0;
+    let endIndex = 0;
+    const nodes: Node[] = [];
+    for (const [n, childOffset, i, childRange] of iterChildren(node, range)) {
+      if (!nodes.length) {
+        startIndex = i;
       }
-      if (covered && isTarget(LEAF, level + 1)) {
-        if (isTextNode(n)) {
+      const covered = isCovered(childRange, getNodeSize(n));
+      const at = offset + childOffset;
+      let next = n;
+      if (isBlockNode(n)) {
+        let m: number;
+        [next, m] = walk(n, childRange, level + 1, at);
+        mask |= m << 1;
+      } else {
+        if (covered || collapsed) {
+          mask |= LEAF << 1;
+        }
+        if (covered && isTarget(LEAF, level + 1)) {
           const [start, end] = childRange;
-          if (start > 0) {
-            nodes.push({ ...n, text: n.text.slice(0, start) });
+          const leafRange: Range = [at + start, at + end];
+          if (isTextNode(n)) {
+            if (start > 0) {
+              nodes.push({ ...n, text: n.text.slice(0, start) });
+            }
+            next = mapNode(
+              { ...n, text: n.text.slice(start, end) },
+              level + 1,
+              leafRange,
+            );
+            if (end < n.text.length) {
+              nodes.push(next);
+              next = { ...n, text: n.text.slice(end) };
+            }
+          } else {
+            next = mapNode(n, level + 1, leafRange);
           }
-          next = mapNode({ ...n, text: n.text.slice(start, end) });
-          if (end < n.text.length) {
-            nodes.push(next);
-            next = { ...n, text: n.text.slice(end) };
-          }
-        } else {
-          next = mapNode(n);
         }
       }
+      if (next !== n) {
+        changed = true;
+      }
+      nodes.push(next);
+      endIndex = i;
     }
-    if (next !== n) {
-      changed = true;
+    let next = node;
+    if (changed) {
+      const { children } = node;
+      const array = children
+        .slice(0, startIndex)
+        .concat(nodes, children.slice(endIndex + 1));
+      next = {
+        ...node,
+        children: normalizeInline(array as InlineNode[]) as N["children"],
+      };
     }
-    nodes.push(next);
-    endIndex = i;
-  }
-  let next = node;
-  if (changed) {
-    const array = normalizeInline(
-      nodes!.concat(node.children.slice(endIndex + 1)) as InlineNode[],
-    );
-    next = { ...node, children: array as T["children"] };
-  }
-  if (isTarget(mask, level)) {
-    next = mapNode(next) as T;
-  }
-  return [next, mask];
+    if (isTarget(mask, level)) {
+      next = mapNode(next, level, [offset + range[0], offset + range[1]]) as N;
+    }
+    return [next, mask];
+  };
+  return walk(doc, range, 0, 0)[0];
 };
 
 const replaceRange = <T extends DocNode>(
@@ -202,8 +215,9 @@ const replaceRange = <T extends DocNode>(
   end: number,
   inserted: Fragment,
 ): T => {
-  const [before, maybeAfter] = splitBlock(doc, start);
-  const after = start < end ? splitBlock(doc, end)[1] : maybeAfter;
+  const placeholder = !inserted.length;
+  const [before, maybeAfter] = splitBlock(doc, start, placeholder);
+  const after = start < end ? splitBlock(doc, end, placeholder)[1] : maybeAfter;
 
   const isBlock = hasBlockChildren(inserted);
   if (isBlock !== hasBlockChildren(doc.children)) {
@@ -337,10 +351,13 @@ export const applyOperation = <T extends DocNode>(
       break;
     }
     case OP_FORMAT: {
-      const { range, key, value, depth = -1 } = op;
-      if (isValidSelection(doc, range) && range[0] <= range[1]) {
-        const isTarget = (mask: number, level: number): boolean =>
-          depth < 0 ? !!(mask & (1 << (-depth - 1))) : depth === level;
+      const { range, key, value, depth } = op;
+      if (
+        key !== "text" &&
+        (key !== "children" || depth === 0) &&
+        isValidSelection(doc, range) &&
+        range[0] <= range[1]
+      ) {
         const patch = <N extends Node | DocNode>(n: N): N => {
           if (value !== undefined) {
             return { ...n, [key]: value };
@@ -348,14 +365,7 @@ export const applyOperation = <T extends DocNode>(
           const { [key]: removed, ...rest } = n as N & Record<string, unknown>;
           return rest as N;
         };
-        doc = updateRange(
-          doc,
-          range,
-          patch,
-          isTarget,
-          0,
-          isCollapsed(range),
-        )[0];
+        doc = formatRange(doc, op, patch);
       }
       break;
     }
@@ -365,4 +375,59 @@ export const applyOperation = <T extends DocNode>(
   }
 
   return [doc, selection];
+};
+
+/**
+ * @internal
+ */
+export const invertOperation = (doc: DocNode, op: Operation): Operation[] => {
+  switch (op.type) {
+    case OP_DELETE: {
+      const { range } = op;
+      return [
+        {
+          type: OP_INSERT_NODE,
+          at: range[0],
+          fragment: sliceFragment(doc, ...range),
+        },
+      ];
+    }
+    case OP_INSERT_TEXT:
+    case OP_INSERT_NODE: {
+      const { at } = op;
+      const ops: Operation[] = [
+        { type: OP_DELETE, range: [at, mapPosition(at, op)] },
+      ];
+      const [block] = getLeafBlockAt(doc, at);
+      if (!getNodeSize(block)) {
+        ops.push({ type: OP_INSERT_NODE, at, fragment: block.children });
+      }
+      return ops;
+    }
+    case OP_FORMAT: {
+      const { key } = op;
+      const ops: FormatOperation[] = [];
+      let last: FormatOperation | undefined;
+      formatRange(doc, op, (n, depth, range) => {
+        const value = (n as Node & Record<string, unknown>)[key];
+        // a gap of 1 is a block separator
+        if (
+          last &&
+          last.depth === depth &&
+          is(last.value, value) &&
+          range[0] - last.range[1] <= 1
+        ) {
+          range = [last.range[0], range[1]];
+          ops.pop();
+        }
+        last = { type: OP_FORMAT, range, key, value, depth };
+        ops.push(last);
+        return n;
+      });
+      return ops;
+    }
+    default: {
+      return op satisfies never;
+    }
+  }
 };

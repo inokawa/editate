@@ -1,127 +1,92 @@
-import { ReplaceDoc } from "../commands.js";
-import { mapPositionWithOps, type Operation } from "../doc/operation.js";
+import { invertOperation, type Operation } from "../doc/operation.js";
 import type { DocNode, Selection } from "../doc/types.js";
 import type { Editor } from "../editor.js";
 import { keymap } from "../keyboard.js";
-import { keys } from "../utils.js";
 
-const MAX_HISTORY_LENGTH = 500;
+const MAX_HISTORY_LENGTH = 100;
 const BATCH_HISTORY_TIME = 500;
 
 interface HistoryContext {
   undo: () => void;
   redo: () => void;
-  undoable: () => boolean;
-  redoable: () => boolean;
-  clear: () => void;
+  stack: (redo?: boolean) => unknown[];
 }
 
 /**
  * @internal
  */
 export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
-  type History = [T, Selection, Operation[]];
-  let index = 0;
+  type History = [selection: Selection, ops: Operation[]];
   let prevTime = 0;
-  let undoOrRedoing = false;
+
+  // keyed by the document the operations led to, since a discarded transaction restores the document it started from
+  let recorded = new WeakMap<T, History>();
+
   const now = Date.now;
-  const histories: History[] = [[editor.doc, editor.selection, []]];
+  const undos: History[] = [];
+  const redos: History[] = [];
 
-  const get = () => histories[index]!;
+  const compose = (
+    [selection, ops]: History,
+    [, nextOps]: History,
+  ): History => [selection, nextOps.concat(ops)];
 
-  const isUndoable = (): boolean => {
-    return index > 0;
+  const take = (): History | undefined => {
+    const entry = recorded.get(editor.doc);
+    recorded = new WeakMap();
+    return entry;
   };
 
-  const isRedoable = (): boolean => {
-    return index < histories.length - 1;
+  const commit = () => {
+    let entry = take();
+    if (entry) {
+      const time = now();
+      if (undos.length && time - prevTime < BATCH_HISTORY_TIME) {
+        entry = compose(undos.pop()!, entry);
+      }
+      prevTime = time;
+      undos.push(entry);
+      redos.length = 0;
+      if (undos.length > MAX_HISTORY_LENGTH) {
+        undos.shift();
+      }
+    }
   };
 
-  const restore = (doc: T) => {
-    editor.exec(ReplaceDoc, doc.children);
-
-    const prev = doc as Record<string, unknown>;
-    const current = editor.doc as Record<string, unknown>;
-    for (const key of keys({ ...current, ...prev })) {
-      if (key !== "children" && current[key] !== prev[key]) {
-        editor.apply({
-          type: "format",
-          range: [0, 0],
-          key,
-          value: prev[key],
-          depth: 0,
-        });
+  // applies the last entry of a stack and moves what it recorded to the other one
+  const restore = (from: History[], to: History[]) => {
+    commit();
+    if (from.length) {
+      const [selection, ops] = from[from.length - 1]!;
+      editor.apply(ops);
+      const entry = take();
+      if (entry) {
+        from.pop();
+        to.push(entry);
+        editor.selection = selection;
       }
     }
   };
 
   const undo = () => {
-    if (isUndoable()) {
-      const sel = get()[1];
-      index--;
-      const currentDoc = editor.doc;
-      undoOrRedoing = true;
-      restore(get()[0]);
-      undoOrRedoing = false;
-      if (currentDoc !== editor.doc) {
-        editor.selection = sel;
-      }
-    }
+    restore(undos, redos);
   };
   const redo = () => {
-    if (isRedoable()) {
-      index++;
-      const [doc, sel, ops] = get();
-      const currentDoc = editor.doc;
-      undoOrRedoing = true;
-      restore(doc);
-      undoOrRedoing = false;
-      if (currentDoc !== editor.doc) {
-        editor.selection = [
-          mapPositionWithOps(sel[0], ops),
-          mapPositionWithOps(sel[1], ops),
-        ];
-      }
-    }
-  };
-
-  const clear = () => {
-    histories.length = 0;
-    histories.push([editor.doc, editor.selection, []]);
-    index = 0;
-    prevTime = 0;
+    restore(redos, undos);
   };
 
   editor.hook("apply", (op, next) => {
-    if (undoOrRedoing) return;
     const doc = editor.doc;
     const selection = editor.selection;
     const applied = next(op);
-    const newDoc = editor.doc;
-
-    if (applied && doc !== newDoc) {
-      const time = now();
-      if (index === 0 || time - prevTime >= BATCH_HISTORY_TIME) {
-        index++;
-        const history: History = [doc, selection, []];
-        if (index >= histories.length) {
-          histories.push(history);
-        } else {
-          histories[index] = history;
-        }
-      }
-      prevTime = time;
-      histories[index]![0] = newDoc;
-      histories[index]![2].push(applied);
-      if (histories.length > index + 1) {
-        histories.length = index + 1;
-      }
-      if (index > MAX_HISTORY_LENGTH) {
-        index--;
-        histories.shift();
-      }
+    const nextDoc = editor.doc;
+    if (applied && doc !== nextDoc) {
+      const entry: History = [selection, invertOperation(doc, applied)];
+      const prev = recorded.get(doc);
+      recorded.set(nextDoc, prev ? compose(prev, entry) : entry);
     }
   });
+  editor.on("change", commit);
 
   editor.hook("keyboard", keymap("Mod+Z", undo));
   editor.hook("keyboard", keymap("Shift+Mod+Z", redo));
@@ -129,9 +94,10 @@ export function historyPlugin<T extends DocNode>(editor: Editor<T>) {
   editor.set<HistoryContext>(historyPlugin, {
     undo,
     redo,
-    undoable: isUndoable,
-    redoable: isRedoable,
-    clear,
+    stack: (redo) => {
+      commit();
+      return redo ? redos : undos;
+    },
   });
 }
 
@@ -153,19 +119,21 @@ export function Redo(editor: Editor) {
  * Check if the history can be undone.
  */
 export function Undoable(editor: Editor): boolean {
-  return editor.get<HistoryContext>(historyPlugin).undoable();
+  return !!editor.get<HistoryContext>(historyPlugin).stack().length;
 }
 
 /**
  * Check if the history can be redone.
  */
 export function Redoable(editor: Editor): boolean {
-  return editor.get<HistoryContext>(historyPlugin).redoable();
+  return !!editor.get<HistoryContext>(historyPlugin).stack(true).length;
 }
 
 /**
  * Clears the history and makes the current document its oldest state.
  */
 export function ClearHistory(editor: Editor) {
-  editor.get<HistoryContext>(historyPlugin).clear();
+  const { stack } = editor.get<HistoryContext>(historyPlugin);
+  stack().length = 0;
+  stack(true).length = 0;
 }

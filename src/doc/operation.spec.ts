@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   applyOperation,
+  invertOperation,
   isValidSelection,
   mapPosition,
   type Operation,
 } from "./operation.js";
-import { type Selection } from "./types.js";
+import { type DocNode, type Selection } from "./types.js";
 import { getNodeSize } from "./node.js";
 
 type Doc = {
@@ -2007,6 +2008,64 @@ describe("insert node", () => {
     expect(res[1]).toEqual([sel[0] + 1, sel[1] + 1]);
   });
 
+  it("insert texts with the same attr on caret", () => {
+    const docText = "abcde";
+    const doc: Doc = {
+      children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
+    };
+    const sel: Selection = [1, 1];
+    const res = applyOperation(doc, sel, {
+      type: "insert_node",
+      at: 1,
+      fragment: [
+        {
+          children: [
+            { text: "x", foo: "bar" },
+            { text: "y", foo: "bar" },
+          ],
+        },
+      ],
+    });
+
+    expect(res[0]).toEqual({
+      children: [
+        {
+          attr: 0,
+          children: [
+            { attr: 0, text: "a" },
+            { text: "xy", foo: "bar" },
+            { attr: 0, text: "bcde" },
+          ],
+        },
+      ],
+    });
+    expect(res[1]).toEqual([sel[0] + 2, sel[1] + 2]);
+  });
+
+  it("insert empty line at empty line", () => {
+    const docText = "abcde";
+    const doc: Doc = {
+      children: [
+        { attr: 0, children: [{ attr: 0, text: docText }] },
+        { attr: 1, children: [{ attr: 1, text: "" }] },
+      ],
+    };
+    const sel: Selection = [docText.length + 1, docText.length + 1];
+    const res = applyOperation(doc, sel, {
+      type: "insert_node",
+      at: docText.length + 1,
+      fragment: [{ children: [{ text: "" }] }],
+    });
+
+    expect(res[0]).toEqual({
+      children: [
+        { attr: 0, children: [{ attr: 0, text: docText }] },
+        { attr: 1, children: [{ text: "" }] },
+      ],
+    });
+    expect(res[1]).toEqual(sel);
+  });
+
   describe("single line document", () => {
     it("insert void on caret", () => {
       const docText = "abcde";
@@ -3073,6 +3132,41 @@ describe("format", () => {
       expect(res[0] === doc).toBe(true);
       expect(res[1]).toEqual(sel);
     });
+
+    it("format text of text node", () => {
+      const docText = "abcde";
+      const doc: Doc = {
+        children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
+      };
+      const sel: Selection = [2, 2];
+      const res = applyOperation(doc, sel, {
+        type: "format",
+        range: [1, 3],
+        key: "text",
+        value: "XYZ",
+      });
+
+      expect(res[0] === doc).toBe(true);
+      expect(res[1]).toEqual(sel);
+    });
+
+    it("format children of block node", () => {
+      const docText = "abcde";
+      const doc: Doc = {
+        children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
+      };
+      const sel: Selection = [2, 2];
+      const res = applyOperation(doc, sel, {
+        type: "format",
+        range: [1, 1],
+        key: "children",
+        value: [{ text: "xy" }],
+        depth: -2,
+      });
+
+      expect(res[0] === doc).toBe(true);
+      expect(res[1]).toEqual(sel);
+    });
   });
 
   it("update text at previous line", () => {
@@ -3794,6 +3888,25 @@ describe("format with depth", () => {
         { attr: 1, children: [{ attr: 0, text: docText2 }] },
       ],
     });
+    expect(res[1]).toEqual(sel);
+  });
+
+  it("update children of root node", () => {
+    const docText = "abcde";
+    const doc: Doc = {
+      children: [{ attr: 0, children: [{ attr: 0, text: docText }] }],
+    };
+    const sel: Selection = [2, 2];
+    const children = [{ attr: 1, children: [{ attr: 1, text: "xy" }] }];
+    const res = applyOperation(doc, sel, {
+      type: "format",
+      range: [0, 0],
+      key: "children",
+      value: children,
+      depth: 0,
+    });
+
+    expect(res[0]).toEqual({ children });
     expect(res[1]).toEqual(sel);
   });
 
@@ -4550,6 +4663,628 @@ describe(mapPosition.name, () => {
     it("should keep position before deletion after it", () => {
       expect(mapPosition(5, op(6, 8))).toBe(5);
       expect(mapPosition(5, op(6, 8))).toBe(5);
+    });
+  });
+});
+
+describe(invertOperation.name, () => {
+  describe("delete", () => {
+    it("should insert the deleted fragment at the start", () => {
+      const sel: Selection = [0, 0];
+      const doc: Doc = {
+        children: [
+          { attr: 0, children: [{ attr: 0, text: "abcde" }] },
+          { attr: 1, children: [{ attr: 1, text: "fghij" }] },
+          { attr: 2, children: [{ attr: 2, text: "klmno" }] },
+        ],
+      };
+      const op: Operation = { type: "delete", range: [3, 13] };
+      const applied = applyOperation(doc, sel, op)[0];
+      const inverted = invertOperation(doc, op);
+      const reverted = inverted.reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applied,
+      );
+
+      expect(applied).toEqual({
+        children: [
+          {
+            attr: 0,
+            children: [
+              { attr: 0, text: "abc" },
+              { attr: 2, text: "lmno" },
+            ],
+          },
+        ],
+      });
+      expect(inverted).toEqual([
+        {
+          type: "insert_node",
+          at: 3,
+          fragment: [
+            { attr: 0, children: [{ attr: 0, text: "de" }] },
+            { attr: 1, children: [{ attr: 1, text: "fghij" }] },
+            { attr: 2, children: [{ attr: 2, text: "k" }] },
+          ],
+        },
+      ]);
+      expect(reverted).toEqual(doc);
+    });
+
+    it("should restore the whole document", () => {
+      const sel: Selection = [0, 0];
+      const doc: Doc = {
+        children: [
+          { attr: 0, children: [{ attr: 0, text: "abcde" }] },
+          { attr: 1, children: [{ attr: 1, text: "fghij" }] },
+        ],
+      };
+      const op: Operation = { type: "delete", range: [0, 11] };
+      const applied = applyOperation(doc, sel, op)[0];
+      const reverted = invertOperation(doc, op).reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applied,
+      );
+
+      expect(applied).toEqual({
+        children: [{ attr: 0, children: [{ attr: 1, text: "" }] }],
+      });
+      expect(reverted).toEqual(doc);
+    });
+
+    it("should restore the empty text node of the joined block", () => {
+      const sel: Selection = [0, 0];
+      const doc: DocNode = {
+        children: [
+          { children: [{ text: "ab", bold: true }] },
+          { children: [{ text: "" }] },
+        ],
+      };
+      const op: Operation = { type: "delete", range: [2, 3] };
+      const applied = applyOperation(doc, sel, op)[0];
+      const reverted = invertOperation(doc, op).reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applied,
+      );
+
+      expect(applied).toEqual({
+        children: [{ children: [{ text: "ab", bold: true }] }],
+      });
+      expect(reverted).toEqual(doc);
+    });
+  });
+
+  describe("insert_text", () => {
+    it("should delete the inserted text including linebreaks", () => {
+      const sel: Selection = [0, 0];
+      const doc: Doc = {
+        children: [{ attr: 0, children: [{ attr: 0, text: "abcde" }] }],
+      };
+      const text = "x\nyz";
+      const op: Operation = { type: "insert_text", at: 2, text };
+      const inverted = invertOperation(doc, op);
+      const reverted = inverted.reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applyOperation(doc, sel, op)[0],
+      );
+
+      expect(inverted).toEqual([
+        { type: "delete", range: [2, 2 + text.length] },
+      ]);
+      expect(reverted).toEqual(doc);
+    });
+  });
+
+  describe("insert_node", () => {
+    it("should delete the inserted fragment", () => {
+      const sel: Selection = [0, 0];
+      const doc: Doc = {
+        children: [{ attr: 0, children: [{ attr: 0, text: "abcde" }] }],
+      };
+      const fragment: Doc["children"] = [
+        { attr: 1, children: [{ attr: 1, text: "x" }] },
+        { attr: 2, children: [{ attr: 2, text: "yz" }] },
+      ];
+      const op: Operation = { type: "insert_node", at: 2, fragment };
+      const inverted = invertOperation(doc, op);
+      const reverted = inverted.reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applyOperation(doc, sel, op)[0],
+      );
+
+      expect(inverted).toEqual([
+        { type: "delete", range: [2, 2 + getNodeSize({ children: fragment })] },
+      ]);
+      expect(reverted).toEqual(doc);
+    });
+
+    it("should delete the inserted void node", () => {
+      const sel: Selection = [0, 0];
+      const doc: DocNode = {
+        children: [{ children: [{ text: "abcde" }] }],
+      };
+      const op: Operation = {
+        type: "insert_node",
+        at: 2,
+        fragment: [{ children: [{ foo: "bar" }] }],
+      };
+      const applied = applyOperation(doc, sel, op)[0];
+      const inverted = invertOperation(doc, op);
+      const reverted = inverted.reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applied,
+      );
+
+      expect(applied).toEqual({
+        children: [
+          { children: [{ text: "ab" }, { foo: "bar" }, { text: "cde" }] },
+        ],
+      });
+      expect(inverted).toEqual([{ type: "delete", range: [2, 3] }]);
+      expect(reverted).toEqual(doc);
+    });
+
+    it("should put the replaced empty text node back after deleting the content", () => {
+      const sel: Selection = [0, 0];
+      const doc: DocNode = {
+        children: [{ children: [{ text: "", bold: true }] }],
+      };
+      const op: Operation = {
+        type: "insert_node",
+        at: 0,
+        fragment: [{ children: [{ text: "hello" }] }],
+      };
+      const applied = applyOperation(doc, sel, op)[0];
+      const inverted = invertOperation(doc, op);
+      const reverted = inverted.reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applied,
+      );
+
+      expect(applied).toEqual({
+        children: [{ children: [{ text: "hello" }] }],
+      });
+      expect(inverted).toEqual([
+        { type: "delete", range: [0, 5] },
+        { type: "insert_node", at: 0, fragment: [{ text: "", bold: true }] },
+      ]);
+      expect(reverted).toEqual(doc);
+    });
+
+    it("should not keep the attrs of the inserted text on the empty text node", () => {
+      const sel: Selection = [0, 0];
+      const doc: DocNode = { children: [{ children: [{ text: "" }] }] };
+      const op: Operation = {
+        type: "insert_node",
+        at: 0,
+        fragment: [{ children: [{ text: "hello", bold: true }] }],
+      };
+      const reverted = invertOperation(doc, op).reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applyOperation(doc, sel, op)[0],
+      );
+
+      expect(reverted).toEqual(doc);
+    });
+  });
+
+  describe("format", () => {
+    it("should restore each text node in the range with its depth from the root", () => {
+      const sel: Selection = [0, 0];
+      const doc: DocNode = {
+        children: [
+          {
+            children: [{ text: "ab", foo: "old" }, { text: "cde" }],
+          },
+          { children: [{ text: "fghij" }] },
+        ],
+      };
+      const op: Operation = {
+        type: "format",
+        range: [1, 7],
+        key: "foo",
+        value: "new",
+      };
+      const inverted = invertOperation(doc, op);
+      const reverted = inverted.reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applyOperation(doc, sel, op)[0],
+      );
+
+      expect(inverted).toEqual([
+        { type: "format", range: [1, 2], key: "foo", value: "old", depth: 2 },
+        {
+          type: "format",
+          range: [2, 7],
+          key: "foo",
+          value: undefined,
+          depth: 2,
+        },
+      ]);
+      expect(reverted).toEqual(doc);
+    });
+
+    it("should revert adjacent nodes with the same value by one operation", () => {
+      const sel: Selection = [0, 0];
+      const doc: DocNode = {
+        children: [
+          { children: [{ text: "ab" }, { text: "cd", foo: "old" }] },
+          { children: [{ text: "ef", foo: "old" }, { text: "gh" }] },
+        ],
+      };
+      const op: Operation = {
+        type: "format",
+        range: [0, 9],
+        key: "foo",
+        value: "new",
+      };
+      const inverted = invertOperation(doc, op);
+      const reverted = inverted.reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applyOperation(doc, sel, op)[0],
+      );
+
+      expect(inverted).toEqual([
+        {
+          type: "format",
+          range: [0, 2],
+          key: "foo",
+          value: undefined,
+          depth: 2,
+        },
+        { type: "format", range: [2, 7], key: "foo", value: "old", depth: 2 },
+        {
+          type: "format",
+          range: [7, 9],
+          key: "foo",
+          value: undefined,
+          depth: 2,
+        },
+      ]);
+      expect(reverted).toEqual(doc);
+    });
+
+    it("should restore the removed attr", () => {
+      const sel: Selection = [0, 0];
+      const doc: DocNode = {
+        children: [{ children: [{ text: "ab", foo: "old" }, { text: "cd" }] }],
+      };
+      const op: Operation = { type: "format", range: [0, 4], key: "foo" };
+      const applied = applyOperation(doc, sel, op)[0];
+      const reverted = invertOperation(doc, op).reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applied,
+      );
+
+      expect(applied).toEqual({ children: [{ children: [{ text: "abcd" }] }] });
+      expect(reverted).toEqual(doc);
+    });
+
+    it("should restore each block in the range with the part of the range on it", () => {
+      const sel: Selection = [0, 0];
+      const doc: Doc = {
+        children: [
+          { attr: 0, children: [{ attr: 0, text: "abcde" }] },
+          { attr: 1, children: [{ attr: 1, text: "fghij" }] },
+        ],
+      };
+      const op: Operation = {
+        type: "format",
+        range: [2, 8],
+        key: "attr",
+        value: 9,
+        depth: -2,
+      };
+      const inverted = invertOperation(doc, op);
+      const reverted = inverted.reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applyOperation(doc, sel, op)[0],
+      );
+
+      expect(inverted).toEqual([
+        { type: "format", range: [2, 5], key: "attr", value: 0, depth: 1 },
+        { type: "format", range: [6, 8], key: "attr", value: 1, depth: 1 },
+      ]);
+      expect(reverted).toEqual(doc);
+    });
+
+    it("should revert adjacent blocks with the same attr by one operation", () => {
+      const sel: Selection = [0, 0];
+      const doc: Doc = {
+        children: [
+          { attr: 0, children: [{ attr: 0, text: "abcde" }] },
+          { attr: 0, children: [{ attr: 1, text: "fghij" }] },
+        ],
+      };
+      const op: Operation = {
+        type: "format",
+        range: [2, 8],
+        key: "attr",
+        value: 9,
+        depth: -2,
+      };
+      const inverted = invertOperation(doc, op);
+      const reverted = inverted.reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applyOperation(doc, sel, op)[0],
+      );
+
+      expect(inverted).toEqual([
+        { type: "format", range: [2, 8], key: "attr", value: 0, depth: 1 },
+      ]);
+      expect(reverted).toEqual(doc);
+    });
+
+    it("should restore the block at caret", () => {
+      const sel: Selection = [0, 0];
+      const doc: Doc = {
+        children: [
+          { attr: 0, children: [{ attr: 0, text: "abcde" }] },
+          { attr: 1, children: [{ attr: 1, text: "fghij" }] },
+        ],
+      };
+      const op: Operation = {
+        type: "format",
+        range: [6, 6],
+        key: "attr",
+        value: 9,
+        depth: -2,
+      };
+      const inverted = invertOperation(doc, op);
+      const reverted = inverted.reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applyOperation(doc, sel, op)[0],
+      );
+
+      expect(inverted).toEqual([
+        { type: "format", range: [6, 6], key: "attr", value: 1, depth: 1 },
+      ]);
+      expect(reverted).toEqual(doc);
+    });
+
+    it("should restore the empty text node at caret", () => {
+      const sel: Selection = [0, 0];
+      const doc: DocNode = {
+        children: [{ children: [{ text: "", foo: "old" }] }],
+      };
+      const op: Operation = {
+        type: "format",
+        range: [0, 0],
+        key: "foo",
+        value: "new",
+      };
+      const applied = applyOperation(doc, sel, op)[0];
+      const inverted = invertOperation(doc, op);
+      const reverted = inverted.reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applied,
+      );
+
+      expect(applied).toEqual({
+        children: [{ children: [{ text: "", foo: "new" }] }],
+      });
+      expect(inverted).toEqual([
+        { type: "format", range: [0, 0], key: "foo", value: "old", depth: 2 },
+      ]);
+      expect(reverted).toEqual(doc);
+    });
+
+    it("should restore the root attr and children", () => {
+      const sel: Selection = [0, 0];
+      const doc = {
+        foo: "old",
+        children: [{ attr: 0, children: [{ attr: 0, text: "abcde" }] }],
+      };
+      const attr: Operation = {
+        type: "format",
+        range: [0, 0],
+        key: "foo",
+        value: "new",
+        depth: 0,
+      };
+      const children: Operation = {
+        type: "format",
+        range: [0, 0],
+        key: "children",
+        value: [{ attr: 1, children: [{ attr: 1, text: "x" }] }],
+        depth: 0,
+      };
+
+      const invertedAttr = invertOperation(doc, attr);
+      const invertedChildren = invertOperation(doc, children);
+
+      expect(invertedAttr).toEqual([
+        { type: "format", range: [0, 0], key: "foo", value: "old", depth: 0 },
+      ]);
+      expect(
+        invertedAttr.reduce(
+          (d, o) => applyOperation(d, sel, o)[0],
+          applyOperation(doc, sel, attr)[0],
+        ),
+      ).toEqual(doc);
+      expect(invertedChildren).toEqual([
+        {
+          type: "format",
+          range: [0, 0],
+          key: "children",
+          value: doc.children,
+          depth: 0,
+        },
+      ]);
+      expect(
+        invertedChildren.reduce(
+          (d, o) => applyOperation(d, sel, o)[0],
+          applyOperation(doc, sel, children)[0],
+        ),
+      ).toEqual(doc);
+    });
+
+    it("should not revert nodes at the same depth apart by one operation", () => {
+      const sel: Selection = [0, 0];
+      const doc: DocNode = {
+        children: [
+          { children: [{ children: [{ children: [{ text: "1" }] }] }] },
+          { children: [{ text: "ab", foo: "old" }] },
+          { children: [{ children: [{ children: [{ text: "2" }] }] }] },
+        ],
+      };
+      const op: Operation = {
+        type: "format",
+        range: [0, getNodeSize(doc)],
+        key: "foo",
+        value: "new",
+        depth: -3,
+      };
+      const inverted = invertOperation(doc, op);
+      const reverted = inverted.reduce(
+        (d, o) => applyOperation(d, sel, o)[0],
+        applyOperation(doc, sel, op)[0],
+      );
+
+      expect(inverted).toEqual([
+        {
+          type: "format",
+          range: [0, 1],
+          key: "foo",
+          value: undefined,
+          depth: 2,
+        },
+        {
+          type: "format",
+          range: [5, 6],
+          key: "foo",
+          value: undefined,
+          depth: 2,
+        },
+        {
+          type: "format",
+          range: [0, 6],
+          key: "foo",
+          value: undefined,
+          depth: 0,
+        },
+      ]);
+      expect(reverted).toEqual(doc);
+    });
+
+    describe("in unevenly nested doc", () => {
+      const doc: DocNode & { foo: string } = {
+        foo: "root",
+        children: [
+          { type: "p", foo: "p", children: [{ text: "abcde" }] },
+          {
+            type: "table",
+            children: [
+              {
+                type: "row",
+                foo: "row",
+                children: [
+                  { type: "cell", children: [{ text: "1" }] },
+                  { type: "cell", foo: "cell", children: [{ text: "2" }] },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+      const docSize = getNodeSize(doc);
+
+      it("should restore leaf blocks of different depths", () => {
+        const sel: Selection = [0, 0];
+        const op: Operation = {
+          type: "format",
+          range: [0, docSize],
+          key: "foo",
+          value: "new",
+          depth: -2,
+        };
+        const inverted = invertOperation(doc, op);
+        const reverted = inverted.reduce(
+          (d, o) => applyOperation(d, sel, o)[0],
+          applyOperation(doc, sel, op)[0],
+        );
+
+        expect(inverted).toEqual([
+          { type: "format", range: [0, 5], key: "foo", value: "p", depth: 1 },
+          {
+            type: "format",
+            range: [6, 7],
+            key: "foo",
+            value: undefined,
+            depth: 3,
+          },
+          {
+            type: "format",
+            range: [8, 9],
+            key: "foo",
+            value: "cell",
+            depth: 3,
+          },
+        ]);
+        expect(reverted).toEqual(doc);
+      });
+
+      it("should not revert adjacent blocks of different depths by one operation", () => {
+        const sel: Selection = [0, 0];
+        const op: Operation = {
+          type: "format",
+          range: [0, docSize],
+          key: "bar",
+          value: "new",
+          depth: -2,
+        };
+        const inverted = invertOperation(doc, op);
+        const reverted = inverted.reduce(
+          (d, o) => applyOperation(d, sel, o)[0],
+          applyOperation(doc, sel, op)[0],
+        );
+
+        expect(inverted).toEqual([
+          {
+            type: "format",
+            range: [0, 5],
+            key: "bar",
+            value: undefined,
+            depth: 1,
+          },
+          {
+            type: "format",
+            range: [6, 9],
+            key: "bar",
+            value: undefined,
+            depth: 3,
+          },
+        ]);
+        expect(reverted).toEqual(doc);
+      });
+
+      it("should restore ancestors of different depths including the root", () => {
+        const sel: Selection = [0, 0];
+        const op: Operation = {
+          type: "format",
+          range: [0, docSize],
+          key: "foo",
+          value: "new",
+          depth: -3,
+        };
+        const inverted = invertOperation(doc, op);
+        const reverted = inverted.reduce(
+          (d, o) => applyOperation(d, sel, o)[0],
+          applyOperation(doc, sel, op)[0],
+        );
+
+        expect(inverted).toEqual([
+          { type: "format", range: [6, 9], key: "foo", value: "row", depth: 2 },
+          {
+            type: "format",
+            range: [0, 9],
+            key: "foo",
+            value: "root",
+            depth: 0,
+          },
+        ]);
+        expect(reverted).toEqual(doc);
+      });
     });
   });
 });

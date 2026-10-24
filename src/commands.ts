@@ -54,9 +54,10 @@ export function ReplaceText(
   text: string,
   range: Range = toRange(editor.selection),
 ) {
-  editor
-    .apply({ type: "delete", range })
-    .apply({ type: "insert_text", at: range[0], text });
+  editor.apply([
+    { type: "delete", range },
+    { type: "insert_text", at: range[0], text },
+  ]);
 }
 
 /**

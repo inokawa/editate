@@ -153,6 +153,7 @@ export const getNodeOffset = (
 export const splitBlock = <T extends DocNode | BlockNode>(
   node: T,
   pos: number,
+  placeholder: boolean = true,
 ): [T, T] => {
   const children = node.children;
   const target = getChildAt(node, pos);
@@ -160,14 +161,22 @@ export const splitBlock = <T extends DocNode | BlockNode>(
     const last = children[children.length - 1]!;
     return [
       node,
-      { ...node, children: isTextNode(last) ? [{ ...last, text: "" }] : [] },
+      {
+        ...node,
+        children:
+          placeholder && isTextNode(last) ? [{ ...last, text: "" }] : [],
+      },
     ];
   }
   const [child, offsetAtChild, i] = target;
   const before: Node[] = children.slice(0, i);
   const after: Node[] = children.slice(i + 1);
   if (isBlockNode(child)) {
-    const [childBefore, childAfter] = splitBlock(child, offsetAtChild);
+    const [childBefore, childAfter] = splitBlock(
+      child,
+      offsetAtChild,
+      placeholder,
+    );
     before.push(childBefore);
     after.unshift(childAfter);
   } else if (isTextNode(child)) {
@@ -176,7 +185,7 @@ export const splitBlock = <T extends DocNode | BlockNode>(
     if (beforeText || !before.length) {
       before.push({ ...child, text: beforeText });
     }
-    if (afterText || !after.length) {
+    if (afterText || (placeholder && !after.length)) {
       after.unshift({ ...child, text: afterText });
     }
   } else {
