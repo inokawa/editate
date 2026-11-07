@@ -41,7 +41,7 @@
     "@dnd-kit/helpers": "^0.5.3",
     "@dnd-kit/react": "^0.5.3",
     "@non-standardworld/stone-engine.js": "^0.2.0",
-    "@playwright/test": "^1.65.0",
+    "@playwright/test": "1.61.0",
     "@size-limit/preset-small-lib": "^14.3.0",
     "@storybook/addon-docs": "^10.6.6",
     "@storybook/react-vite": "^10.6.6",
