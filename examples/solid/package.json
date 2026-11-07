@@ -9,13 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "editate": "0.6.26",
-    "solid-js": "^1.9.14",
-    "zod": "^4.4.3"
+    "editate": "0.6.27",
+    "solid-js": "^1.9.18",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "typescript": "^6.0.0",
-    "vite": "^8.0.13",
-    "vite-plugin-solid": "^2.11.13"
+    "vite": "^8.3.6",
+    "vite-plugin-solid": "^2.11.15"
   }
 }

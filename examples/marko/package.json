@@ -9,13 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "editate": "0.6.26",
-    "marko": "^6.3.22"
+    "editate": "0.6.27",
+    "marko": "^6.4.10"
   },
   "devDependencies": {
-    "@marko/type-check": "^3.1.5",
-    "@marko/vite": "^6.1.8",
+    "@marko/type-check": "^3.2.1",
+    "@marko/vite": "^6.1.13",
     "typescript": "^6.0.0",
-    "vite": "^8.0.13"
+    "vite": "^8.3.6"
   }
 }
