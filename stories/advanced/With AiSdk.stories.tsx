@@ -45,13 +45,11 @@ const streamAiCompletion = (
             ...(
               RESPONSES[responseIndex++ % RESPONSES.length]!.match(/\S+\s*/g) ??
               []
-            ).map(
-              (delta): LanguageModelV4StreamPart => ({
-                type: "text-delta",
-                id: "0",
-                delta,
-              }),
-            ),
+            ).map((delta): LanguageModelV4StreamPart => ({
+              type: "text-delta",
+              id: "0",
+              delta,
+            })),
             { type: "text-end", id: "0" },
             {
               type: "finish",

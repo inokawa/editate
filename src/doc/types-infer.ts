@@ -27,11 +27,10 @@ export type InferTextNode<T extends Node> = Extract<
 >;
 
 type FlattenAllNodes<T extends Node> = T extends any
-  ?
-      | T
-      | (T extends { children: readonly (infer N extends Node)[] }
-          ? FlattenAllNodes<N>
-          : never)
+  ? | T
+    | (T extends { children: readonly (infer N extends Node)[] }
+        ? FlattenAllNodes<N>
+        : never)
   : never;
 export type ExtractAttrValue<N extends Node, K extends PropertyKey> =
   FlattenAllNodes<N> extends infer AllNodes extends Node

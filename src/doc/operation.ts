@@ -53,10 +53,7 @@ type FormatOperation = Readonly<{
 }>;
 
 export type Operation =
-  | DeleteOperation
-  | InsertTextOperation
-  | InsertNodeOperation
-  | FormatOperation;
+  DeleteOperation | InsertTextOperation | InsertNodeOperation | FormatOperation;
 
 /**
  * @internal

@@ -448,9 +448,9 @@ export const createEditor = <
       return editor;
     },
     input: (element) => {
-      if (
-        !(window.InputEvent && isFunction(InputEvent.prototype.getTargetRanges))
-      ) {
+      if (!(
+        window.InputEvent && isFunction(InputEvent.prototype.getTargetRanges)
+      )) {
         onWarn("beforeinput event is not supported.");
         return noop;
       }

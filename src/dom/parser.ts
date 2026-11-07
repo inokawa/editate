@@ -4,9 +4,7 @@ const LINE_BREAK_ELEMENT = 1;
 const HIDDEN_ELEMENT = 2;
 const STUB_ELEMENT = 3;
 type ElementType =
-  | typeof LINE_BREAK_ELEMENT
-  | typeof HIDDEN_ELEMENT
-  | typeof STUB_ELEMENT;
+  typeof LINE_BREAK_ELEMENT | typeof HIDDEN_ELEMENT | typeof STUB_ELEMENT;
 
 type TagName = Uppercase<
   | keyof HTMLElementTagNameMap
