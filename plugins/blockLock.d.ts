@@ -4,8 +4,7 @@ import { Editor } from '../editor.js';
 /**
  * A plugin to make specific blocks read-only.
  *
- * Locked blocks can still be selected and copied, but operations editing them are cancelled,
- * except ones that unlock the block and ones targeting the root (e.g. undo / redo).
+ * Locked blocks can still be selected and copied, but operations editing them are cancelled with their transaction, except ones that unlock the block.
  */
 export declare function blockLockPlugin<T extends DocNode>(editor: Editor<T>, options: {
     /**

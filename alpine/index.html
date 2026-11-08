@@ -5,13 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="./vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite + Alpine + TS</title>
-    <script type="module" crossorigin src="./assets/index-CqnnCXvH.js"></script>
+    <script type="module" crossorigin src="./assets/index-1nRQ-63H.js"></script>
   </head>
   <body>
     <div
       x-data="editor"
       x-editable
       style="background-color: white; border: solid 1px darkgray; padding: 8px"
-    ><template x-for="b in doc.children"><div><template x-for="n in b.children"><span><template x-if="n.text"><span x-text="n.text"></span></template><template x-if="!n.text"><br /></template></span></template></div></template></div>
+    ><template x-for="b in doc.children" :key="id(b)"><div><template x-for="n in b.children" :key="id(n)"><span><template x-if="n.text"><span x-text="n.text"></span></template><template x-if="!n.text"><br /></template></span></template></div></template></div>
   </body>
 </html>

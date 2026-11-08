@@ -33,13 +33,13 @@ export declare function Format<T extends DocNode, N extends Omit<InferTextNode<T
  */
 export declare function ToggleFormat<T extends DocNode>(editor: Editor<T>, key: Extract<ToggleableKey<Omit<InferTextNode<T>, "text">>, string>, range?: Range): void;
 /**
- * Set attr to a block node at the caret or specified position.
+ * Set attr to block nodes in the selection or specified range.
  */
-export declare function SetBlockAttr<T extends DocNode, N extends InferLeafBlockNode<T>, K extends string>(editor: Editor<T>, key: K, value: ExtractAttrValue<N, K>, offset?: number): void;
+export declare function SetBlockAttr<T extends DocNode, N extends InferLeafBlockNode<T>, K extends string>(editor: Editor<T>, key: K, value: ExtractAttrValue<N, K>, range?: Range): void;
 /**
- * Toggle attr of block node at the caret or specified position.
+ * Toggle attr of block nodes in the selection or specified range.
  */
-export declare function ToggleBlockAttr<T extends DocNode, N extends InferLeafBlockNode<T>, K extends string>(editor: Editor<T>, key: K, onValue: ExtractAttrValue<N, K>, offValue: ExtractAttrValue<N, K>, offset?: number): void;
+export declare function ToggleBlockAttr<T extends DocNode, N extends InferLeafBlockNode<T>, K extends string>(editor: Editor<T>, key: K, onValue: ExtractAttrValue<N, K>, offValue: ExtractAttrValue<N, K>, range?: Range): void;
 /**
  * Set attr to a void node at the caret or specified position.
  */

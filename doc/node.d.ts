@@ -6,6 +6,14 @@ export declare const getLeafBlockAt: <T extends DocNode | BlockNode>(node: T, of
 export declare const getLeafAt: <T extends DocNode | BlockNode>(node: T, offset: number, isBackwardAffinity?: boolean) => [node: InferInlineNode<T>, offset: number, path: Path] | null;
 export declare const getNodeOffset: (root: DocNode | BlockNode, target: Node) => number | null;
 export declare const offsetToPosition: (node: DocNode | BlockNode, offset: number) => DomPosition;
-export declare function iterLeafBlocks<T extends Node>(node: T, range: Range): Generator<[node: InferLeafBlockNode<T>, offset: number], void, void>;
-export declare function iterLeaves<T extends Node>(node: T, range: Range): Generator<[node: InferInlineNode<T>, offset: number], void, void>;
+export declare function iterLeafBlocks<T extends Node>(node: T, range: Range): Generator<[
+    node: InferLeafBlockNode<T>,
+    offset: number,
+    range: Range
+], void, void>;
+export declare function iterLeaves<T extends Node>(node: T, range: Range): Generator<[
+    node: InferInlineNode<T>,
+    offset: number,
+    range: Range
+], void, void>;
 export declare const sliceText: <T extends Node>(node: T, start?: number, end?: number, voidToString?: (node: InferVoidNode<T>) => string) => string;

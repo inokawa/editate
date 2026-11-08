@@ -61,10 +61,12 @@ export type CopyHook = (dataTransfer: DataTransfer) => void;
 export type PasteHook = (dataTransfer: DataTransfer) => string | Fragment | true | null;
 type EditorHookMap = {
     /**
-     * Call `next(op)` to continue applying the operation, or `next()` with a nullish value to cancel it.
+     * Call `next(op)` to continue applying the operation, or `next()` with a nullish value to cancel it with its transaction.
+     * `next` returns the operation applied to the document after the following hooks, or null if it was cancelled or failed to apply. The transaction may still be discarded afterwards.
+     *
      * If the hook returns without calling `next`, the operation is passed through as is.
      */
-    apply: (op: Operation, next: (op?: Operation | null) => void) => void;
+    apply: (op: Operation, next: (op?: Operation | null) => Operation | null) => void;
     mount: (element: HTMLElement, parser: Parser) => void | (() => void);
     keyboard: KeyboardHook;
     copy: CopyHook;
@@ -82,10 +84,10 @@ export interface Editor<T extends DocNode = DocNode> {
      */
     readonly: boolean;
     /**
-     * Dispatches editing operations.
+     * Applies editing operations as a transaction, which is discarded if one of them is cancelled or throws, or the result is rejected by the schema.
      * @param op {@link Operation}
      */
-    apply(op: Operation | Operation[]): this;
+    apply(op: Operation | readonly Operation[]): this;
     /**
      * Executes a function with editor bound as context.
      * @param fn {@link EditorCommandOrPlugin} or {@link EditorQuery}
