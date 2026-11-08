@@ -330,19 +330,12 @@ export const sliceText = <T extends Node>(
       str += "\n";
     }
 
-    const size = getNodeSize(leaf);
-    const leafEnd = leafStart + size;
     if (isTextNode(leaf)) {
-      str +=
-        textStart === 0 && textEnd === size
-          ? leaf.text
-          : leaf.text.slice(textStart, textEnd);
-    } else {
-      if (voidToString && textStart < textEnd) {
-        str += voidToString(leaf as InferVoidNode<T>);
-      }
+      str += leaf.text.slice(textStart, textEnd);
+    } else if (voidToString && textStart < textEnd) {
+      str += voidToString(leaf as InferVoidNode<T>);
     }
-    offset = leafEnd;
+    offset = leafStart + getNodeSize(leaf);
   }
 
   for (let i = min(end, getNodeSize(node)) - offset; i > 0; i--) {
