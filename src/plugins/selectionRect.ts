@@ -17,15 +17,14 @@ export function selectionRectPlugin(
       requestAnimationFrame(() => {
         scheduling = false;
         if (!mounted) return;
-        onSelectionChange(() => {
-          const selection = editor.selection;
-          return selectionToRange(
+        onSelectionChange(() =>
+          selectionToRange(
             element,
             parser,
             editor.doc,
-            selection,
-          ).getBoundingClientRect();
-        });
+            editor.selection,
+          ).getBoundingClientRect(),
+        );
       });
     });
     return () => {

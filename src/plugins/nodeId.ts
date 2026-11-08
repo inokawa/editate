@@ -46,8 +46,8 @@ export function nodeIdPlugin<T extends DocNode>(editor: Editor<T>) {
     const n = nextEnd - start;
     for (let i = start; i < prevEnd && i < nextEnd; i++) {
       // A node split into several or several merged into one: the largest piece carries the identity.
-      const p = prev[m > 1 && n === 1 ? largest(prev, start, prevEnd) : i]!;
-      const q = next[n > 1 && m === 1 ? largest(next, start, nextEnd) : i]!;
+      const p = prev[n === 1 ? largest(prev, start, prevEnd) : i]!;
+      const q = next[m === 1 ? largest(next, start, nextEnd) : i]!;
       // A surviving or already identified node keeps its identity, with its descendants'.
       if (kept.has(p) || ids.has(q)) continue;
       const id = ids.get(p);
