@@ -77,14 +77,16 @@ const normalizeInline = (nodes: readonly InlineNode[]): InlineNode[] => {
   const array: InlineNode[] = [];
   let prev: InlineNode | undefined;
   for (let n of nodes) {
-    // remove empty text nodes, leaving at least one node per block
-    if (isTextNode(n) && !n.text) {
-      continue;
-    }
-    // merge text nodes with same attrs
-    if (prev && isTextNode(prev) && isTextNode(n) && isSameNode(prev, n)) {
-      n = { ...prev, text: prev.text + n.text };
-      array.pop();
+    if (isTextNode(n)) {
+      // remove empty text nodes, leaving at least one node per block
+      if (!n.text) {
+        continue;
+      }
+      // merge text nodes with same attrs
+      if (prev && isTextNode(prev) && isSameNode(prev, n)) {
+        n = { ...prev, text: prev.text + n.text };
+        array.pop();
+      }
     }
     array.push((prev = n));
   }

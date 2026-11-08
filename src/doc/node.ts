@@ -68,22 +68,20 @@ export const getChildAt = <T extends BlockNode>(
   isBackwardAffinity?: boolean,
 ): [node: T["children"][number], offset: number, index: number] | null => {
   // TODO optimize
-  const length = children.length;
-  for (let i = 0; i < length; i++) {
+  for (let i = 0; i < children.length; i++) {
     const node = children[i]!;
     const isBlock = isBlockNode(node);
-    let size = getNodeSize(node);
-    const isEmptyNode = size === 0;
-    if (isBlock) {
-      size++;
-    }
+    const size = getNodeSize(node);
     if (
-      size > offset ||
-      (size === offset && !isBlock && (isBackwardAffinity || isEmptyNode))
+      offset < size ||
+      (offset === size && (isBlock || isBackwardAffinity || !size))
     ) {
       return [node, offset, i];
     }
     offset -= size;
+    if (isBlock) {
+      offset--;
+    }
   }
   return null;
 };
@@ -260,7 +258,7 @@ export function* iterChildren<T extends Node>(
         targetNode,
         offset,
         i,
-        [max(start, offset) - offset, min(end, offset + size) - offset],
+        [max(start - offset, 0), min(end - offset, size)],
       ];
 
       i++;
