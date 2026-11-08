@@ -4,11 +4,11 @@
 
 # Function: ToggleBlockAttr()
 
-> **ToggleBlockAttr**\<`T`, `N`, `K`\>(`editor`, `key`, `onValue`, `offValue`, `offset?`): `void`
+> **ToggleBlockAttr**\<`T`, `N`, `K`\>(`editor`, `key`, `onValue`, `offValue`, `range?`): `void`
 
-Defined in: [commands.ts:150](https://github.com/inokawa/editate/blob/f40074584f982d89983e034df674fd6e901e116f/src/commands.ts#L150)
+Defined in: [commands.ts:171](https://github.com/inokawa/editate/blob/77fa3f457c4bbeaf1b3e868da8266d56da9d0255/src/commands.ts#L171)
 
-Toggle attr of block node at the caret or specified position.
+Toggle attr of block nodes in the selection or specified range.
 
 ## Type Parameters
 
@@ -42,9 +42,9 @@ Toggle attr of block node at the caret or specified position.
 
 `ExtractAttrValue`\<`N`, `K`\>
 
-### offset?
+### range?
 
-`number` = `...`
+`Range` = `...`
 
 ## Returns
 

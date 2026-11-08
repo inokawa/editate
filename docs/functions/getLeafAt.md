@@ -6,7 +6,7 @@
 
 > **getLeafAt**\<`T`\>(`node`, `offset`, `isBackwardAffinity?`): \[[`InferInlineNode`](../type-aliases/InferInlineNode.md)\<`T`\>, `number`, `Path`\] \| `null`
 
-Defined in: [doc/node.ts:118](https://github.com/inokawa/editate/blob/f40074584f982d89983e034df674fd6e901e116f/src/doc/node.ts#L118)
+Defined in: [doc/node.ts:109](https://github.com/inokawa/editate/blob/77fa3f457c4bbeaf1b3e868da8266d56da9d0255/src/doc/node.ts#L109)
 
 ## Type Parameters
 

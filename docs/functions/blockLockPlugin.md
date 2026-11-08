@@ -6,12 +6,11 @@
 
 > **blockLockPlugin**\<`T`\>(`editor`, `options`): `void`
 
-Defined in: [plugins/blockLock.ts:23](https://github.com/inokawa/editate/blob/f40074584f982d89983e034df674fd6e901e116f/src/plugins/blockLock.ts#L23)
+Defined in: [plugins/blockLock.ts:17](https://github.com/inokawa/editate/blob/77fa3f457c4bbeaf1b3e868da8266d56da9d0255/src/plugins/blockLock.ts#L17)
 
 A plugin to make specific blocks read-only.
 
-Locked blocks can still be selected and copied, but operations editing them are cancelled,
-except ones that unlock the block and ones targeting the root (e.g. undo / redo).
+Locked blocks can still be selected and copied, but operations editing them are cancelled with their transaction, except ones that unlock the block.
 
 ## Type Parameters
 

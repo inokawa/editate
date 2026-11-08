@@ -6,7 +6,7 @@
 
 > **createPlainEditor**(`__namedParameters`): [`Editor`](../interfaces/Editor.md)\<`PlainDoc`\>
 
-Defined in: [presets/plain.ts:29](https://github.com/inokawa/editate/blob/f40074584f982d89983e034df674fd6e901e116f/src/presets/plain.ts#L29)
+Defined in: [presets/plain.ts:29](https://github.com/inokawa/editate/blob/77fa3f457c4bbeaf1b3e868da8266d56da9d0255/src/presets/plain.ts#L29)
 
 A function to initialize editor with plaintext.
 

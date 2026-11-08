@@ -4,11 +4,11 @@
 
 # Function: SetBlockAttr()
 
-> **SetBlockAttr**\<`T`, `N`, `K`\>(`editor`, `key`, `value`, `offset?`): `void`
+> **SetBlockAttr**\<`T`, `N`, `K`\>(`editor`, `key`, `value`, `range?`): `void`
 
-Defined in: [commands.ts:133](https://github.com/inokawa/editate/blob/f40074584f982d89983e034df674fd6e901e116f/src/commands.ts#L133)
+Defined in: [commands.ts:155](https://github.com/inokawa/editate/blob/77fa3f457c4bbeaf1b3e868da8266d56da9d0255/src/commands.ts#L155)
 
-Set attr to a block node at the caret or specified position.
+Set attr to block nodes in the selection or specified range.
 
 ## Type Parameters
 
@@ -38,9 +38,9 @@ Set attr to a block node at the caret or specified position.
 
 `ExtractAttrValue`\<`N`, `K`\>
 
-### offset?
+### range?
 
-`number` = `...`
+`Range` = `...`
 
 ## Returns
 
