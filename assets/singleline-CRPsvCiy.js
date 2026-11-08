@@ -1,0 +1,2 @@
+import{n as e}from"./rolldown-runtime-BCiCTKAo.js";import{C as t,I as n,L as r,w as i}from"./plainTransfer-TAH41ZWf.js";function a(e){e.hook(`mount`,e=>{e.ariaMultiLine=null}),e.hook(`apply`,(e,t)=>{if(e.type===`insert_text`)e={...e,text:e.text.replaceAll(`
+`,``)};else if(e.type===`insert_node`){let t=e.fragment;e={...e,fragment:n(t)?[i(t)]:t}}t(e)})}function o(){return(o=e((()=>{r(),t()})))()}export{a as n,o as t};
