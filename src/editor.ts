@@ -495,6 +495,9 @@ export const createEditor = <
 
       const syncFocus = () => {
         if (!hasFocus) {
+          // Otherwise the focus handler overwrites the selection with the stale DOM selection, which may not be in the editor while unfocused.
+          setSelectionToDOM(element, parser, doc, selection, true);
+          domSelection = selection;
           // Set focus imperatively to return focus to the editor after a command execution via click.
           // It must be queued after the MO callback because that may cause an additional selectionchange event.
           element.focus({ preventScroll: true });

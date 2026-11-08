@@ -2,6 +2,7 @@
 import {
   createParser,
   defaultIsBlockNode,
+  findPosition,
   getDOMSelection,
   getSelectionRangeInEditor,
   takeSelectionSnapshot,
@@ -116,6 +117,23 @@ export const getSelection = (
     return offset;
   };
   return [transformPos(selection[0]), transformPos(selection[1])];
+};
+
+export const getSelectedRects = (element: HTMLElement): DOMRectList =>
+  getSelectionRangeInEditor(
+    getDOMSelection(element),
+    element,
+  )!.getClientRects();
+
+export const getCharRect = (
+  element: HTMLElement,
+  [path, offset]: DomPosition,
+): DOMRect => {
+  const parse = createParser(element.ownerDocument, defaultIsBlockNode);
+  const range = element.ownerDocument.createRange();
+  range.setStart(...findPosition(element, parse, [path, offset]));
+  range.setEnd(...findPosition(element, parse, [path, offset + 1]));
+  return range.getBoundingClientRect();
 };
 
 const ANCHOR = "^";
