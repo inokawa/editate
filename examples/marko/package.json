@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "editate": "0.6.27",
+    "editate": "0.7.0",
     "marko": "^6.4.10"
   },
   "devDependencies": {

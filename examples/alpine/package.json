@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "alpinejs": "^3.17.5",
-    "editate": "0.6.27",
+    "editate": "0.7.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {

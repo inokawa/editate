@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "editate": "0.6.27",
+    "editate": "0.7.0",
     "morphdom": "^2.7.8",
     "zod": "^4.6.7"
   },
