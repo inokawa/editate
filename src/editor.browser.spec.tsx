@@ -33,6 +33,8 @@ import {
 import type { KeyString } from "./keyboard.js";
 import {
   NON_EDITABLE_PLACEHOLDER,
+  getCharRect,
+  getSelectedRects,
   getSelection,
   getState,
   getText,
@@ -155,11 +157,6 @@ const readClipboard = async (
     }
   }
   return null;
-};
-
-const getSelectedRect = (element: HTMLElement): DOMRect => {
-  const selection = element.ownerDocument.getSelection()!;
-  return selection.getRangeAt(0)!.getBoundingClientRect();
 };
 
 const moveSelectionToOrigin = async (element: HTMLElement) => {
@@ -1896,24 +1893,31 @@ function Example() {`;
   });
 
   describe("Drag and Drop", () => {
-    const dragSelectionTo = async (
-      editable: HTMLElement,
-      { line = 0, char = 0 }: { line?: number; char?: number },
-    ) => {
-      const selectedTextLength = getText(editable, { selected: true }).join(
-        "",
-      ).length;
-      const selected = getSelectedRect(editable);
-      const x = selected.x + selected.width / 2;
-      const y = selected.y + selected.height / 2;
-      await commands.mouseDrag(
-        [x, y],
-        [
-          x + char * (selected.width / selectedTextLength),
-          y + selected.height * line,
-        ],
-      );
+    const drag = async (from: [number, number], to: [number, number]) => {
+      await commands.mouseDrag(from, to);
+      await settle();
     };
+
+    const centerOf = (rect: DOMRect): [number, number] => [
+      rect.x + rect.width / 2,
+      rect.y + rect.height / 2,
+    ];
+
+    const getSelectedPoint = (editable: HTMLElement): [number, number] =>
+      centerOf(getSelectedRects(editable)[0]!);
+
+    const getCaretPoint = (
+      editable: HTMLElement,
+      [line, offset]: [line: number, offset: number],
+    ): [number, number] => {
+      const rect = getCharRect(editable, [[line], offset]);
+      return [rect.x + rect.width / 4, rect.y + rect.height / 2];
+    };
+
+    const dragSelectionTo = (
+      editable: HTMLElement,
+      position: [line: number, offset: number],
+    ) => drag(getSelectedPoint(editable), getCaretPoint(editable, position));
 
     it("move chars", async () => {
       const text = "Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒";
@@ -1933,7 +1937,7 @@ function Example() {`;
         expect(getState(editable)).toBe("H^ell|o world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
 
         // drop text to next line
-        await dragSelectionTo(editable, { line: 1 });
+        await dragSelectionTo(editable, [1, 1]);
         expect(getState(editable)).toBe("Ho world.\nこ^ell|んにちは。\n👍❤️🧑‍🧑‍🧒");
       }
 
@@ -1952,7 +1956,7 @@ function Example() {`;
         expect(getState(editable)).toBe("Hello world.\nこん^にち|は。\n👍❤️🧑‍🧑‍🧒");
 
         // drop text to swap
-        await dragSelectionTo(editable, { char: -2 });
+        await dragSelectionTo(editable, [1, 1]);
         expect(getState(editable)).toBe("Hello world.\nこ^にち|んは。\n👍❤️🧑‍🧑‍🧒");
       }
 
@@ -1971,12 +1975,167 @@ function Example() {`;
         expect(getState(editable)).toBe("Hello world.\nこ^んに|ちは。\n👍❤️🧑‍🧑‍🧒");
 
         // drop text to swap
-        await dragSelectionTo(editable, { char: 2 });
+        await dragSelectionTo(editable, [1, 4]);
         expect(getState(editable)).toBe("Hello world.\nこち^んに|は。\n👍❤️🧑‍🧑‍🧒");
       }
     });
 
-    it.todo("drop external");
+    it("move linebreak", async () => {
+      const text = "Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒";
+      const editable = await getEditable(
+        render(<PlainEditor initialText={text} />),
+      );
+
+      editable.focus();
+
+      expect(getState(editable)).toBe("|Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
+
+      // Select [0,1]-[1,1]
+      await press("ArrowRight");
+      await press("Shift+ArrowDown");
+      expect(getState(editable)).toBe("H^ello world.\nこ|んにちは。\n👍❤️🧑‍🧑‍🧒");
+
+      // drop text to next line
+      await dragSelectionTo(editable, [1, 3]);
+      expect(getState(editable)).toBe("Hんに^ello world.\nこ|ちは。\n👍❤️🧑‍🧑‍🧒");
+    });
+
+    it("move all chars of a line, then drop text from outside", async () => {
+      const text = "Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒";
+      const container = render(
+        <>
+          <PlainEditor initialText={text} />
+          <div
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.setData("text/plain", "Drop text.");
+            }}
+          >
+            source
+          </div>
+        </>,
+      );
+      const editable = await getEditable(container);
+      const source = container.querySelector<HTMLElement>("[draggable]")!;
+
+      editable.focus();
+
+      // Select [1,0]-[1,6]
+      await press("ArrowDown");
+      await loop(6, () => press("Shift+ArrowRight"));
+      expect(getState(editable)).toBe("Hello world.\n^こんにちは。|\n👍❤️🧑‍🧑‍🧒");
+
+      // drop text to previous line
+      await dragSelectionTo(editable, [0, 1]);
+      expect(getState(editable)).toBe("H^こんにちは。|ello world.\n\n👍❤️🧑‍🧑‍🧒");
+
+      // drop text from outside
+      await drag(
+        centerOf(source.getBoundingClientRect()),
+        getCaretPoint(editable, [2, 2]),
+      );
+      expect(getText(editable)).toEqual([
+        "Hこんにちは。ello world.",
+        "",
+        "👍Drop text.❤️🧑‍🧑‍🧒",
+      ]);
+    });
+
+    it("drop text from outside", async () => {
+      const text = "Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒";
+      const container = render(
+        <>
+          <PlainEditor initialText={text} />
+          <div
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.setData("text/plain", "Drop text.");
+            }}
+          >
+            source
+          </div>
+        </>,
+      );
+      const editable = await getEditable(container);
+      const source = container.querySelector<HTMLElement>("[draggable]")!;
+
+      expect(getState(editable)).toBe("Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
+
+      // drop text from outside
+      await drag(
+        centerOf(source.getBoundingClientRect()),
+        getCaretPoint(editable, [1, 2]),
+      );
+      // the editor returns focus to the editable in the next animation frame
+      await expect
+        .poll(() => getState(editable))
+        .toBe("Hello world.\nこん^Drop text.|にちは。\n👍❤️🧑‍🧑‍🧒");
+    });
+
+    it("drag text to outside", async () => {
+      const text = "Hello world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒";
+      let dropped: string | undefined;
+      const container = render(
+        <>
+          <PlainEditor initialText={text} />
+          <div
+            data-testid="target"
+            onDragOver={(e) => {
+              e.preventDefault();
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              dropped = e.dataTransfer.getData("text/plain");
+            }}
+          >
+            target
+          </div>
+          <div
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.setData("text/plain", "Drop text.");
+            }}
+          >
+            source
+          </div>
+        </>,
+      );
+      const editable = await getEditable(container);
+      const target = container.querySelector<HTMLElement>(
+        '[data-testid="target"]',
+      )!;
+      const source = container.querySelector<HTMLElement>("[draggable]")!;
+
+      editable.focus();
+
+      // Select [0,1]-[0,4]
+      await press("ArrowRight");
+      await loop(3, () => press("Shift+ArrowRight"));
+      expect(getState(editable)).toBe("H^ell|o world.\nこんにちは。\n👍❤️🧑‍🧑‍🧒");
+
+      // drag text to outside
+      await drag(
+        getSelectedPoint(editable),
+        centerOf(target.getBoundingClientRect()),
+      );
+      expect(dropped).toBe("ell");
+      expect(getText(editable)).toEqual([
+        "Hello world.",
+        "こんにちは。",
+        "👍❤️🧑‍🧑‍🧒",
+      ]);
+
+      // drop text from outside
+      await drag(
+        centerOf(source.getBoundingClientRect()),
+        getCaretPoint(editable, [1, 2]),
+      );
+      expect(getText(editable)).toEqual([
+        "Hello world.",
+        "こんDrop text.にちは。",
+        "👍❤️🧑‍🧑‍🧒",
+      ]);
+    });
   });
 
   describe("undo and redo", () => {
