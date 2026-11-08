@@ -1,1 +1,0 @@
-import{t as e}from"./iframe-DUaYTx_q.js";e();
