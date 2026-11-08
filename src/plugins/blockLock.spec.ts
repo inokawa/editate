@@ -1,7 +1,6 @@
 import { expect, it } from "vitest";
 import { createEditor } from "../editor.js";
 import { blockLockPlugin, LockedInRange } from "./blockLock.js";
-import { Redo, Undo } from "./history.js";
 
 type LockDoc = {
   children: {
@@ -494,26 +493,27 @@ it("format on root", () => {
   expect(editor.doc).toEqual({ ...doc, foo: 1 });
 });
 
-it("undo and redo", () => {
+it("replacing the children of the root changing a locked block is rejected", () => {
   const doc: LockDoc = {
     children: [
       { children: [{ text: "abcde" }] },
       { locked: true, children: [{ text: "fghij" }] },
-      { children: [{ text: "klmno" }] },
     ],
   };
   const editor = createEditor({ doc }).exec(blockLockPlugin, {
     isLocked: (b) => !!b.locked,
   });
-  editor.apply({ type: "insert_text", at: 1, text: "x" });
-  const updatedDoc = editor.doc;
-  expect(updatedDoc.children[0]).toEqual({ children: [{ text: "axbcde" }] });
-
-  editor.exec(Undo);
-  expect(editor.doc).toEqual(doc);
-
-  editor.exec(Redo);
-  expect(editor.doc).toEqual(updatedDoc);
+  editor.apply({
+    type: "format",
+    range: [0, 0],
+    key: "children",
+    value: [
+      { children: [{ text: "abcde" }] },
+      { locked: true, children: [{ text: "xyz" }] },
+    ],
+    depth: 0,
+  });
+  expect(editor.doc).toBe(doc);
 });
 
 it("paste at a caret inside locked block is rejected as a whole", () => {

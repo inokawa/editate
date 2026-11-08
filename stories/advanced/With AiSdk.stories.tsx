@@ -81,6 +81,7 @@ const streamAiCompletion = (
  * Insert a text stream into the editor at the given offset.
  * The insertion range is remapped against every operation with an apply hook,
  * so the user can keep editing the document while streaming.
+ * The range is kept for each document, since a transaction may be discarded after the hook, which restores the document before it.
  */
 const insertTextStream = async (
   editor: Editor,
@@ -88,22 +89,26 @@ const insertTextStream = async (
   at: number,
   onRangeChange: (range: [number, number] | null) => void,
 ): Promise<void> => {
-  let range: [number, number] = [at, at];
+  const ranges = new WeakMap<Editor["doc"], [number, number]>([
+    [editor.doc, [at, at]],
+  ]);
   const unhook = editor.hook("apply", (op, next) => {
+    const doc = editor.doc;
     const applied = next(op);
-    if (applied) {
-      range = [
+    const range = ranges.get(doc);
+    if (applied && range && doc !== editor.doc) {
+      ranges.set(editor.doc, [
         mapPosition(range[0], applied, true),
         mapPosition(range[1], applied),
-      ];
+      ]);
     }
   });
   const unsubscribe = editor.on("change", () => {
-    onRangeChange([range[0], range[1]]);
+    onRangeChange(ranges.get(editor.doc)!);
   });
   try {
     for await (const delta of stream) {
-      editor.exec(InsertText, delta, range[1]);
+      editor.exec(InsertText, delta, ranges.get(editor.doc)![1]);
     }
   } finally {
     unsubscribe();

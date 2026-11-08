@@ -1,10 +1,9 @@
-import { iterLeafBlocks } from "../doc/node.js";
-import { applyOperation } from "../doc/operation.js";
+import { getNodeSize, iterLeafBlocks } from "../doc/node.js";
+import { applyOperation, type Operation } from "../doc/operation.js";
 import { toRange } from "../doc/position.js";
 import type { InferLeafBlockNode } from "../doc/types-infer.js";
 import type { BlockNode, DocNode, Range } from "../doc/types.js";
 import type { Editor } from "../editor.js";
-import { microtask } from "../utils.js";
 
 interface BlockLockContext {
   locked: (range: Range) => boolean;
@@ -13,8 +12,7 @@ interface BlockLockContext {
 /**
  * A plugin to make specific blocks read-only.
  *
- * Locked blocks can still be selected and copied, but operations editing them are cancelled,
- * except ones that unlock the block and ones targeting the root (e.g. undo / redo).
+ * Locked blocks can still be selected and copied, but operations editing them are cancelled with their transaction, except ones that unlock the block.
  */
 export function blockLockPlugin<T extends DocNode>(
   editor: Editor<T>,
@@ -36,55 +34,30 @@ export function blockLockPlugin<T extends DocNode>(
     return false;
   };
 
-  let suppressInsert = false;
-
-  editor.hook("apply", (op, next) => {
-    const wasSuppressed = suppressInsert;
-    suppressInsert = false;
-
-    switch (op.type) {
-      case "delete": {
-        if (hasLockedBlock(toRange(op.range))) {
-          // also cancel an insert paired with this delete (e.g. input and paste dispatch [delete, insert])
-          suppressInsert = true;
-          microtask(() => {
-            suppressInsert = false;
-          });
-          next(null);
-          return;
-        }
-        break;
-      }
-      case "insert_text":
-      case "insert_node": {
-        if (wasSuppressed || hasLockedBlock([op.at, op.at])) {
-          next(null);
-          return;
-        }
-        break;
-      }
-      case "format": {
-        if (op.depth === 0) {
-          // undo and redo replace the root
-          break;
-        }
-        const doc = editor.doc;
-        const range = toRange(op.range);
-        const after = iterLeafBlocks(
-          applyOperation(doc, editor.selection, op)[0],
-          range,
-        );
-        for (const [b] of iterLeafBlocks(doc, range)) {
-          const a = after.next().value?.[0];
-          if (a && b !== a && isLockedNode(b) && isLockedNode(a)) {
-            next(null);
-            return;
-          }
-        }
-        break;
+  const editsLockedBlock = (op: Operation): boolean => {
+    if (op.type !== "format") {
+      return hasLockedBlock(
+        op.type === "delete" ? toRange(op.range) : [op.at, op.at],
+      );
+    }
+    const doc = editor.doc;
+    const range: Range =
+      op.depth === 0 ? [0, getNodeSize(doc)] : toRange(op.range);
+    const after = iterLeafBlocks(
+      applyOperation(doc, editor.selection, op)[0],
+      range,
+    );
+    for (const [b] of iterLeafBlocks(doc, range)) {
+      const a = after.next().value?.[0];
+      if (a && b !== a && isLockedNode(b) && isLockedNode(a)) {
+        return true;
       }
     }
-    next(op);
+    return false;
+  };
+
+  editor.hook("apply", (op, next) => {
+    next(editsLockedBlock(op) ? null : op);
   });
 
   editor.set<BlockLockContext>(blockLockPlugin, {
