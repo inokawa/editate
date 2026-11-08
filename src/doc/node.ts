@@ -39,23 +39,20 @@ export const hasBlockChildren = (
 
 const sizeCache = new WeakMap<BlockNode, number>();
 
-const calcBlockSize = ({ children }: BlockNode): number => {
-  let size = 0;
-  for (let i = 0; i < children.length; i++) {
-    const n = children[i]!;
-    size += getNodeSize(n);
-    if (i !== 0 && isBlockNode(n)) {
-      size++;
-    }
-  }
-  return size;
-};
-
 export const getNodeSize = (node: Node): number => {
   if (isBlockNode(node)) {
     let size = sizeCache.get(node);
     if (size == null) {
-      sizeCache.set(node, (size = calcBlockSize(node)));
+      const { children } = node;
+      size = 0;
+      for (let i = 0; i < children.length; i++) {
+        const n = children[i]!;
+        size += getNodeSize(n);
+        if (i !== 0 && isBlockNode(n)) {
+          size++;
+        }
+      }
+      sizeCache.set(node, size);
     }
     return size;
   }
