@@ -39,16 +39,12 @@ export const hasBlockChildren = (
 
 const sizeCache = new WeakMap<BlockNode, number>();
 
-const calcBlockSize = (
-  { children }: BlockNode,
-  start: number = 0,
-  end: number = children.length,
-): number => {
+const calcBlockSize = ({ children }: BlockNode): number => {
   let size = 0;
-  for (let i = start; i < end; i++) {
+  for (let i = 0; i < children.length; i++) {
     const n = children[i]!;
     size += getNodeSize(n);
-    if (i !== start && isBlockNode(n)) {
+    if (i !== 0 && isBlockNode(n)) {
       size++;
     }
   }
@@ -126,23 +122,18 @@ export const getNodeOffset = (
 ): number | null => {
   // TODO optimize
   let offset = 0;
-  let count = 0;
   for (const child of root.children) {
-    const isBlock = isBlockNode(child);
-    if (isBlock && count !== 0) {
-      offset++;
-    }
     if (child === target) {
       return offset;
     }
-    if (isBlock) {
+    if (isBlockNode(child)) {
       const found = getNodeOffset(child, target);
       if (found != null) {
         return offset + found;
       }
+      offset++;
     }
     offset += getNodeSize(child);
-    count++;
   }
   return null;
 };
@@ -205,15 +196,13 @@ export const positionToOffset = (
   node: DocNode | BlockNode,
   [path, offset]: DomPosition,
 ): number => {
-  let size = 0;
   for (const p of path) {
-    size += calcBlockSize(node, 0, p);
-    if (p !== 0) {
-      size++;
+    for (let i = 0; i < p; i++) {
+      offset += getNodeSize(node.children[i]!) + 1;
     }
     node = node.children[p]! as BlockNode;
   }
-  return size + offset;
+  return offset;
 };
 
 export const offsetToPosition = (
