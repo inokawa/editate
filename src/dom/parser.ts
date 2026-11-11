@@ -6,11 +6,10 @@ const STUB_ELEMENT = 3;
 type ElementType =
   typeof LINE_BREAK_ELEMENT | typeof HIDDEN_ELEMENT | typeof STUB_ELEMENT;
 
-type TagName = Uppercase<
-  | keyof HTMLElementTagNameMap
+type TagName =
+  | Uppercase<keyof HTMLElementTagNameMap>
   | keyof SVGElementTagNameMap
-  | keyof MathMLElementTagNameMap
->;
+  | keyof MathMLElementTagNameMap;
 
 const ELEMENT_TO_TYPE_MAP = new Map<string, ElementType>([
   ["BR", LINE_BREAK_ELEMENT],
@@ -46,8 +45,8 @@ const ELEMENT_TO_TYPE_MAP = new Map<string, ElementType>([
   ["OBJECT", STUB_ELEMENT],
   ["PICTURE", STUB_ELEMENT],
   ["VIDEO", STUB_ELEMENT],
-  ["SVG", STUB_ELEMENT],
-  ["MATH", STUB_ELEMENT],
+  ["svg", STUB_ELEMENT],
+  ["math", STUB_ELEMENT],
   // https://html.spec.whatwg.org/multipage/rendering.html#widgets
   ["BUTTON", STUB_ELEMENT],
   ["INPUT", STUB_ELEMENT],

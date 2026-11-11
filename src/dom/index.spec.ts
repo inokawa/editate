@@ -393,6 +393,28 @@ const elToString = (element: Element): string => {
 }
 
 {
+  const doc = h("div");
+  doc.innerHTML = "Hello<svg><title>image</title></svg>world";
+
+  it.for<[DomPosition, DomPosition]>([
+    [
+      [[2], 0],
+      [[], 6],
+    ],
+    [
+      [[2], 5],
+      [[], 11],
+    ],
+  ])(`${elToString(doc)}: $0 $1`, ([p, expectedPos]) => {
+    const domPos = posAt(doc, ...p);
+    const pos = serializePosition(doc, parser, ...domPos);
+    expect(pos).toEqual(expectedPos);
+    const domPos2 = toRange(findPosition(doc, parser, pos));
+    expect(serializePosition(doc, parser, ...domPos2)).toEqual(pos);
+  });
+}
+
+{
   const doc = h("div", [h("span", ["void"], { contentEditable: "false" })]);
 
   it.for<[DomPosition, DomPosition]>([
