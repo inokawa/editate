@@ -1545,7 +1545,7 @@ export const Comment: StoryObj = {
 
     const commentIdRef = useRef(0);
     const [comments, setComments] = useState([
-      { id: "0", text: "This is comment." },
+      { id: "0", text: "Can we start at 11?" },
     ]);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [hasSelection, setHasSelection] = useState(false);
@@ -1554,12 +1554,18 @@ export const Comment: StoryObj = {
       children: [
         {
           children: [
-            { text: "Hello " },
-            { text: " world", comment: "0" },
+            { text: "The team meeting is on Tuesday at " },
+            { text: "10 am", comment: "0" },
             { text: "." },
           ],
         },
-        { children: [{ text: "Select text and add comments." }] },
+        {
+          children: [
+            {
+              text: "Please read the agenda and add your topics before joining.",
+            },
+          ],
+        },
       ],
     });
 
@@ -1600,113 +1606,141 @@ export const Comment: StoryObj = {
       return editor.input(ref.current);
     }, []);
 
-    const inputRef = useRef<HTMLTextAreaElement>(null);
+    // the comment being written, or null while not writing
+    const [draft, setDraft] = useState<string | null>(null);
+
+    const cardStyle: CSSProperties = {
+      padding: 8,
+      background: "white",
+      border: "solid 1px #e0e0e0",
+      borderRadius: 6,
+      fontSize: 13,
+    };
 
     return (
-      <div>
-        <div>
-          <textarea
-            ref={inputRef}
-            placeholder="Select text and write comment"
-          />
-          <button
-            disabled={!hasSelection}
-            onClick={() => {
-              const input = inputRef.current;
-              if (!input) return;
-              const value = input.value;
-              if (!value) return;
-              const id = String(++commentIdRef.current);
-              editor.exec(Format, "comment", id);
-              setComments((prev) => [...prev, { id, text: value }]);
-              setActiveId(id);
-              input.value = "";
-            }}
-          >
-            Add comment
-          </button>
-        </div>
-        <div style={{ display: "flex", alignItems: "flex-start" }}>
-          <div
-            ref={ref}
-            style={{
-              backgroundColor: "white",
-              padding: 8,
-              flex: 1,
-              minHeight: 120,
-            }}
-          >
-            {doc.children.map((b) => (
-              <div key={NodeId(editor, b)}>
-                {b.children.map((t) => (
-                  <span
-                    key={NodeId(editor, t)}
-                    style={{
-                      backgroundColor: t.comment
-                        ? t.comment === activeId
-                          ? "gold"
-                          : "khaki"
-                        : undefined,
-                    }}
-                  >
-                    {t.text || <br />}
-                  </span>
-                ))}
-              </div>
-            ))}
-          </div>
-          <div
-            style={{
-              width: 200,
-              background: "#f5f5f5",
-              padding: 8,
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-            }}
-          >
-            {comments.map((c) => (
-              <div
-                key={c.id}
-                style={{
-                  padding: 8,
-                  background: "white",
-                  border:
-                    c.id === activeId
-                      ? "solid 1px orange"
-                      : "solid 1px #e0e0e0",
-                  borderRadius: 6,
-                  cursor: "pointer",
-                  fontSize: 13,
-                }}
-                onClick={() => {
-                  setActiveId(c.id);
-                }}
-              >
-                <div>{c.text}</div>
-                <button
-                  style={{ marginTop: 6, fontSize: 11 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const ranges: [number, number][] = [];
-                    for (const [leaf, offset] of iterLeaves(editor.doc, [
-                      0,
-                      getNodeSize(editor.doc),
-                    ])) {
-                      if (leaf.comment === c.id) {
-                        ranges.push([offset, offset + getNodeSize(leaf)]);
-                      }
-                    }
-                    for (const range of ranges) {
-                      editor.exec(Format, "comment", undefined, range);
-                    }
+      <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+        <div
+          ref={ref}
+          style={{
+            backgroundColor: "white",
+            border: "solid 1px darkgray",
+            padding: 8,
+            flex: 1,
+            minHeight: 120,
+          }}
+        >
+          {doc.children.map((b) => (
+            <div key={NodeId(editor, b)}>
+              {b.children.map((t) => (
+                <span
+                  key={NodeId(editor, t)}
+                  style={{
+                    backgroundColor: t.comment
+                      ? t.comment === activeId
+                        ? "gold"
+                        : "khaki"
+                      : undefined,
                   }}
                 >
-                  delete
+                  {t.text || <br />}
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+        <div
+          style={{
+            width: 220,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          {comments.map((c) => (
+            <div
+              key={c.id}
+              style={{
+                ...cardStyle,
+                borderColor: c.id === activeId ? "orange" : "#e0e0e0",
+                cursor: "pointer",
+              }}
+              onClick={() => {
+                setActiveId(c.id);
+              }}
+            >
+              <div>{c.text}</div>
+              <button
+                style={{ marginTop: 6 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const ranges: [number, number][] = [];
+                  for (const [leaf, offset] of iterLeaves(editor.doc, [
+                    0,
+                    getNodeSize(editor.doc),
+                  ])) {
+                    if (leaf.comment === c.id) {
+                      ranges.push([offset, offset + getNodeSize(leaf)]);
+                    }
+                  }
+                  for (const range of ranges) {
+                    editor.exec(Format, "comment", undefined, range);
+                  }
+                }}
+              >
+                delete
+              </button>
+            </div>
+          ))}
+          {draft == null ? (
+            <button
+              style={{ alignSelf: "flex-start" }}
+              disabled={!hasSelection}
+              onClick={() => {
+                setDraft("");
+              }}
+            >
+              add comment
+            </button>
+          ) : (
+            <div style={cardStyle}>
+              <textarea
+                autoFocus
+                placeholder="Write a comment"
+                rows={2}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  boxSizing: "border-box",
+                  resize: "vertical",
+                }}
+                value={draft}
+                onChange={(e) => {
+                  setDraft(e.target.value);
+                }}
+              />
+              <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                <button
+                  disabled={!hasSelection || !draft}
+                  onClick={() => {
+                    const id = String(++commentIdRef.current);
+                    editor.exec(Format, "comment", id);
+                    setComments((prev) => [...prev, { id, text: draft }]);
+                    setActiveId(id);
+                    setDraft(null);
+                  }}
+                >
+                  comment
+                </button>
+                <button
+                  onClick={() => {
+                    setDraft(null);
+                  }}
+                >
+                  cancel
                 </button>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     );
