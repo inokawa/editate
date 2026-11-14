@@ -76,9 +76,11 @@ export function ReplaceDoc<T extends DocNode>(
   });
 }
 
-type ToggleableKey<T> = {
-  [K in keyof T]-?: T[K] extends boolean | undefined ? K : never;
-}[keyof T];
+type ToggleableKey<T> = T extends any
+  ? {
+      [K in keyof T]-?: T[K] extends boolean | undefined ? K : never;
+    }[keyof T]
+  : never;
 
 function* textRangesIn(
   editor: Editor,
@@ -107,12 +109,12 @@ function* textRangesIn(
  */
 export function Format<
   T extends DocNode,
-  N extends Omit<InferTextNode<T>, "text">,
-  K extends Extract<keyof N, string>,
+  N extends InferTextNode<T>,
+  K extends Exclude<N extends any ? Extract<keyof N, string> : never, "text">,
 >(
   editor: Editor<T>,
   key: K,
-  value: N[K],
+  value: ExtractAttrValue<N, K>,
   range: Range = toRange(editor.selection),
 ) {
   for (const r of textRangesIn(editor, range)) {
@@ -125,7 +127,7 @@ export function Format<
  */
 export function ToggleFormat<T extends DocNode>(
   editor: Editor<T>,
-  key: Extract<ToggleableKey<Omit<InferTextNode<T>, "text">>, string>,
+  key: Extract<ToggleableKey<InferTextNode<T>>, string>,
   range: Range = toRange(editor.selection),
 ) {
   let shouldFormat = false;
