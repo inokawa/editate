@@ -1,0 +1,1 @@
+import{t as e}from"./iframe-BLMH-Hp1.js";e();
