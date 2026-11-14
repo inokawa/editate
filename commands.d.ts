@@ -21,17 +21,17 @@ export declare function ReplaceText(editor: Editor, text: string, range?: Range)
  * Replace document in the editor.
  */
 export declare function ReplaceDoc<T extends DocNode>(editor: Editor<T>, fragment: T["children"]): void;
-type ToggleableKey<T> = {
+type ToggleableKey<T> = T extends any ? {
     [K in keyof T]-?: T[K] extends boolean | undefined ? K : never;
-}[keyof T];
+}[keyof T] : never;
 /**
  * Format content in the selection or specified range.
  */
-export declare function Format<T extends DocNode, N extends Omit<InferTextNode<T>, "text">, K extends Extract<keyof N, string>>(editor: Editor<T>, key: K, value: N[K], range?: Range): void;
+export declare function Format<T extends DocNode, N extends InferTextNode<T>, K extends Exclude<N extends any ? Extract<keyof N, string> : never, "text">>(editor: Editor<T>, key: K, value: ExtractAttrValue<N, K>, range?: Range): void;
 /**
  * Toggle formatting in the selection or specified range.
  */
-export declare function ToggleFormat<T extends DocNode>(editor: Editor<T>, key: Extract<ToggleableKey<Omit<InferTextNode<T>, "text">>, string>, range?: Range): void;
+export declare function ToggleFormat<T extends DocNode>(editor: Editor<T>, key: Extract<ToggleableKey<InferTextNode<T>>, string>, range?: Range): void;
 /**
  * Set attr to block nodes in the selection or specified range.
  */
