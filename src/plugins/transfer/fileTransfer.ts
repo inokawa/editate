@@ -9,17 +9,18 @@ export const fileTransferPlugin = (
   handlerByMime: Record<string, (file: File) => InlineNode>,
 ) => {
   editor.hook("paste", (dataTransfer) => {
+    const nodes: InlineNode[] = [];
     for (const item of dataTransfer.items) {
       if (item.kind === "file") {
         const mapper = handlerByMime[item.type];
         if (mapper) {
           const file = item.getAsFile();
           if (file) {
-            return [{ children: [mapper(file)] }];
+            nodes.push(mapper(file));
           }
         }
       }
     }
-    return null;
+    return nodes.length ? nodes : null;
   });
 };
