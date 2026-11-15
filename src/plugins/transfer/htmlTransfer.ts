@@ -131,8 +131,17 @@ export function htmlTransferPlugin<T extends DocNode>(
     serializers: HtmlSerializers<T>;
   },
 ) {
+  let mounted: [element: HTMLElement, parser: Parser] | undefined;
+
   editor.hook("mount", (element, parser) => {
-    const cleanupCopy = editor.hook("copy", (dataTransfer) => {
+    mounted = [element, parser];
+    return () => {
+      mounted = undefined;
+    };
+  });
+  editor.hook("copy", (dataTransfer) => {
+    if (mounted) {
+      const element = mounted[0];
       const wrapper = document.createElement("div");
       wrapper.appendChild(
         // DOM range must exist here
@@ -142,17 +151,13 @@ export function htmlTransferPlugin<T extends DocNode>(
         )!.cloneContents(),
       );
       dataTransfer.setData("text/html", wrapper.innerHTML);
-    });
-    const cleanupPaste = editor.hook("paste", (dataTransfer) => {
-      const html = dataTransfer.getData("text/html");
-      if (html) {
-        return htmlPaste(html, parser, options.serializers);
-      }
-      return null;
-    });
-    return () => {
-      cleanupCopy();
-      cleanupPaste();
-    };
+    }
+  });
+  editor.hook("paste", (dataTransfer) => {
+    const html = dataTransfer.getData("text/html");
+    if (mounted && html) {
+      return htmlPaste(html, mounted[1], options.serializers);
+    }
+    return null;
   });
 }
