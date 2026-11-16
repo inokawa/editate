@@ -4,9 +4,9 @@
 
 # Type Alias: InferBlockNode\<T\>
 
-> **InferBlockNode**\<`T`\> = `T` *extends* `object` ? `T` \| `InferBlockNode`\<`N`\> : `never`
+> **InferBlockNode**\<`T`\> = `T` *extends* `Parent` ? `Blocks`\<`T`\[`"children"`\]\[`number`\], `T`\> : `never`
 
-Defined in: [doc/types-infer.ts:3](https://github.com/inokawa/editate/blob/77fa3f457c4bbeaf1b3e868da8266d56da9d0255/src/doc/types-infer.ts#L3)
+Defined in: [doc/types-infer.ts:25](https://github.com/inokawa/editate/blob/12d33bccfeca058ef7302c87a94e740df476d8a4/src/doc/types-infer.ts#L25)
 
 ## Type Parameters
 

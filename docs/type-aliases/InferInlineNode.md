@@ -4,9 +4,9 @@
 
 # Type Alias: InferInlineNode\<T\>
 
-> **InferInlineNode**\<`T`\> = `T` *extends* `object` ? `InferInlineNode`\<`N`\> : `T`
+> **InferInlineNode**\<`T`\> = `T` *extends* `Parent` ? `Exclude`\<[`InferBlockNode`](InferBlockNode.md)\<`T`\>\[`"children"`\]\[`number`\], `Parent`\> : `T`
 
-Defined in: [doc/types-infer.ts:15](https://github.com/inokawa/editate/blob/77fa3f457c4bbeaf1b3e868da8266d56da9d0255/src/doc/types-infer.ts#L15)
+Defined in: [doc/types-infer.ts:31](https://github.com/inokawa/editate/blob/12d33bccfeca058ef7302c87a94e740df476d8a4/src/doc/types-infer.ts#L31)
 
 ## Type Parameters
 

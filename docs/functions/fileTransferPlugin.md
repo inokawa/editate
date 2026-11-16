@@ -6,7 +6,7 @@
 
 > **fileTransferPlugin**(`editor`, `handlerByMime`): `void`
 
-Defined in: [plugins/transfer/fileTransfer.ts:7](https://github.com/inokawa/editate/blob/77fa3f457c4bbeaf1b3e868da8266d56da9d0255/src/plugins/transfer/fileTransfer.ts#L7)
+Defined in: [plugins/transfer/fileTransfer.ts:7](https://github.com/inokawa/editate/blob/12d33bccfeca058ef7302c87a94e740df476d8a4/src/plugins/transfer/fileTransfer.ts#L7)
 
 A plugin to handle pasting / dropping from File.
 

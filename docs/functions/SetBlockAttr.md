@@ -6,7 +6,7 @@
 
 > **SetBlockAttr**\<`T`, `N`, `K`\>(`editor`, `key`, `value`, `range?`): `void`
 
-Defined in: [commands.ts:155](https://github.com/inokawa/editate/blob/77fa3f457c4bbeaf1b3e868da8266d56da9d0255/src/commands.ts#L155)
+Defined in: [commands.ts:157](https://github.com/inokawa/editate/blob/12d33bccfeca058ef7302c87a94e740df476d8a4/src/commands.ts#L157)
 
 Set attr to block nodes in the selection or specified range.
 
@@ -18,7 +18,7 @@ Set attr to block nodes in the selection or specified range.
 
 ### N
 
-`N` *extends* `object` & `BlockNode` \| `object` & `BlockNode` \| `object` & `DocNode` \| `object` & `DocNode`
+`N` *extends* `BlockNode` \| `DocNode`
 
 ### K
 

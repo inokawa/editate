@@ -6,7 +6,7 @@
 
 > **ToggleFormat**\<`T`\>(`editor`, `key`, `range?`): `void`
 
-Defined in: [commands.ts:126](https://github.com/inokawa/editate/blob/77fa3f457c4bbeaf1b3e868da8266d56da9d0255/src/commands.ts#L126)
+Defined in: [commands.ts:128](https://github.com/inokawa/editate/blob/12d33bccfeca058ef7302c87a94e740df476d8a4/src/commands.ts#L128)
 
 Toggle formatting in the selection or specified range.
 
@@ -24,7 +24,7 @@ Toggle formatting in the selection or specified range.
 
 ### key
 
-`Extract`\<`ToggleableKey`\<`Omit`\<[`InferTextNode`](../type-aliases/InferTextNode.md)\<`T`\>, `"text"`\>\>, `string`\>
+`Extract`\<`ToggleableKey`\<[`InferTextNode`](../type-aliases/InferTextNode.md)\<`T`\>\>, `string`\>
 
 ### range?
 
