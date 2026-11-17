@@ -1501,6 +1501,65 @@ function Example() {`;
 
         expect(getState(editable)).toBe("|");
       });
+
+      // iOS Safari removes the empty line on Backspace without beforeinput, then dispatches input in a later task
+      it("revert deletion without beforeinput", async () => {
+        const editable = await getEditable(
+          render(<PlainEditor initialText="" />),
+        );
+
+        editable.focus();
+
+        expect(getState(editable)).toBe("|");
+
+        editable.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Backspace", bubbles: true }),
+        );
+        await settle();
+        editable.firstChild!.remove();
+        await settle();
+        editable.dispatchEvent(
+          new InputEvent("input", {
+            inputType: "deleteContentBackward",
+            bubbles: true,
+          }),
+        );
+        await settle();
+        editable.dispatchEvent(
+          new KeyboardEvent("keyup", { key: "Backspace", bubbles: true }),
+        );
+        await settle();
+
+        expect(editable.innerHTML).toBe("<div><br></div>");
+        expect(getState(editable)).toBe("|");
+
+        await type("abc");
+
+        expect(getState(editable)).toBe("abc|");
+      });
+
+      it("keep render between keydown and beforeinput", async () => {
+        const editor = createRef<PlainEditor>();
+        const editable = await getEditable(
+          render(
+            <HighlightEditor initialText="" initialSearch="" ref={editor} />,
+          ),
+        );
+
+        editable.focus();
+
+        // A key without beforeinput, whose keyup is not dispatched yet
+        editable.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Shift", bubbles: true }),
+        );
+        await settle();
+        editor.current!.exec(InsertText, "text");
+        await expect.poll(() => getState(editable)).toBe("text|");
+
+        await type("abc");
+
+        expect(getState(editable)).toBe("textabc|");
+      });
     });
 
     describe("Delete", () => {
