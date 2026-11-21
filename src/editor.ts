@@ -4,6 +4,8 @@ import {
   takeSelectionSnapshot,
   setSelectionToDOM,
   getPointedCaretPosition,
+  getDOMSelection,
+  getSelectionRangeInEditor,
   defaultIsBlockNode,
   serializeRange,
 } from "./dom/index.js";
@@ -748,13 +750,12 @@ export const createEditor = <
         const dataTransfer = e.dataTransfer;
         const droppedPosition = getPointedCaretPosition(element, parser, e);
         if (dataTransfer && droppedPosition) {
-          let afterSelection: Selection | undefined;
-          const ops: Operation[] = [];
-          if (isDragging) {
-            ops.push({ type: "delete", range: toRange(selection) });
-          }
           const pasted = paste(dataTransfer);
           if (pasted) {
+            const ops: Operation[] = [];
+            if (isDragging) {
+              ops.push({ type: "delete", range: toRange(selection) });
+            }
             const offset = positionToOffset(doc, droppedPosition);
             const pos = mapPositionWithOps(offset, ops);
             ops.push(
@@ -762,11 +763,11 @@ export const createEditor = <
                 ? { type: "insert_text", at: pos, text: pasted }
                 : { type: "insert_node", at: pos, fragment: pasted },
             );
-            afterSelection = [pos, mapPositionWithOps(offset, ops)];
-          }
-          apply(ops);
-          if (afterSelection) {
-            updateSelection(afterSelection);
+            const prev = doc;
+            apply(ops);
+            if (doc !== prev) {
+              updateSelection([pos, mapPositionWithOps(offset, ops)]);
+            }
           }
         }
 
@@ -774,8 +775,15 @@ export const createEditor = <
         isDragging = false;
       };
       const onDragStart = (e: DragEvent) => {
-        isDragging = true;
-        copy(e.dataTransfer!);
+        const range = getSelectionRangeInEditor(
+          getDOMSelection(element),
+          element,
+        );
+        // dragstart fires also for a node dragged from out of the selection, e.g. a draggable handle or an image which WebKit doesn't select on mousedown
+        if (range && range.intersectsNode(e.target as Node)) {
+          isDragging = true;
+          copy(e.dataTransfer!);
+        }
       };
       const onDragEnd = () => {
         isDragging = false;

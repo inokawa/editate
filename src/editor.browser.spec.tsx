@@ -2136,6 +2136,205 @@ function Example() {`;
         "👍❤️🧑‍🧑‍🧒",
       ]);
     });
+
+    it("move a selected image", async () => {
+      const Editor = () => {
+        const ref = useRef<HTMLDivElement>(null);
+        const [doc, setDoc] = useState({
+          children: [
+            {
+              children: [
+                { text: "Hello " },
+                { type: "image", src: IMAGE },
+                { text: " world." },
+              ],
+            },
+            { children: [{ text: "こんにちは。" }] },
+          ],
+        });
+        useEffect(() => {
+          const editor = createEditor({ doc }).exec(internalTransferPlugin);
+          editor.on("change", () => {
+            setDoc(editor.doc);
+          });
+          return editor.input(ref.current!);
+        }, []);
+        return (
+          <div ref={ref}>
+            {doc.children.map((b, i) => (
+              <div key={i}>
+                {b.children.map((t, j) =>
+                  "text" in t ? (
+                    t.text
+                  ) : (
+                    <img key={j} src={t.src} width={20} height={20} />
+                  ),
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      };
+      const editable = await getEditable(render(<Editor />));
+
+      editable.focus();
+
+      // Select the image
+      await loop(6, () => press("ArrowRight"));
+      await press("Shift+ArrowRight");
+
+      // drop the image to the next line
+      await drag(
+        centerOf(editable.querySelector("img")!.getBoundingClientRect()),
+        getCaretPoint(editable, [1, 2]),
+      );
+      expect(getText(editable)).toEqual(["Hello  world.", "こん$にちは。"]);
+    });
+
+    it("move chars which can't be pasted", async () => {
+      const Editor = () => {
+        const ref = useRef<HTMLDivElement>(null);
+        const [doc, setDoc] = useState({
+          children: [
+            { children: [{ text: "Hello world." }] },
+            { children: [{ text: "こんにちは。" }] },
+          ],
+        });
+        useEffect(() => {
+          // without paste hooks
+          const editor = createEditor({ doc, onWarn: () => {} });
+          editor.on("change", () => {
+            setDoc(editor.doc);
+          });
+          return editor.input(ref.current!);
+        }, []);
+        return (
+          <div ref={ref}>
+            {doc.children.map((b, i) => (
+              <div key={i}>{b.children.map((t) => t.text)}</div>
+            ))}
+          </div>
+        );
+      };
+      const editable = await getEditable(render(<Editor />));
+
+      editable.focus();
+
+      // Select [0,1]-[0,4]
+      await press("ArrowRight");
+      await loop(3, () => press("Shift+ArrowRight"));
+      expect(getState(editable)).toBe("H^ell|o world.\nこんにちは。");
+
+      // drop text to next line
+      await dragSelectionTo(editable, [1, 1]);
+      expect(getText(editable)).toEqual(["Hello world.", "こんにちは。"]);
+    });
+
+    it("move chars which the editor applies nothing of", async () => {
+      let selection!: () => unknown;
+      const Editor = () => {
+        const ref = useRef<HTMLDivElement>(null);
+        const [doc, setDoc] = useState({
+          children: [
+            { children: [{ text: "Hello world." }] },
+            { children: [{ text: "こんにちは。" }] },
+          ],
+        });
+        useEffect(() => {
+          const editor = createEditor({ doc });
+          selection = () => editor.selection;
+          editor.hook("paste", () => "x");
+          editor.hook("apply", (_op, next) => {
+            next(null);
+          });
+          editor.on("change", () => {
+            setDoc(editor.doc);
+          });
+          return editor.input(ref.current!);
+        }, []);
+        return (
+          <div ref={ref}>
+            {doc.children.map((b, i) => (
+              <div key={i}>{b.children.map((t) => t.text)}</div>
+            ))}
+          </div>
+        );
+      };
+      const editable = await getEditable(render(<Editor />));
+
+      editable.focus();
+
+      // Select [0,1]-[0,4]
+      await press("ArrowRight");
+      await loop(3, () => press("Shift+ArrowRight"));
+      expect(getState(editable)).toBe("H^ell|o world.\nこんにちは。");
+
+      const before = selection();
+
+      // drop text to next line
+      await dragSelectionTo(editable, [1, 1]);
+      expect(selection()).toEqual(before);
+    });
+
+    it("drag a handle out of the selection", async () => {
+      // A draggable handle in the document like the one to reorder blocks, which the app drags by itself
+      const Editor = () => {
+        const ref = useRef<HTMLDivElement>(null);
+        const [doc, setDoc] = useState({
+          children: [
+            { children: [{ text: "Hello world." }, { type: "handle" }] },
+            { children: [{ text: "こんにちは。" }] },
+          ],
+        });
+        useEffect(() => {
+          const editor = createEditor({ doc }).exec(plainTransferPlugin);
+          editor.on("change", () => {
+            setDoc(editor.doc);
+          });
+          return editor.input(ref.current!);
+        }, []);
+        return (
+          <div ref={ref}>
+            {doc.children.map((b, i) => (
+              <div key={i}>
+                {b.children.map((t, j) =>
+                  "text" in t ? (
+                    t.text
+                  ) : (
+                    <span
+                      key={j}
+                      draggable
+                      contentEditable="false"
+                      suppressContentEditableWarning
+                    >
+                      ⠿
+                    </span>
+                  ),
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      };
+      const editable = await getEditable(render(<Editor />));
+
+      editable.focus();
+
+      // Select [1,1]-[1,3]
+      await press("ArrowDown");
+      await press("ArrowRight");
+      await loop(2, () => press("Shift+ArrowRight"));
+      expect(getState(editable)).toBe("Hello world.$\nこ^んに|ちは。");
+
+      // drag the handle into its line
+      await drag(
+        centerOf(
+          editable.querySelector("[draggable]")!.getBoundingClientRect(),
+        ),
+        getCaretPoint(editable, [0, 2]),
+      );
+      expect(getText(editable)).toEqual(["Hello world.$", "こんにちは。"]);
+    });
   });
 
   describe("undo and redo", () => {
