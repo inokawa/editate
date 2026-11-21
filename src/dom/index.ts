@@ -7,7 +7,7 @@ import type {
   DomSelection,
   Path,
 } from "../doc/types.js";
-import { offsetToPosition, selectionToDomSelection } from "../doc/node.js";
+import { selectionToDomSelection } from "../doc/node.js";
 import { isCollapsed } from "../doc/position.js";
 import { min } from "../utils.js";
 import { isElementNode } from "./utils.js";
@@ -59,15 +59,14 @@ export const getSelectionRangeInEditor = (
   }
 };
 
-const selectionToRange = (
+const findDomRange = (
   root: Element,
   parse: Parser,
   doc: DocNode,
   sel: JsSelection,
-): Range => {
+): [start: DomPoint, end: DomPoint] => {
   const [anchor, focus] = selectionToDomSelection(doc, sel);
 
-  const document = getCurrentDocument(root);
   const collapsed = isCollapsed(sel);
   const backward = sel[0] - sel[1] > 0;
   const start = backward ? focus : anchor;
@@ -75,11 +74,15 @@ const selectionToRange = (
 
   const domStart = findPosition(root, parse, start);
   const domEnd = collapsed ? domStart : findPosition(root, parse, end);
+  return [domStart, domEnd];
+};
 
-  const range = document.createRange();
-
-  const [startNode, startOffset] = domStart;
-  const [endNode, endOffset] = domEnd;
+const toDomRange = (
+  root: Element,
+  [startNode, startOffset]: DomPoint,
+  [endNode, endOffset]: DomPoint,
+): Range => {
+  const range = getCurrentDocument(root).createRange();
 
   // embed or br
   if (isElementNode(startNode) && root !== startNode) {
@@ -118,7 +121,7 @@ export const setSelectionToDOM = (
   const selection = getDOMSelection(root);
 
   if (force || getSelectionRangeInEditor(selection, root)) {
-    const range = selectionToRange(root, parse, doc, sel);
+    const range = toDomRange(root, ...findDomRange(root, parse, doc, sel));
     const backward = sel[0] - sel[1] > 0;
 
     selection.removeAllRanges();
@@ -356,21 +359,13 @@ export const rangeToRect = (
   doc: DocNode,
   range: JsRange | JsSelection,
 ): DOMRect => {
-  if (!isCollapsed(range)) {
-    return selectionToRange(root, parse, doc, range).getBoundingClientRect();
-  }
-  const [node, offset] = findPosition(
-    root,
-    parse,
-    offsetToPosition(doc, range[0]),
-  );
+  const points = findDomRange(root, parse, doc, range);
+  const [node] = points[0];
   // A collapsed range around a `<br>` reports an empty rect at (0, 0), so the token is measured, such as the <br>, a void or the root without tokens
-  if (isElementNode(node)) {
+  if (isCollapsed(range) && isElementNode(node)) {
     return node.getBoundingClientRect();
   }
-  const caret = getCurrentDocument(root).createRange();
-  caret.setStart(node, offset);
-  const rect = caret.getBoundingClientRect();
+  const rect = toDomRange(root, ...points).getBoundingClientRect();
   // A caret itself is flat on one axis only, on y in a vertical writing mode. WebKit reports an empty rect for a caret in a vertical writing mode, so the element of the text is measured instead
   return rect.width || rect.height
     ? rect
