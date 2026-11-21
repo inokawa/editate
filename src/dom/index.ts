@@ -10,7 +10,7 @@ import type {
 import { selectionToDomSelection } from "../doc/node.js";
 import { isCollapsed } from "../doc/position.js";
 import { min } from "../utils.js";
-import { isElementNode } from "./utils.js";
+import { isElementNode, isTextNode } from "./utils.js";
 
 export {
   createParser,
@@ -366,8 +366,13 @@ export const rangeToRect = (
     return node.getBoundingClientRect();
   }
   const rect = toDomRange(root, ...points).getBoundingClientRect();
-  // A caret itself is flat on one axis only, on y in a vertical writing mode. WebKit reports an empty rect for a caret in a vertical writing mode, so the element of the text is measured instead
-  return rect.width || rect.height
-    ? rect
-    : node.parentElement!.getBoundingClientRect();
+  // A caret itself is flat on one axis only, on y in a vertical writing mode. WebKit reports an empty rect for a caret in a vertical writing mode, and Firefox at the end of a line in one, so the character next to it is measured instead, which a text token always has.
+  if (!rect.width && !rect.height && isTextNode(node)) {
+    const offset = min(points[0][1], node.length - 1);
+    const char = getCurrentDocument(root).createRange();
+    char.setStart(node, offset);
+    char.setEnd(node, offset + 1);
+    return char.getBoundingClientRect();
+  }
+  return rect;
 };
