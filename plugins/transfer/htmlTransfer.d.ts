@@ -8,6 +8,8 @@ type HtmlSerializers<T extends DocNode> = Partial<{
 };
 /**
  * A plugin to handle copying / pasting HTML
+ *
+ * Under [Trusted Types](https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API), pasted HTML is parsed through a policy named `editate`.
  */
 export declare function htmlTransferPlugin<T extends DocNode>(editor: Editor<T>, options: {
     serializers: HtmlSerializers<T>;
