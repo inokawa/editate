@@ -1,3 +1,4 @@
+/// <reference types="trusted-types" />
 import type { Editor } from "../../editor.js";
 
 import {
@@ -27,6 +28,9 @@ type HtmlSerializers<T extends DocNode> = Partial<{
   text: (t: string) => Extract<InferInlineNode<T>, TextNode>;
 };
 
+// Policy names are registered per window
+let policy: { createHTML: (html: string) => string | TrustedHTML } | undefined;
+
 /**
  * @internal
  */
@@ -48,14 +52,30 @@ export const htmlPaste = <T extends DocNode>(
     return;
   };
 
-  let dom: Node = new DOMParser().parseFromString(html, "text/html").body;
+  if (!policy) {
+    const rules = { createHTML: (html: string) => html };
+    policy = rules;
+    try {
+      const trustedTypes = window.trustedTypes;
+      if (trustedTypes) {
+        policy = trustedTypes.createPolicy("editate", rules);
+      }
+    } catch {
+      // Pages may limit policy names without enforcing Trusted Types
+    }
+  }
+  const doc = new DOMParser().parseFromString(
+    policy.createHTML(html) as string,
+    "text/html",
+  );
+  let dom: Node = doc.body;
   let isWindowsCopy = false;
   // https://github.com/w3c/clipboard-apis/issues/193
   for (const n of [...dom.childNodes]) {
     if (isCommentNode(n)) {
       if (n.data === "StartFragment") {
         isWindowsCopy = true;
-        dom = new DocumentFragment();
+        dom = doc.createDocumentFragment();
       } else if (n.data === "EndFragment") {
         isWindowsCopy = false;
       }
@@ -124,6 +144,8 @@ export const htmlPaste = <T extends DocNode>(
 
 /**
  * A plugin to handle copying / pasting HTML
+ *
+ * Under [Trusted Types](https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API), pasted HTML is parsed through a policy named `editate`.
  */
 export function htmlTransferPlugin<T extends DocNode>(
   editor: Editor<T>,
