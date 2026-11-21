@@ -1,4 +1,4 @@
-import { selectionToRange } from "../dom/index.js";
+import { rangeToRect } from "../dom/index.js";
 import type { Editor } from "../editor.js";
 
 /**
@@ -18,12 +18,7 @@ export function selectionRectPlugin(
         scheduling = false;
         if (!mounted) return;
         onSelectionChange(() =>
-          selectionToRange(
-            element,
-            parser,
-            editor.doc,
-            editor.selection,
-          ).getBoundingClientRect(),
+          rangeToRect(element, parser, editor.doc, editor.selection),
         );
       });
     });
