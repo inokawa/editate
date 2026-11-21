@@ -6,9 +6,11 @@
 
 > **internalTransferPlugin**(`editor`, `options?`): `void`
 
-Defined in: [plugins/transfer/internalTransfer.ts:11](https://github.com/inokawa/editate/blob/12d33bccfeca058ef7302c87a94e740df476d8a4/src/plugins/transfer/internalTransfer.ts#L11)
+Defined in: [plugins/transfer/internalTransfer.ts:13](https://github.com/inokawa/editate/blob/44215fcf4ae4e6409e32a411c0f3465296f1888b/src/plugins/transfer/internalTransfer.ts#L13)
 
 A plugin to handle copying / pasting between editor instances
+
+Any website can write data of `options.mime` type to the clipboard, and it's pasted as is, so validate it with [EditorOptions.schema](../interfaces/EditorOptions.md#schema).
 
 ## Parameters
 

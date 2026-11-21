@@ -38,6 +38,7 @@
 - [Undoable](functions/Undoable.md)
 - [Redoable](functions/Redoable.md)
 - [ClearHistory](functions/ClearHistory.md)
+- [restoreSelectionPlugin](functions/restoreSelectionPlugin.md)
 - [scrollToSelectionPlugin](functions/scrollToSelectionPlugin.md)
 - [nodeIdPlugin](functions/nodeIdPlugin.md)
 - [NodeId](functions/NodeId.md)

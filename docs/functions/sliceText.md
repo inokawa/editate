@@ -6,7 +6,7 @@
 
 > **sliceText**\<`T`\>(`node`, `start?`, `end?`, `voidToString?`): `string`
 
-Defined in: [doc/node.ts:310](https://github.com/inokawa/editate/blob/12d33bccfeca058ef7302c87a94e740df476d8a4/src/doc/node.ts#L310)
+Defined in: [doc/node.ts:310](https://github.com/inokawa/editate/blob/44215fcf4ae4e6409e32a411c0f3465296f1888b/src/doc/node.ts#L310)
 
 ## Type Parameters
 
