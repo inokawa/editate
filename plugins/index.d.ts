@@ -3,6 +3,7 @@ export { blockLockPlugin, LockedInRange } from './blockLock.js';
 export { debugPlugin } from './debug.js';
 export { keymapPlugin } from './keymap.js';
 export { Undo, Redo, Undoable, Redoable, ClearHistory } from './history.js';
+export { restoreSelectionPlugin } from './restoreSelection.js';
 export { scrollToSelectionPlugin } from './scrollToSelection.js';
 export { nodeIdPlugin, NodeId } from './nodeId.js';
 export { selectionRectPlugin } from './selectionRect.js';
