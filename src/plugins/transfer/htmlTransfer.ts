@@ -38,7 +38,7 @@ export const htmlPaste = <T extends DocNode>(
   html: string,
   parse: Parser,
   serializers: HtmlSerializers<T>,
-): Fragment => {
+): Fragment | null => {
   const serializeText = serializers["text"];
   const serializeVoid = (n: Element) => {
     const s = serializers[n.tagName.toLowerCase() as keyof typeof serializers];
@@ -61,13 +61,18 @@ export const htmlPaste = <T extends DocNode>(
         policy = trustedTypes.createPolicy("editate", rules);
       }
     } catch {
-      // Pages may limit policy names without enforcing Trusted Types
+      // The name is not allowed or taken. Strings are still accepted unless Trusted Types are enforced without a default policy
     }
   }
-  const doc = new DOMParser().parseFromString(
-    policy.createHTML(html) as string,
-    "text/html",
-  );
+  let doc: Document;
+  try {
+    doc = new DOMParser().parseFromString(
+      policy.createHTML(html) as string,
+      "text/html",
+    );
+  } catch {
+    return null;
+  }
   let dom: Node = doc.body;
   let isWindowsCopy = false;
   // https://github.com/w3c/clipboard-apis/issues/193
@@ -145,7 +150,8 @@ export const htmlPaste = <T extends DocNode>(
 /**
  * A plugin to handle copying / pasting HTML
  *
- * Under [Trusted Types](https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API), pasted HTML is parsed through a policy named `editate`.
+ * Under [Trusted Types](https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API), pasted HTML is parsed through a policy named `editate`. Allow the name in the `trusted-types` directive, with `'allow-duplicates'` if multiple copies of this library are loaded in a page.
+ * Otherwise HTML may not be parsed, and the data is left to the paste hooks registered after this plugin.
  */
 export function htmlTransferPlugin<T extends DocNode>(
   editor: Editor<T>,
