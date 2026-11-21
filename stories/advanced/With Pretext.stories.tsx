@@ -10,6 +10,7 @@ import {
   nodeIdPlugin,
   NodeId,
   type Editor,
+  restoreSelectionPlugin,
 } from "../../src";
 
 const FONT_FAMILY = "Arial";
@@ -213,6 +214,7 @@ export const WithPretext: StoryObj = {
         isBlock: (n) => !!n.dataset.block,
       })
         .exec(scrollToSelectionPlugin)
+        .exec(restoreSelectionPlugin)
         .exec(internalTransferPlugin)
         .exec(plainTransferPlugin)
         .exec(nodeIdPlugin);
