@@ -1,5 +1,5 @@
 import { expect, it, onTestFinished } from "vitest";
-import { createEditor } from "../editor.js";
+import { createEditor } from "../../editor.js";
 import { scrollToSelectionPlugin } from "./scrollToSelection.js";
 
 type Doc = { children: { children: { text: string }[] }[] };

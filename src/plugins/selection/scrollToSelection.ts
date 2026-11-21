@@ -1,9 +1,13 @@
-import { findPosition, getCurrentDocument, rangeToRect } from "../dom/index.js";
-import { isElementNode } from "../dom/utils.js";
-import { offsetToPosition } from "../doc/node.js";
-import { toRange } from "../doc/position.js";
-import type { Editor } from "../editor.js";
-import { max, min } from "../utils.js";
+import {
+  findPosition,
+  getCurrentDocument,
+  rangeToRect,
+} from "../../dom/index.js";
+import { isElementNode } from "../../dom/utils.js";
+import { offsetToPosition } from "../../doc/node.js";
+import { toRange } from "../../doc/position.js";
+import type { Editor } from "../../editor.js";
+import { max, min } from "../../utils.js";
 
 // `auto` parses to NaN and reserves nothing
 const resolveScrollPadding = (value: string, size: number): number => {

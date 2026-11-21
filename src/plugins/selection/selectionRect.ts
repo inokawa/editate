@@ -1,5 +1,5 @@
-import { rangeToRect } from "../dom/index.js";
-import type { Editor } from "../editor.js";
+import { rangeToRect } from "../../dom/index.js";
+import type { Editor } from "../../editor.js";
 
 /**
  * A plugin to get the bounding rect of selection on selection change

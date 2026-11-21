@@ -2,7 +2,7 @@ import { expect, it, onTestFinished } from "vitest";
 import { cdp, server, userEvent } from "vitest/browser";
 // Types the cdp session as playwright's
 import type {} from "@vitest/browser-playwright";
-import { createEditor } from "../editor.js";
+import { createEditor } from "../../editor.js";
 import { restoreSelectionPlugin } from "./restoreSelection.js";
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
