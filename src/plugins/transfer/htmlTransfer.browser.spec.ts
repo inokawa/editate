@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { htmlPaste } from "./htmlTransfer.js";
 import { createParser } from "../../dom/parser.js";
 import { defaultIsBlockNode } from "../../dom/default.js";
@@ -39,18 +39,43 @@ it("parse without running scripts", async () => {
   expect([...parsed]).toEqual([]);
 });
 
-it("parse where Trusted Types are required", () => {
-  const meta = document.createElement("meta");
-  meta.httpEquiv = "Content-Security-Policy";
-  meta.content = "require-trusted-types-for 'script'";
-  // Enforced for the rest of this file's document
-  document.head.appendChild(meta);
-
+describe("Trusted Types", () => {
+  // A CSP cannot be removed, so it applies to the rest of this file's document
+  const addCSP = (content: string) => {
+    const meta = document.createElement("meta");
+    meta.httpEquiv = "Content-Security-Policy";
+    meta.content = content;
+    document.head.appendChild(meta);
+  };
+  // Another copy of this library, which cannot create the policy once the name is taken
+  const importCopy = (): Promise<typeof import("./htmlTransfer.js")> => {
+    const url = "./htmlTransfer.ts?copy";
+    return import(/* @vite-ignore */ url);
+  };
   const parser = createParser(document, defaultIsBlockNode);
-  // The policy is created once and used for every parse
-  for (let i = 0; i < 2; i++) {
-    expect(
-      htmlPaste("<p>a</p>", parser, { text: (text) => ({ text }) }),
-    ).toEqual([{ children: [{ text: "a" }] }]);
-  }
+  const paste = (fn: typeof htmlPaste) =>
+    fn("<p>a</p>", parser, { text: (text) => ({ text }) });
+  const parsed = [{ children: [{ text: "a" }] }];
+
+  it("parse where not required and the policy name is taken", async () => {
+    addCSP("trusted-types editate");
+
+    // Take the name
+    expect(paste(htmlPaste)).toEqual(parsed);
+    expect(paste((await importCopy()).htmlPaste)).toEqual(parsed);
+  });
+
+  it("parse where required", () => {
+    addCSP("require-trusted-types-for 'script'");
+
+    expect(paste(htmlPaste)).toEqual(parsed);
+  });
+
+  it("parse nothing where required and the policy name is taken", async () => {
+    addCSP("require-trusted-types-for 'script'; trusted-types editate");
+
+    // Take the name
+    expect(paste(htmlPaste)).toEqual(parsed);
+    expect(paste((await importCopy()).htmlPaste)).toBe(null);
+  });
 });
