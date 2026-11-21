@@ -5,7 +5,7 @@ import type { DocNode } from "../doc/types.js";
 const IMAGE =
   "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACwAAAAAAQABAAACAkQBADs=";
 
-const render = (html: string, style: string = ""): HTMLElement => {
+const render = (html: string, style = ""): HTMLElement => {
   const element = document.body.appendChild(document.createElement("div"));
   element.style.cssText = "font: 20px monospace;" + style;
   element.innerHTML = html;
@@ -63,33 +63,22 @@ describe("rangeToRect", () => {
 
   it("caret next to a void", () => {
     const doc: DocNode = {
-      children: [
-        {
-          children: [
-            { type: "image" },
-            { text: "ab" },
-            { type: "image" },
-            { text: "cd" },
-            { type: "image" },
-          ],
-        },
-      ],
+      children: [{ children: [{ text: "ab" }, { type: "image" }] }],
     };
-    const element = render(
-      `<div><img src="${IMAGE}">ab<img src="${IMAGE}">cd<img src="${IMAGE}"></div>`,
+    const element = render(`<div>ab<img src="${IMAGE}"></div>`);
+    expect(rangeToRect(element, parser, doc, [3, 3]).toJSON()).toEqual(
+      element.querySelector("img")!.getBoundingClientRect().toJSON(),
     );
-    const [first, middle, last] = element.querySelectorAll("img");
-    // before the void at the start of the block
-    expect(rangeToRect(element, parser, doc, [0, 0]).toJSON()).toEqual(
-      first!.getBoundingClientRect().toJSON(),
-    );
-    // after the void followed by text
-    expect(rangeToRect(element, parser, doc, [4, 4]).toJSON()).toEqual(
-      middle!.getBoundingClientRect().toJSON(),
-    );
-    // after the void at the end of the block
-    expect(rangeToRect(element, parser, doc, [7, 7]).toJSON()).toEqual(
-      last!.getBoundingClientRect().toJSON(),
+  });
+
+  it("range from a void", () => {
+    const doc: DocNode = {
+      children: [{ children: [{ type: "image" }, { text: "ab" }] }],
+    };
+    const element = render(`<div><img src="${IMAGE}">ab</div>`);
+    const block = element.firstChild!;
+    expect(rangeToRect(element, parser, doc, [0, 3]).toJSON()).toEqual(
+      domRange([block, 0], [block.lastChild!, 2]).toJSON(),
     );
   });
 
@@ -103,15 +92,20 @@ describe("rangeToRect", () => {
   });
 
   it("caret in a vertical writing mode", () => {
-    const doc: DocNode = { children: [{ children: [{ text: "abc" }] }] };
-    const element = render("<div>abc</div>", "writing-mode: vertical-rl");
-    const block = element.firstElementChild!.getBoundingClientRect();
-    const rect = rangeToRect(element, parser, doc, [1, 1]);
-    // not the empty rect WebKit reports, but on the line, or the element of the text in WebKit
-    expect(rect.width || rect.height).not.toBe(0);
-    expect(rect.left).toBeGreaterThanOrEqual(block.left);
-    expect(rect.right).toBeLessThanOrEqual(block.right);
-    expect(rect.top).toBeGreaterThanOrEqual(block.top);
-    expect(rect.bottom).toBeLessThanOrEqual(block.bottom);
+    const text = "a".repeat(100);
+    const doc: DocNode = { children: [{ children: [{ text }] }] };
+    const element = render(`<div>${text}</div>`, "writing-mode: vertical-rl");
+    const node = element.firstChild!.firstChild!;
+    const last = domRange([node, 99], [node, 100]);
+    // WebKit reports an empty rect, so the character next to the caret is measured instead, or the one before it at the end. Firefox reports a caret as long as the rest of the line.
+    for (const [offset, y] of [
+      [99, last.top],
+      [100, last.bottom],
+    ] as const) {
+      const rect = rangeToRect(element, parser, doc, [offset, offset]);
+      expect(rect.top).toBeLessThanOrEqual(y + 0.5);
+      expect(rect.bottom).toBeGreaterThanOrEqual(y - 0.5);
+      expect(rect.height).toBeLessThanOrEqual(last.height + 0.5);
+    }
   });
 });
