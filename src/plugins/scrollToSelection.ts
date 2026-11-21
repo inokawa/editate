@@ -1,5 +1,4 @@
-import { getCurrentDocument, selectionToRange } from "../dom/index.js";
-import { isElementNode } from "../dom/utils.js";
+import { getCurrentDocument, rangeToRect } from "../dom/index.js";
 import type { Editor } from "../editor.js";
 import { max, min } from "../utils.js";
 
@@ -88,23 +87,7 @@ export const scrollToSelectionPlugin = (editor: Editor) => {
       // ran against the layout before it. Matches the delay in editor.input().
       timer = setTimeout(() => {
         timer = null;
-        const range = selectionToRange(
-          element,
-          parser,
-          editor.doc,
-          editor.selection,
-        );
-        let rect = range.getBoundingClientRect();
-        // A collapsed range around a `<br>` reports an empty rect at (0, 0),
-        // which would scroll toward the start of the document. A caret itself
-        // is flat on one axis only, on y in a vertical writing mode.
-        if (!rect.width && !rect.height) {
-          const node = range.startContainer;
-          const el = isElementNode(node) ? node : node.parentElement;
-          if (el) {
-            rect = el.getBoundingClientRect();
-          }
-        }
+        const rect = rangeToRect(element, parser, editor.doc, editor.selection);
 
         // Walk the scroll chain inner -> outer like scrollIntoView(). Rects are
         // viewport-relative, so fitting the caret in the scroller does not put

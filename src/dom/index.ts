@@ -1,12 +1,13 @@
 import { type TokenType, type Parser, TOKEN_BLOCK } from "./parser.js";
 import type {
   DocNode,
+  Range as JsRange,
   Selection as JsSelection,
   DomPosition,
   DomSelection,
   Path,
 } from "../doc/types.js";
-import { selectionToDomSelection } from "../doc/node.js";
+import { offsetToPosition, selectionToDomSelection } from "../doc/node.js";
 import { isCollapsed } from "../doc/position.js";
 import { min } from "../utils.js";
 import { isElementNode } from "./utils.js";
@@ -58,7 +59,7 @@ export const getSelectionRangeInEditor = (
   }
 };
 
-export const selectionToRange = (
+const selectionToRange = (
   root: Element,
   parse: Parser,
   doc: DocNode,
@@ -344,4 +345,34 @@ export const getPointedCaretPosition = (
       );
     }
   }
+};
+
+/**
+ * @internal
+ */
+export const rangeToRect = (
+  root: Element,
+  parse: Parser,
+  doc: DocNode,
+  range: JsRange | JsSelection,
+): DOMRect => {
+  if (!isCollapsed(range)) {
+    return selectionToRange(root, parse, doc, range).getBoundingClientRect();
+  }
+  const [node, offset] = findPosition(
+    root,
+    parse,
+    offsetToPosition(doc, range[0]),
+  );
+  // A collapsed range around a `<br>` reports an empty rect at (0, 0), so the token is measured, such as the <br>, a void or the root without tokens
+  if (isElementNode(node)) {
+    return node.getBoundingClientRect();
+  }
+  const caret = getCurrentDocument(root).createRange();
+  caret.setStart(node, offset);
+  const rect = caret.getBoundingClientRect();
+  // A caret itself is flat on one axis only, on y in a vertical writing mode. WebKit reports an empty rect for a caret in a vertical writing mode, so the element of the text is measured instead
+  return rect.width || rect.height
+    ? rect
+    : node.parentElement!.getBoundingClientRect();
 };
