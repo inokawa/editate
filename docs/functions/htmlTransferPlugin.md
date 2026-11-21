@@ -6,11 +6,12 @@
 
 > **htmlTransferPlugin**\<`T`\>(`editor`, `options`): `void`
 
-Defined in: [plugins/transfer/htmlTransfer.ts:150](https://github.com/inokawa/editate/blob/44215fcf4ae4e6409e32a411c0f3465296f1888b/src/plugins/transfer/htmlTransfer.ts#L150)
+Defined in: [plugins/transfer/htmlTransfer.ts:156](https://github.com/inokawa/editate/blob/ea4ae783901e2f8bcc03273ecd5fdcaeccad4574/src/plugins/transfer/htmlTransfer.ts#L156)
 
 A plugin to handle copying / pasting HTML
 
-Under [Trusted Types](https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API), pasted HTML is parsed through a policy named `editate`.
+Under [Trusted Types](https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API), pasted HTML is parsed through a policy named `editate`. Allow the name in the `trusted-types` directive, with `'allow-duplicates'` if multiple copies of this library are loaded in a page.
+Otherwise HTML may not be parsed, and the data is left to the paste hooks registered after this plugin.
 
 ## Type Parameters
 

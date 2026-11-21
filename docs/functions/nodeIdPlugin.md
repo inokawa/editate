@@ -6,7 +6,7 @@
 
 > **nodeIdPlugin**\<`T`\>(`editor`): `void`
 
-Defined in: [plugins/nodeId.ts:23](https://github.com/inokawa/editate/blob/44215fcf4ae4e6409e32a411c0f3465296f1888b/src/plugins/nodeId.ts#L23)
+Defined in: [plugins/nodeId.ts:23](https://github.com/inokawa/editate/blob/ea4ae783901e2f8bcc03273ecd5fdcaeccad4574/src/plugins/nodeId.ts#L23)
 
 A plugin to give immutable document nodes stable identifiers suitable for renderer keys.
 

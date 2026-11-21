@@ -6,7 +6,7 @@
 
 > **internalTransferPlugin**(`editor`, `options?`): `void`
 
-Defined in: [plugins/transfer/internalTransfer.ts:13](https://github.com/inokawa/editate/blob/44215fcf4ae4e6409e32a411c0f3465296f1888b/src/plugins/transfer/internalTransfer.ts#L13)
+Defined in: [plugins/transfer/internalTransfer.ts:13](https://github.com/inokawa/editate/blob/ea4ae783901e2f8bcc03273ecd5fdcaeccad4574/src/plugins/transfer/internalTransfer.ts#L13)
 
 A plugin to handle copying / pasting between editor instances
 

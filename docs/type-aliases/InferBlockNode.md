@@ -6,7 +6,7 @@
 
 > **InferBlockNode**\<`T`\> = `T` *extends* `Parent` ? `Blocks`\<`T`\[`"children"`\]\[`number`\], `T`\> : `never`
 
-Defined in: [doc/types-infer.ts:25](https://github.com/inokawa/editate/blob/44215fcf4ae4e6409e32a411c0f3465296f1888b/src/doc/types-infer.ts#L25)
+Defined in: [doc/types-infer.ts:25](https://github.com/inokawa/editate/blob/ea4ae783901e2f8bcc03273ecd5fdcaeccad4574/src/doc/types-infer.ts#L25)
 
 ## Type Parameters
 
