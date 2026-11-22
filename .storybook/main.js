@@ -14,10 +14,6 @@ export default {
         // for textlint
         inconsistentCjsInterop: true,
       },
-      define: {
-        // For @textlint/kernel
-        "process.env.TIMING": false,
-      },
     });
   },
 };
