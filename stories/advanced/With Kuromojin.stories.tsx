@@ -109,7 +109,7 @@ const Editor = ({ tokenizer }: { tokenizer: Tokenizer }) => {
         return (
           <div key={NodeId(editor, doc.children[i]!)}>
             {v ? (
-              tokenizer.tokenize(v).map((token) => {
+              tokenizer.tokenizeForSentence(v).map((token) => {
                 return (
                   <Mark key={token.word_position} token={token}>
                     {token.surface_form}
@@ -132,11 +132,7 @@ export const WithKuromojin: StoryObj = {
 
     useEffect(() => {
       (async () => {
-        const tokenizer = await getTokenizer({
-          dicPath: (import.meta as any).env.STORYBOOK_DEPLOY
-            ? "/editate/dict"
-            : "/dict",
-        });
+        const tokenizer = await getTokenizer();
         setTokenizer(tokenizer);
       })().catch((e) => {
         setTokenizer(e.toString());

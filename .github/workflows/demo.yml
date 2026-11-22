@@ -22,7 +22,7 @@ jobs:
 
       - run: npm ci
 
-      - run: STORYBOOK_DEPLOY=true npm run storybook:build -- -o dist
+      - run: npm run storybook:build -- -o dist
 
       - run: npm run build && npm link
       - run: (cd examples/react && npm ci && npm run build -- --base ./ --outDir ../../dist/react)

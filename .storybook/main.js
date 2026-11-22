@@ -8,21 +8,8 @@ export default {
     name: "@storybook/react-vite",
     options: {},
   },
-  staticDirs: [
-    // for kuromojin
-    {
-      from: "../node_modules/kuromoji/dict",
-      to: "/dict",
-    },
-  ],
   viteFinal: async (config) => {
     return mergeConfig(config, {
-      resolve: {
-        alias: {
-          // for kuromojin
-          path: "path-browserify",
-        },
-      },
       legacy: {
         // for textlint
         inconsistentCjsInterop: true,
