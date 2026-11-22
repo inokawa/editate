@@ -1,4 +1,4 @@
-import { createSignal, For, onCleanup, onMount } from "solid-js";
+import { createSignal, For, onSettled } from "solid-js";
 import { createEditor, plainTransferPlugin } from "editate";
 import * as z from "zod";
 
@@ -27,7 +27,7 @@ const initialDoc: Doc = {
 function App() {
   let ref: HTMLDivElement | undefined;
   const [doc, setDoc] = createSignal<Doc>(initialDoc);
-  onMount(() => {
+  onSettled(() => {
     const editor = createEditor({
       doc: initialDoc,
       schema: schema,
@@ -35,10 +35,7 @@ function App() {
     editor.on("change", () => {
       setDoc(editor.doc);
     });
-    const dispose = editor.input(ref!);
-    onCleanup(() => {
-      dispose();
-    });
+    return editor.input(ref!);
   });
 
   return (

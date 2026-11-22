@@ -10,12 +10,12 @@
   },
   "dependencies": {
     "alpinejs": "^3.17.5",
-    "editate": "0.7.0",
+    "editate": "0.7.3",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/alpinejs": "^3.17.0",
     "typescript": "^6.0.0",
-    "vite": "^8.3.6"
+    "vite": "^8.3.8"
   }
 }
