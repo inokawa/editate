@@ -1,0 +1,481 @@
+{
+	"version": "1",
+	"manifestHash": "a21ag9",
+	"options": {
+		"target": "client",
+		"buildMode": "production",
+		"entryStrategy": {
+			"type": "smart"
+		}
+	},
+	"preloader": "../assets/preloader-qxoPTanA.js",
+	"qwikLoader": "../assets/qwikloader-BTUIEz9o.js",
+	"bundleGraphAsset": "assets/bundle-graph-v8V5motp.json",
+	"injections": [],
+	"mapping": {
+		"s_VTBySuot5FY": "../assets/App.tsx_App_component_useVisibleTask_VTBySuot5FY-UrMmJE53.js",
+		"s_de065P7FXtE": "../assets/App.tsx_App_component_de065P7FXtE-BTAHgJ7g.js",
+		"_caC": "../assets/handlers-itIEDSoc.js",
+		"_caR": "../assets/handlers-itIEDSoc.js",
+		"_chk": "../assets/handlers-itIEDSoc.js",
+		"_eaC": "../assets/handlers-itIEDSoc.js",
+		"_eaT": "../assets/handlers-itIEDSoc.js",
+		"_peC": "../assets/handlers-itIEDSoc.js",
+		"_peT": "../assets/handlers-itIEDSoc.js",
+		"_reC": "../assets/handlers-itIEDSoc.js",
+		"_reR": "../assets/handlers-itIEDSoc.js",
+		"_reT": "../assets/handlers-itIEDSoc.js",
+		"_res": "../assets/handlers-itIEDSoc.js",
+		"_rsc": "../assets/handlers-itIEDSoc.js",
+		"_run": "../assets/handlers-itIEDSoc.js",
+		"_shC": "../assets/handlers-itIEDSoc.js",
+		"_shT": "../assets/handlers-itIEDSoc.js",
+		"_task": "../assets/handlers-itIEDSoc.js",
+		"_val": "../assets/handlers-itIEDSoc.js"
+	},
+	"bundles": {
+		"../assets/App-D_OVgbsK.js": {
+			"size": 2052,
+			"total": 95423,
+			"imports": [
+				"../assets/core.min-D-_PQUIh.js"
+			],
+			"dynamicImports": [
+				"../assets/App.tsx_App_component_de065P7FXtE-BTAHgJ7g.js"
+			],
+			"qrlImports": [
+				"../assets/App.tsx_App_component_de065P7FXtE-BTAHgJ7g.js"
+			],
+			"origins": [
+				"src/App.tsx"
+			],
+			"interactivity": 0
+		},
+		"../assets/App.tsx_App_component_de065P7FXtE-BTAHgJ7g.js": {
+			"size": 565,
+			"total": 189359,
+			"imports": [
+				"../assets/App-D_OVgbsK.js",
+				"../assets/core.min-D-_PQUIh.js"
+			],
+			"dynamicImports": [
+				"../assets/App.tsx_App_component_useVisibleTask_VTBySuot5FY-UrMmJE53.js"
+			],
+			"qrlImports": [
+				"../assets/App.tsx_App_component_useVisibleTask_VTBySuot5FY-UrMmJE53.js"
+			],
+			"origins": [
+				"src/App.tsx_App_component_de065P7FXtE.js"
+			],
+			"symbols": [
+				"s_de065P7FXtE"
+			],
+			"interactivity": 2
+		},
+		"../assets/App.tsx_App_component_useVisibleTask_VTBySuot5FY-UrMmJE53.js": {
+			"size": 94229,
+			"total": 283023,
+			"imports": [
+				"../assets/App-D_OVgbsK.js",
+				"../assets/core.min-D-_PQUIh.js"
+			],
+			"origins": [
+				"node_modules/editate/lib/index.js",
+				"node_modules/zod/v4/classic/errors.js",
+				"node_modules/zod/v4/classic/parse.js",
+				"node_modules/zod/v4/classic/schemas.js",
+				"node_modules/zod/v4/core/api.js",
+				"node_modules/zod/v4/core/checks.js",
+				"node_modules/zod/v4/core/core.js",
+				"node_modules/zod/v4/core/doc.js",
+				"node_modules/zod/v4/core/errors.js",
+				"node_modules/zod/v4/core/json-schema-processors.js",
+				"node_modules/zod/v4/core/memoizer.js",
+				"node_modules/zod/v4/core/parse.js",
+				"node_modules/zod/v4/core/regexes.js",
+				"node_modules/zod/v4/core/registries.js",
+				"node_modules/zod/v4/core/schemas.js",
+				"node_modules/zod/v4/core/to-json-schema.js",
+				"node_modules/zod/v4/core/util.js",
+				"node_modules/zod/v4/core/versions.js",
+				"node_modules/zod/v4/locales/en.js",
+				"src/App.tsx_App_component_useVisibleTask_VTBySuot5FY.js"
+			],
+			"symbols": [
+				"s_VTBySuot5FY"
+			],
+			"interactivity": 3
+		},
+		"../assets/core.min-D-_PQUIh.js": {
+			"size": 93371,
+			"total": 93371,
+			"origins": [
+				"node_modules/@qwik.dev/core/dist/core.min.mjs"
+			],
+			"interactivity": 0
+		},
+		"../assets/handlers-itIEDSoc.js": {
+			"size": 207,
+			"total": 93578,
+			"imports": [
+				"../assets/core.min-D-_PQUIh.js"
+			],
+			"origins": [
+				"node_modules/@qwik.dev/core/handlers.mjs"
+			],
+			"interactivity": 0,
+			"symbols": [
+				"_caC",
+				"_caR",
+				"_chk",
+				"_eaC",
+				"_eaT",
+				"_peC",
+				"_peT",
+				"_reC",
+				"_reR",
+				"_res",
+				"_reT",
+				"_rsc",
+				"_run",
+				"_shC",
+				"_shT",
+				"_task",
+				"_val"
+			]
+		},
+		"../assets/index-F8TgBWBR.js": {
+			"size": 185,
+			"total": 194261,
+			"imports": [
+				"../assets/App-D_OVgbsK.js",
+				"../assets/core.min-D-_PQUIh.js",
+				"../assets/qwikloader-BTUIEz9o.js",
+				"../assets/qwikloader-BTUIEz9o.js"
+			],
+			"origins": [
+				"index.html",
+				"src/main.tsx"
+			],
+			"interactivity": 0
+		},
+		"../assets/preloader-qxoPTanA.js": {
+			"size": 4020,
+			"total": 4020,
+			"origins": [
+				"node_modules/@qwik.dev/core/dist/preloader.mjs"
+			],
+			"interactivity": 0
+		},
+		"../assets/qwik-worker-core-BdwvhTc3.js": {
+			"size": 90,
+			"total": 93461,
+			"imports": [
+				"../assets/core.min-D-_PQUIh.js"
+			],
+			"origins": [
+				"@qwik-worker-core"
+			],
+			"interactivity": 0
+		},
+		"../assets/qwikloader-BTUIEz9o.js": {
+			"size": 5282,
+			"total": 5282,
+			"origins": [
+				"node_modules/@qwik.dev/core/dist/qwikloader.js"
+			],
+			"interactivity": 0
+		}
+	},
+	"assets": {
+		"index.html": {
+			"size": 415
+		},
+		"assets/bundle-graph-v8V5motp.json": {
+			"name": "bundle-graph.json",
+			"size": 25
+		}
+	},
+	"symbols": {
+		"s_VTBySuot5FY": {
+			"displayName": "App.tsx_App_component_useVisibleTask",
+			"hash": "VTBySuot5FY",
+			"ctxKind": "function",
+			"ctxName": "useVisibleTask$",
+			"captures": true,
+			"canonicalFilename": "App.tsx_App_component_useVisibleTask_VTBySuot5FY",
+			"parent": "s_de065P7FXtE",
+			"origin": "App.tsx",
+			"loc": [
+				740,
+				1002
+			],
+			"paramNames": [
+				"{cleanup}"
+			],
+			"captureNames": [
+				"doc",
+				"ref"
+			]
+		},
+		"s_de065P7FXtE": {
+			"displayName": "App.tsx_App_component",
+			"hash": "de065P7FXtE",
+			"ctxKind": "function",
+			"ctxName": "component$",
+			"captures": false,
+			"canonicalFilename": "App.tsx_App_component_de065P7FXtE",
+			"parent": null,
+			"origin": "App.tsx",
+			"loc": [
+				624,
+				1396
+			]
+		},
+		"_caC": {
+			"origin": "Qwik core",
+			"displayName": "_caC",
+			"canonicalFilename": "",
+			"hash": "_caC",
+			"ctxKind": "function",
+			"ctxName": "_caC",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_caR": {
+			"origin": "Qwik core",
+			"displayName": "_caR",
+			"canonicalFilename": "",
+			"hash": "_caR",
+			"ctxKind": "function",
+			"ctxName": "_caR",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_chk": {
+			"origin": "Qwik core",
+			"displayName": "_chk",
+			"canonicalFilename": "",
+			"hash": "_chk",
+			"ctxKind": "function",
+			"ctxName": "_chk",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_eaC": {
+			"origin": "Qwik core",
+			"displayName": "_eaC",
+			"canonicalFilename": "",
+			"hash": "_eaC",
+			"ctxKind": "function",
+			"ctxName": "_eaC",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_eaT": {
+			"origin": "Qwik core",
+			"displayName": "_eaT",
+			"canonicalFilename": "",
+			"hash": "_eaT",
+			"ctxKind": "function",
+			"ctxName": "_eaT",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_peC": {
+			"origin": "Qwik core",
+			"displayName": "_peC",
+			"canonicalFilename": "",
+			"hash": "_peC",
+			"ctxKind": "function",
+			"ctxName": "_peC",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_peT": {
+			"origin": "Qwik core",
+			"displayName": "_peT",
+			"canonicalFilename": "",
+			"hash": "_peT",
+			"ctxKind": "function",
+			"ctxName": "_peT",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_reC": {
+			"origin": "Qwik core",
+			"displayName": "_reC",
+			"canonicalFilename": "",
+			"hash": "_reC",
+			"ctxKind": "function",
+			"ctxName": "_reC",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_reR": {
+			"origin": "Qwik core",
+			"displayName": "_reR",
+			"canonicalFilename": "",
+			"hash": "_reR",
+			"ctxKind": "function",
+			"ctxName": "_reR",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_reT": {
+			"origin": "Qwik core",
+			"displayName": "_reT",
+			"canonicalFilename": "",
+			"hash": "_reT",
+			"ctxKind": "function",
+			"ctxName": "_reT",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_res": {
+			"origin": "Qwik core",
+			"displayName": "_res",
+			"canonicalFilename": "",
+			"hash": "_res",
+			"ctxKind": "function",
+			"ctxName": "_res",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_rsc": {
+			"origin": "Qwik core",
+			"displayName": "_rsc",
+			"canonicalFilename": "",
+			"hash": "_rsc",
+			"ctxKind": "function",
+			"ctxName": "_rsc",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_run": {
+			"origin": "Qwik core",
+			"displayName": "_run",
+			"canonicalFilename": "",
+			"hash": "_run",
+			"ctxKind": "function",
+			"ctxName": "_run",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_shC": {
+			"origin": "Qwik core",
+			"displayName": "_shC",
+			"canonicalFilename": "",
+			"hash": "_shC",
+			"ctxKind": "function",
+			"ctxName": "_shC",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_shT": {
+			"origin": "Qwik core",
+			"displayName": "_shT",
+			"canonicalFilename": "",
+			"hash": "_shT",
+			"ctxKind": "function",
+			"ctxName": "_shT",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_task": {
+			"origin": "Qwik core",
+			"displayName": "_task",
+			"canonicalFilename": "",
+			"hash": "_task",
+			"ctxKind": "function",
+			"ctxName": "_task",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		},
+		"_val": {
+			"origin": "Qwik core",
+			"displayName": "_val",
+			"canonicalFilename": "",
+			"hash": "_val",
+			"ctxKind": "function",
+			"ctxName": "_val",
+			"captures": false,
+			"parent": null,
+			"loc": [
+				0,
+				0
+			]
+		}
+	},
+	"platform": {
+		"vite": "",
+		"rollup": "4.23.0",
+		"env": "node",
+		"os": "linux",
+		"node": "26.13.1"
+	}
+}

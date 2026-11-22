@@ -1,0 +1,1 @@
+import"./qwikloader-BTUIEz9o.js";import{S as e,p as t}from"./core.min-D-_PQUIh.js";import{t as n}from"./App-D_OVgbsK.js";t(document.getElementById(`root`),e(n,null,null,null,3,`vw_0`));

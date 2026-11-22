@@ -1,0 +1,1 @@
+export{w as _deserialize,g as _getSingleton,h as setPlatform}from"./core.min-D-_PQUIh.js";
