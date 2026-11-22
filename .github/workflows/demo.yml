@@ -35,7 +35,7 @@ jobs:
       - run: (cd examples/marko && npm ci && npm run build -- --base ./ --outDir ../../dist/marko)
       - run: (cd examples/octane && npm ci && npm run build -- --base ./ --outDir ../../dist/octane)
       - run: (cd examples/remix && npm ci && npm run build -- --base ./ --outDir ../../dist/remix)
-      - run: (cd examples/qwik && npm ci && npm run build -- --base ./ --outDir ../../dist/qwik)
+      - run: (cd examples/qwik && npm ci && npm run build -- --base /editate/qwik/ --outDir ../../dist/qwik)
       - run: (cd examples/vanilla && npm ci && npm run build -- --base ./ --outDir ../../dist/vanilla)
 
       - name: Deploy
