@@ -223,6 +223,7 @@ export const App = () => {
 - [Marko](https://markojs.com) ([Demo](https://inokawa.github.io/editate/marko), [Source](./examples/marko))
 - [Octane](https://octanejs.dev) ([Demo](https://inokawa.github.io/editate/octane), [Source](./examples/octane))
 - [Remix](https://remix.run) ([Demo](https://inokawa.github.io/editate/remix), [Source](./examples/remix))
+- [Qwik](https://qwik.dev) ([Demo](https://inokawa.github.io/editate/qwik), [Source](./examples/qwik))
 - Vanilla ([Demo](https://inokawa.github.io/editate/vanilla), [Source](./examples/vanilla))
 
 ...and more! Contribution welcome!
