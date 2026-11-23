@@ -6,6 +6,7 @@ export const createMutationObserver = (
   onMutationIgnored: () => void,
 ) => {
   let isInputing = false;
+  let isSilent = true;
   let queue: MutationRecord[] = [];
 
   const process = (records: MutationRecord[]) => {
@@ -16,7 +17,7 @@ export const createMutationObserver = (
   // https://dom.spec.whatwg.org/#interface-mutationobserver
   const mo = new MutationObserver((records) => {
     process(records);
-    if (!isInputing) {
+    if (!isInputing || !isSilent) {
       onMutationIgnored();
     }
   });
@@ -57,11 +58,15 @@ export const createMutationObserver = (
       }
       flush();
     },
-    _record: (enable: boolean) => {
+    /**
+     * @param silent if false, records mutations but still notifies them as ignored
+     */
+    _record: (enable: boolean, silent: boolean = true) => {
       if (!isInputing && enable) {
         sync();
       }
       isInputing = enable;
+      isSilent = silent;
     },
     _flush: flush,
     _dispose: () => {
