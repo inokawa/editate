@@ -31,7 +31,7 @@
     "typedoc": "typedoc",
     "size": "size-limit",
     "prepare": "patch-package",
-    "prepublishOnly": "npm run typedoc && rimraf lib && npm run build"
+    "prepublishOnly": "npm run typedoc && npm run build"
   },
   "dependencies": {
     "@standard-schema/spec": "^1.0.0"
@@ -66,7 +66,6 @@
     "react-is": "^19.3.1",
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
-    "rimraf": "6.1.4",
     "shiki": "^4.6.0",
     "size-limit": "^14.3.0",
     "storybook": "^10.6.8",
